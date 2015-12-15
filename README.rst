@@ -6,7 +6,7 @@ hansel
 Flexible parametric file paths to make queries, build folder trees and
 smart folder structure access.
 
-.. image:: https://travis-ci.org/alexsavio/hansel.svg
+.. image:: https://travis-ci.org/alexsavio/hansel.svg?branch=master
     :target: https://travis-ci.org/alexsavio/hansel
 
 .. image:: https://coveralls.io/repos/alexsavio/hansel/badge.svg?branch=master&service=github 
