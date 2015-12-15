@@ -9,8 +9,8 @@ smart folder structure access.
 .. image:: https://travis-ci.org/alexsavio/hansel.svg
     :target: https://travis-ci.org/alexsavio/hansel
 
-.. image:: https://coveralls.io/repos/alexsavio/hansel/badge.png
-    :target: https://coveralls.io/r/alexsavio/hansel
+.. image:: https://coveralls.io/repos/alexsavio/hansel/badge.svg?branch=master&service=github 
+    :target: https://coveralls.io/github/alexsavio/hansel?branch=master 
 
 
 Dependencies
