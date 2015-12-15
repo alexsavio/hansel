@@ -69,7 +69,7 @@ We tag stable releases in the repository with the version number.
 Testing
 -------
 
-We are using [pytest](http://pytest.org) to help us with the testing.
+We are using `py.test <http://pytest.org/>`_ to help us with the testing.
 If you don't have pytest installed you can run the tests using:
 
     ./runtests.py
