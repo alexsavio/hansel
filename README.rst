@@ -12,6 +12,10 @@ smart folder structure access.
 .. image:: https://coveralls.io/repos/alexsavio/hansel/badge.svg?branch=master&service=github 
     :target: https://coveralls.io/github/alexsavio/hansel?branch=master 
 
+Usage
+=====
+TBD (check the tests for now)
+
 
 Dependencies
 ============
