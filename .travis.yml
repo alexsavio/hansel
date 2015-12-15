@@ -1,0 +1,20 @@
+language: python
+
+python:
+  - "3.4"
+  - "3.5"
+
+env:
+  - PIP_USE_MIRRORS=true
+
+install: 
+  - pip install -r requirements.txt
+  - python setup.py install
+  - pip install coveralls
+
+script: 
+  - python setup.py test
+  - coverage run --source=hansel setup.py test
+
+after_success:
+  - coveralls
