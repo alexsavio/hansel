@@ -376,7 +376,7 @@ class Crumb(object):
 
     def _lastarg(self):
         """ Return the name and idx of the last argument."""
-        for arg, idx in reversed(self._argidx.items()):
+        for arg, idx in reversed(list(self._argidx.items())):
             return arg, idx
 
     def _firstarg(self):
