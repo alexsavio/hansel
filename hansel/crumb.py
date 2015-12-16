@@ -404,7 +404,7 @@ class Crumb(object):
         #         return False
         # return True
         # Take into account that self._argidx is OrderedDict
-        return self._firstarg() == arg_name
+        return arg_name == self._firstarg()[0]
 
     def _arg_values(self, arg_name, arg_values=None):
         """ Return the existing values in the file system for the crumb argument
