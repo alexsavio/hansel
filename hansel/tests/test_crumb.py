@@ -205,8 +205,8 @@ def test_ls1():
 
     flst = crumb.ls('user_folder', fullpath=True, duplicates=True, make_crumbs=True)
     assert all([isinstance(f, Crumb) for f in flst])
-    # TODO: check if all crumbs exist
-    # assert all([f.exists() or f.is_symlink() for f in flst])
+    # check if all crumbs exist
+    assert all([c.exists() for c in flst])
 
     #TODO: missing test ls with duplicates=False
 
@@ -289,10 +289,16 @@ if __name__ == '__main__':
     crumb2 = crumb.replace(base_dir=base_dir.name)
 
     values_map = {'session_id': ['session_' + str(i) for i in range(2)],
-                  'subject_id': ['subj_' + str(i) for i in range(3)]}
+                  'subject_id': ['subj_' + str(i) for i in range(3)],
+                  'modality':   ['anat', 'rest', 'pet'],
+                  }
 
     nupaths = crumb2.mktree(list(ParameterGrid(values_map)))
 
     assert all([op.exists(npath) for npath in nupaths])
+
+    anat_crumb = crumb2.replace(modality='anat')
+
+    anat_crumb.ls('subject_id')
 
 

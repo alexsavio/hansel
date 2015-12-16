@@ -550,8 +550,10 @@ class Crumb(object):
             raise NotImplementedError("Can't list paths that starts"
                                       " with an argument.")
 
-        if make_crumbs and not fullpath:
-            raise ValueError("`make_crumbs` can only work if `fullpath` is also True.")
+        #if make_crumbs and not fullpath:
+        #    raise ValueError("`make_crumbs` can only work if `fullpath` is also True.")
+        if not fullpath:
+            make_crumbs = False
 
         arg_deps = self._arg_deps(arg_name)
         args_vals = None
@@ -714,7 +716,7 @@ class Crumb(object):
     @classmethod
     def _exists(cls, crumb_path):
         """ Return True if the part without crumb arguments of `crumb_path`
-        is an existing path, False otherwise.
+        is an existing path or a symlink, False otherwise.
 
         Returns
         -------
@@ -725,7 +727,7 @@ class Crumb(object):
         else:
             rpath = crumb_path
 
-        return op.exists(rpath)
+        return op.exists(rpath) or op.islink(rpath)
 
 
     def __repr__(self):
