@@ -218,10 +218,6 @@ Testing
 
 We are using `py.test <http://pytest.org/>`__ to help us with the testing.
 
-If you don't have pytest installed you can run the tests using:
-
-    ./runtests.py
-
 Otherwise you can run the tests executing:
 
     python setup.py test
