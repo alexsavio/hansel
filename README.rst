@@ -108,7 +108,7 @@ parameter:
 
     assert str(crumb) == "/home/hansel/data/raw/{subject_id}/{session_id}/{image_type}"
 
-if you don't need a copy of `crumb`, you can use the `[]` operator:
+if you don't need a copy of ``crumb``, you can use the ``[]`` operator:
 
 .. code:: python
 
