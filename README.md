@@ -13,37 +13,7 @@ Usage
 Quick Intro
 -----------
 
-```python
-from hansel import Crumb
-
-crumb = Crumb("{base_dir}/data/raw/{subject_id}/{session_id}/{image_type}")
-
-crumb = crumb.replace('base_dir', '/home/hansel')
-
-assert str(crumb) == "/home/hansel/data/raw/{subject_id}/{session_id}/{image_type}"
-
-
-anat_crumb = crumb2.replace(modality='anat')
-
-subjec_paths_crumbs = anat_crumb.ls('subject_id')
-
-
-subject_ids = crumb.ls('subject_id', fullpath=False)
-
-assert subject_ids == ['0040000', '0040001', '0040002', '0040003', '0040004', ....]
-
-
-anat_crumb = crumb.replace(image_type='anat_1')
-
-anat_paths = anat_crumb.ls('image')
-```
-
-
-Long Intro
-----------
-
-I often find myself in a work related with structured folder paths. For
-example:
+Imagine this folder tree:
 
 ```
 data
@@ -70,6 +40,36 @@ data
     │       └── rest_1
 
 ```
+
+```python
+from hansel import Crumb
+
+crumb = Crumb("{base_dir}/data/raw/{subject_id}/{session_id}/{image_type}")
+
+crumb = crumb.replace('base_dir', '/home/hansel')
+
+assert str(crumb) == "/home/hansel/data/raw/{subject_id}/{session_id}/{image_type}"
+
+
+subject_ids = crumb.ls('subject_id', fullpath=False)
+
+assert subject_ids == ['0040000', '0040001', '0040002', '0040003', '0040004', ....]
+
+
+subject_paths = crumb.ls('subject_id', fullpath=True)
+
+
+anat_crumb = crumb.replace(image_type='anat_1')
+
+anat_paths = anat_crumb.ls('image')
+```
+
+
+Long Intro
+----------
+
+I often find myself in a work related with structured folder paths, such as the 
+one shown above.
 
 I have tried many ways of "modelling" these situations: loops,
 dictionaries, configuration files, etc. I always end up doing a
