@@ -19,7 +19,7 @@ from   hansel.utils import ParameterGrid
 BASE_DIR = op.expanduser('~/data/cobre')
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def crumb(request):
 
     crumb = Crumb("{base_dir}/raw/{subject_id}/{session_id}/{modality}/{image}")
@@ -48,8 +48,35 @@ def tmp_crumb(request):
     return crumb2  # provide the fixture value
 
 
+def test_path_property(crumb):
+
+    assert crumb.path == crumb._path
+
+    base_dir = BASE_DIR
+    crumb2 = crumb.replace(base_dir=base_dir)
+
+    assert crumb2.path == crumb2._path
+    assert crumb.path != crumb2._path
+    assert crumb._argidx != crumb2._argidx
+
+    crumb.path =  crumb2.path
+
+    assert crumb.path == crumb.path
+    assert crumb._argidx == crumb2._argidx
+
+
 def test_replace(crumb):
     base_dir = BASE_DIR
+    crumb2 = crumb.replace(base_dir=base_dir)
+
+    assert crumb2._path == op.join(base_dir, crumb._path.replace('{base_dir}/', ''))
+    assert 'base_dir' not in crumb2._argidx
+
+
+def test_replace1(crumb):
+    base_dir = BASE_DIR
+    crumb.path = op.join(crumb.path, '{hansel}', '{gretel}')
+
     crumb2 = crumb.replace(base_dir=base_dir)
 
     assert crumb2._path == op.join(base_dir, crumb._path.replace('{base_dir}/', ''))
@@ -118,6 +145,8 @@ def test_copy(crumb):
     assert crumb is not copy
     assert crumb == copy
 
+    pytest.raises(ValueError, crumb.copy, {})
+
 
 def test_equal_no_copy(crumb):
     crumb2 = crumb
@@ -129,6 +158,9 @@ def test_equal_no_copy(crumb):
     crumb2.path == op.join(crumb._path, '{test}')
     assert crumb2 == crumb
 
+    crumb2._argidx['hansel'] = []
+    assert crumb2 == crumb
+
 
 def test_equal_copy(crumb):
     crumb2 = Crumb.copy(crumb)
@@ -138,6 +170,9 @@ def test_equal_copy(crumb):
     assert crumb2 != crumb
 
     crumb2.path == op.join(crumb._path, '{test}')
+    assert crumb2 != crumb
+
+    crumb2._argidx['hansel'] = []
     assert crumb2 != crumb
 
 
@@ -155,7 +190,21 @@ def test_is_valid_a_bit(crumb):
 
     crumb_path = crumb._path
     crumb_path = crumb_path[:3] + Crumb._arg_start_sym + crumb_path[3:-1]
+
+    pytest.raises(ValueError, Crumb.from_path, crumb_path)
+
     assert not Crumb.is_valid(crumb_path)
+
+    crumb._path = crumb_path
+    pytest.raises(ValueError, crumb._check)
+
+    pytest.raises(ValueError, crumb.isabs)
+
+    pytest.raises(ValueError, crumb.abspath)
+
+
+def test_arg_name(crumb):
+    pytest.raises(ValueError, crumb._arg_name, 'hansel')
 
 
 def test_has_crumbs(crumb):
