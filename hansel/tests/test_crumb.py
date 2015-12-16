@@ -7,11 +7,13 @@ import pytest
 
 import os
 import os.path  as op
+import shutil
 from   copy     import copy
 from   pathlib  import Path
 
 from   six      import string_types
 from   hansel   import Crumb
+from   hansel.utils import ParameterGrid
 
 
 BASE_DIR = op.expanduser('~/data/cobre')
@@ -29,12 +31,55 @@ def crumb(request):
     return crumb  # provide the fixture value
 
 
+@pytest.fixture(scope="module")
+def tmp_crumb(request):
+    from tempfile import TemporaryDirectory
+
+    crumb = Crumb("{base_dir}/raw/{subject_id}/{session_id}/{modality}/{image}")
+    base_dir = TemporaryDirectory(prefix='crumbtest_')
+    crumb2 = crumb.replace(base_dir=base_dir.name)
+
+    def fin():
+        print("teardown tmp_crumb")
+        shutil.rmtree(base_dir.name)
+        #os.removedirs(base_dir.name)
+
+    request.addfinalizer(fin)
+    return crumb2  # provide the fixture value
+
+
 def test_replace(crumb):
     base_dir = BASE_DIR
     crumb2 = crumb.replace(base_dir=base_dir)
 
     assert crumb2._path == op.join(base_dir, crumb._path.replace('{base_dir}/', ''))
     assert 'base_dir' not in crumb2._argidx
+
+
+def test_firstarg(crumb):
+    an, ai = crumb._firstarg()
+    assert an == 'base_dir'
+    assert ai == 0
+
+    base_dir = BASE_DIR
+    crumb2 = crumb.replace(base_dir=base_dir)
+
+    an, ai = crumb2._firstarg()
+    assert an == 'subject_id'
+    assert ai == len(base_dir.split(op.sep)) + 1
+
+
+def test_lastarg(crumb):
+    an, ai = crumb._lastarg()
+    assert an == 'image'
+    assert ai == len(crumb._path_split()) - 1
+
+    base_dir = BASE_DIR
+    crumb2 = crumb.replace(base_dir=base_dir)
+
+    an, ai = crumb2._lastarg()
+    assert an == 'image'
+    assert ai == len(crumb2._path_split()) - 1
 
 
 def test_isabs(crumb):
@@ -120,6 +165,10 @@ def test_has_crumbs(crumb):
     assert not Crumb.has_crumbs('/home/hansel/.config')
 
 
+def test_str(crumb):
+    assert crumb._path == str(crumb)
+
+
 def test_ls_raises():
     crumb = Crumb(op.join('{home}', '{user_folder}'))
 
@@ -196,12 +245,38 @@ def test_rem_deps(crumb):
     assert not crumb._remaining_deps(values)
 
 
-def test_mktree(crumb):
-    pass
-#     %run crumb.py
-#     values_map = {'year': [str(y) for y in range(2010, 2013)],
-#                   'subject_id': ['subj_' + str(i) for i in range(3)]}
-#     vm = cr._recursive_values_maps(values_map)
+def test_touch(tmp_crumb):
+    path = tmp_crumb.touch()
+    assert path == tmp_crumb.split()[0]
+    assert op.exists(path)
+
+
+def test_mktree1(tmp_crumb):
+    nupaths = tmp_crumb.mktree(None)
+
+    assert all([op.exists(npath) for npath in nupaths])
+
+
+def test_mktree2(tmp_crumb):
+    values_map = {'session_id': ['session_' + str(i) for i in range(2)],
+                  'subject_id': ['subj_' + str(i) for i in range(3)]}
+
+    nupaths = tmp_crumb.mktree(list(ParameterGrid(values_map)))
+
+    assert all([op.exists(npath) for npath in nupaths])
+
+
+def test_exists(tmp_crumb):
+    values_map = {'session_id': ['session_' + str(i) for i in range(2)],
+                  'subject_id': ['subj_' + str(i) for i in range(3)]}
+
+    shutil.rmtree(tmp_crumb.split()[0])
+
+    assert not tmp_crumb.exists()
+
+    _ = tmp_crumb.mktree(list(ParameterGrid(values_map)))
+
+    assert tmp_crumb.exists()
 
 if __name__ == '__main__':
     import os.path as op
@@ -216,6 +291,8 @@ if __name__ == '__main__':
     values_map = {'session_id': ['session_' + str(i) for i in range(2)],
                   'subject_id': ['subj_' + str(i) for i in range(3)]}
 
-    crumb2.mktree(list(ParameterGrid(values_map)))
+    nupaths = crumb2.mktree(list(ParameterGrid(values_map)))
+
+    assert all([op.exists(npath) for npath in nupaths])
 
 

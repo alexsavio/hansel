@@ -8,7 +8,7 @@ Crumb class: the smart path model class.
 import os
 import os.path     as op
 from   copy        import deepcopy
-from   collections import OrderedDict, Mapping
+from   collections import OrderedDict, Mapping, Sequence
 from   pathlib     import Path
 
 from   six import string_types
@@ -374,10 +374,13 @@ class Crumb(object):
 
         return path
 
+    def _lastarg(self):
+        """ Return the name and idx of the last argument."""
+        for arg, idx in reversed(self._argidx.items()):
+            return arg, idx
+
     def _firstarg(self):
-        """
-        Return the name and idx of the first argument.
-        """
+        """Return the name and idx of the first argument."""
         for arg, idx in self._argidx.items():
             return arg, idx
 
@@ -408,6 +411,12 @@ class Crumb(object):
         -------
         vals: list of tuples
 
+        Raises
+        ------
+        ValueError: if `arg_values` is None and `arg_name` is not the
+        first crumb argument in self._path
+
+        IOError: if this crosses to any path that is non-existing.
         """
         if arg_values is None and not self._is_firstarg(arg_name):
             raise ValueError("Cannot get the list of values for {} if"
@@ -415,6 +424,10 @@ class Crumb(object):
                              " in `paths`.".format(arg_name))
 
         def list_children(path, just_dirs=False):
+            if not op.exists(path):
+                raise IOError("Expected an existing path, but could not"
+                              " find {}.".format(path))
+
             if op.isfile(path):
                 if just_dirs:
                     vals = []
@@ -580,6 +593,60 @@ class Crumb(object):
 
         return rem_deps
 
+    def touch(self):
+        """ Create a leaf directory and all intermediate ones
+        using the non crumbed part of `crumb_path`.
+        If the target directory already exists, raise an OSError
+        if exist_ok is False. Otherwise no exception is raised.
+
+        Parameters
+        ----------
+        crumb_path: str
+
+        exist_ok: bool
+            Default = True
+
+        Returns
+        -------
+        nupath: str
+            The new path created.
+        """
+        return self._touch(self._path)
+
+    @classmethod
+    def _touch(cls, crumb_path, exist_ok=True):
+        """ Create a leaf directory and all intermediate ones
+        using the non crumbed part of `crumb_path`.
+        If the target directory already exists, raise an OSError
+        if exist_ok is False. Otherwise no exception is raised.
+
+        Parameters
+        ----------
+        crumb_path: str
+
+        exist_ok: bool
+            Default = True
+
+        Returns
+        -------
+        nupath: str
+            The new path created.
+        """
+        if cls.has_crumbs(crumb_path):
+            nupath = cls._split(crumb_path)[0]
+        else:
+            nupath = crumb_path
+
+        if op.exists(nupath) and not exist_ok:
+            raise IOError("Folder {} already exists.".format(nupath))
+
+        try:
+            os.makedirs(nupath, exist_ok=exist_ok)
+        except:
+            raise
+        else:
+            return nupath
+
     def mktree(self, values_map):
         """ Create the tree of folders given the values for the crumb arguments
         of the current crumb path.
@@ -604,6 +671,13 @@ class Crumb(object):
         paths: list of Paths
             The paths that have been created.
         """
+        if values_map is None:
+            return [self.touch()]
+
+        if not isinstance(values_map, (Sequence, Mapping)):
+            raise ValueError("Expected keys in `values_map` to be a Sequence, "
+                             "got {}.".format(type(values_map)))
+
         paths = []
         for idx, aval in enumerate(values_map):
             if not isinstance(aval, Mapping):
@@ -620,15 +694,7 @@ class Crumb(object):
 
             paths.append(self.replace(**aval))
 
-        for path in paths:
-            break
-
-        import ipdb
-        ipdb.set_trace()
-
-
-
-
+        return [self._touch(str(path)) for path in paths]
 
     def exists(self):
         """ Return True if the current crumb path is a possibly existing path,
@@ -638,16 +704,35 @@ class Crumb(object):
         -------
         exists: bool
         """
-        pass
-        # splt = self._path_split()
-        # for
-        # for arg_name in self._argidx:
+        if not op.exists(self.split()[0]):
+            return False
+
+        last, _ = self._lastarg()
+        paths = self.ls(last, fullpath=True, make_crumbs=False, duplicates=True)
+        return all([self._exists(lp) for lp in paths])
+
+    @classmethod
+    def _exists(cls, crumb_path):
+        """ Return True if the part without crumb arguments of `crumb_path`
+        is an existing path, False otherwise.
+
+        Returns
+        -------
+        exists: bool
+        """
+        if cls.has_crumbs(crumb_path):
+            rpath = cls._split(crumb_path)[0]
+        else:
+            rpath = crumb_path
+
+        return op.exists(rpath)
+
 
     def __repr__(self):
         return '{}("{}")'.format(__class__.__name__, self._path)
 
     def __str__(self):
-        return '{}("{}")'.format(__class__.__name__, self._path)
+        return str(self._path)
 
 
 if __name__ == "__main__":
