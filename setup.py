@@ -39,7 +39,7 @@ exec(compile(read(VERSION_PYFILE), VERSION_PYFILE, 'exec'))
 setup_dict = dict(
     name=MODULE_NAME,
     version=__version__,
-    description='Import crumbs to find your file path.',
+    description='from hansel import Crumb to find your file path.',
 
     url='https://pypi.python.org/pypi/hansel',
     license='New BSD',
