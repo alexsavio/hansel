@@ -39,6 +39,7 @@ Imagine this folder tree:
         │       ├── anat_1
         │       └── rest_1
 
+
 .. code:: python
 
     from hansel import Crumb
@@ -64,6 +65,7 @@ Imagine this folder tree:
 
     # get the paths to the anat_1 folders
     anat_paths = anat_crumb.ls('image')
+
 
 Long Intro
 ----------
@@ -154,6 +156,7 @@ or
 
 More functionalities, ideas and comments are welcome.
 
+
 Dependencies
 ============
 
@@ -162,8 +165,12 @@ install its dependencies with:
 
     pip install -r requirements.txt
 
+
 Install
 =======
+
+I am only testing this tool on Python 3.4 and 3.5. Maybe it works on Python 2.7 as well as for the parts related with
+strings (very few) I am using `six`.
 
 This package uses setuptools. You can install it running:
 
@@ -182,6 +189,7 @@ To install for all users on Unix/Linux:
 You can also install it in development mode with:
 
     python setup.py develop
+
 
 Development
 ===========
