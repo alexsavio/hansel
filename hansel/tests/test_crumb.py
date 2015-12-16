@@ -321,6 +321,7 @@ def test_exists(tmp_crumb):
 
     shutil.rmtree(tmp_crumb.split()[0])
 
+    pytest.raises(IOError, tmp_crumb._arg_values, 'subject_id')
     assert not tmp_crumb.exists()
 
     _ = tmp_crumb.mktree(list(ParameterGrid(values_map)))
