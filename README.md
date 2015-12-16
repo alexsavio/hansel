@@ -146,16 +146,16 @@ This package uses setuptools. You can install it running:
 If you already have the dependencies listed in requirements.txt
 installed, to install in your home directory, use:
 
-    python setup.py install --user
+> python setup.py install --user
 
 To install for all users on Unix/Linux:
 
-    python setup.py build
-    sudo python setup.py install
+> python setup.py build
+> sudo python setup.py install
 
 You can also install it in development mode with:
 
-    python setup.py develop
+> python setup.py develop
 
 Development
 ===========
@@ -167,11 +167,11 @@ Code
 
 You can check the latest sources with the command:
 
-    git clone https://www.github.com/alexsavio/hansel.git
+> git clone https://www.github.com/alexsavio/hansel.git
 
 or if you have write privileges:
 
-    git clone git@github.com:alexsavio/hansel.git
+> git clone git@github.com:alexsavio/hansel.git
 
 If you are going to create patches for this project, create a branch for
 it from the master branch.
@@ -192,4 +192,4 @@ Otherwise you can run the tests executing:
 
 or
 
-> pytest
+> py.test
