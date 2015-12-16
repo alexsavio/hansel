@@ -17,9 +17,7 @@ from   hansel.utils import remove_duplicates
 
 
 class Crumb(object):
-    """
-    The crumb path model class.
-
+    """ The crumb path model class.
     Parameters
     ----------
     crumb_path: str
@@ -40,13 +38,12 @@ class Crumb(object):
 
     @property
     def path(self):
-        """ Returns the current crumb path string."""
+        """Return the current crumb path string."""
         return self._path
 
     @path.setter
     def path(self, value):
         """ Set the current crumb path string and updates the internal members.
-
         Parameters
         ----------
         value: str
@@ -60,12 +57,8 @@ class Crumb(object):
             raise ValueError("The current crumb path has errors, got {}.".format(self.path))
 
     def _update(self):
-        """
-
-        Returns
-        -------
-
-        """
+        """ Clean up, parse the current crumb path and fill the internal
+        members for functioning."""
         self._clean()
         self._check()
         self._set_argidx()
@@ -78,7 +71,6 @@ class Crumb(object):
     @classmethod
     def _arg_name(cls, arg):
         """ Return the name of the argument given its crumb representation.
-
         Parameters
         ----------
         arg_crumb: str
@@ -94,7 +86,6 @@ class Crumb(object):
 
     def _arg_format(self, arg_name):
         """ Return the argument for its string `format()` representation.
-
         Parameters
         ----------
         arg_name: str
@@ -106,6 +97,15 @@ class Crumb(object):
         return '{' + arg_name + '}'
 
     def __eq__(self, other):
+        """ Return True if `self` and `other` are equal, False otherwise.
+        Parameters
+        ----------
+        other: Crumb
+
+        Returns
+        -------
+        is_equal: bool
+        """
         if self._path != other._path:
             return False
 
@@ -116,6 +116,15 @@ class Crumb(object):
 
     @classmethod
     def copy(cls, crumb):
+        """ Return a deep copy of the given `crumb`.
+        Parameters
+        ----------
+        crumb: str or Crumb
+
+        Returns
+        -------
+        copy: Crumb
+        """
         if isinstance(crumb, cls):
             return cls(crumb._path)
         elif isinstance(crumb, string_types):
@@ -161,7 +170,6 @@ class Crumb(object):
         """ Return a copy of `self` with an absolute crumb path.
         Add as prefix the absolute path to the current directory if the current
         crumb is not absolute.
-
         Parameters
         ----------
         first_is_basedir: bool
@@ -187,7 +195,6 @@ class Crumb(object):
 
     def _abspath(self, first_is_basedir=False):
         """ Return the absolute path of the current crumb path.
-
         Parameters
         ----------
         first_is_basedir: bool
@@ -254,7 +261,6 @@ class Crumb(object):
     def is_valid(cls, crumb_path):
         """ Return True if `crumb_path` is a well formed path with crumb arguments,
         False otherwise.
-
         Parameters
         ----------
         crumb_path: str
@@ -282,7 +288,6 @@ class Crumb(object):
     def _is_crumb_arg(cls, crumb_arg):
         """ Returns True if `crumb_arg` is a well formed
         crumb argument.
-
         Parameters
         ----------
         crumb_arg: str
@@ -312,6 +317,15 @@ class Crumb(object):
 
     @classmethod
     def _get_path(cls, crumb_path):
+        """ Return the path string from `crumb_path`.
+        Parameters
+        ----------
+        crumb_path: str or Crumb
+
+        Returns
+        -------
+        path: str
+        """
         if isinstance(crumb_path, cls):
             crumb_path = crumb_path._path
 
@@ -324,7 +338,6 @@ class Crumb(object):
     def from_path(cls, crumb_path):
         """ Create an instance of Crumb or pathlib.Path out of `crumb_path`.
         It will return a Crumb if `crumb_path` has crumbs or
-
         Parameters
         ----------
         val: str, Crumb or pathlib.Path
@@ -379,18 +392,19 @@ class Crumb(object):
             return arg, idx
 
     def _firstarg(self):
-        """Return the name and idx of the first argument."""
+        """ Return the name and idx of the first argument."""
         for arg, idx in self._argidx.items():
             return arg, idx
 
     def _is_firstarg(self, arg_name):
-        """
-        """
-        argidx = self._find_arg(arg_name)
-        for an in self._argidx:
-            if self._find_arg(an) < argidx:
-                return False
-        return True
+        """ Return True if `arg_name` is the first argument."""
+        # argidx = self._find_arg(arg_name)
+        # for an in self._argidx:
+        #     if self._find_arg(an) < argidx:
+        #         return False
+        # return True
+        # Take into account that self._argidx is OrderedDict
+        return self._firstarg() == arg_name
 
     def _arg_values(self, arg_name, arg_values=None):
         """ Return the existing values in the file system for the crumb argument
@@ -399,7 +413,6 @@ class Crumb(object):
         (previous in the path) crumb arguments.
         The format of `arg_values` work in such a way that `self._path.format(dict(arg_values[0]))`
         would give me a valid path or crumb.
-
         Parameters
         ----------
         arg_name: str
@@ -471,7 +484,6 @@ class Crumb(object):
     def replace(self, **kwargs):
         """ Return a copy of self with the crumb arguments in
         `kwargs` replaced by its values.
-
         Parameters
         ----------
         kwargs: strings
@@ -493,7 +505,6 @@ class Crumb(object):
         """ Return a subdict of `self._argidx` with the
          values from the crumb arguments that come before
          `arg_name` in the crumb path.
-
         Parameters
         ----------
         arg_name: str
@@ -510,7 +521,6 @@ class Crumb(object):
         Return the list of values for the argument crumb `arg_name`.
         This will also unfold any other argument crumb that appears before in the
         path.
-
         Parameters
         ----------
         arg_name: str
@@ -574,7 +584,6 @@ class Crumb(object):
 
     def _remaining_deps(self, arg_names):
         """ Return the name of the arguments that are dependencies of `arg_names`.
-
         Parameters
         ----------
         arg_names: Sequence[str]
@@ -599,7 +608,6 @@ class Crumb(object):
         using the non crumbed part of `crumb_path`.
         If the target directory already exists, raise an OSError
         if exist_ok is False. Otherwise no exception is raised.
-
         Parameters
         ----------
         crumb_path: str
@@ -620,7 +628,6 @@ class Crumb(object):
         using the non crumbed part of `crumb_path`.
         If the target directory already exists, raise an OSError
         if exist_ok is False. Otherwise no exception is raised.
-
         Parameters
         ----------
         crumb_path: str
@@ -651,7 +658,6 @@ class Crumb(object):
     def mktree(self, values_map):
         """ Create the tree of folders given the values for the crumb arguments
         of the current crumb path.
-
         Parameters
         ----------
         values_map: Sequence[Sequence[2-Tuple[str, str]]] or Sequence[Dict[str, str]]
@@ -700,7 +706,6 @@ class Crumb(object):
     def exists(self):
         """ Return True if the current crumb path is a possibly existing path,
         False otherwise.
-
         Returns
         -------
         exists: bool
@@ -716,7 +721,6 @@ class Crumb(object):
     def _exists(cls, crumb_path):
         """ Return True if the part without crumb arguments of `crumb_path`
         is an existing path or a symlink, False otherwise.
-
         Returns
         -------
         exists: bool
