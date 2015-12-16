@@ -94,8 +94,8 @@ With ``hansel`` I can represent this folder structure like this:
 
     crumb = Crumb("{base_dir}/data/raw/{subject_id}/{session_id}/{image_type}")
 
-Let's say we have the structure above hanging from a base directory
-  like ``/home/hansel/``.
+
+Let's say we have the structure above hanging from a base directory like ``/home/hansel/``.
 
 I can use the ``replace`` function to make set the ``base_dir``
 parameter:
