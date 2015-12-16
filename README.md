@@ -51,7 +51,7 @@ crumb = crumb.replace('base_dir', '/home/hansel')
 assert str(crumb) == "/home/hansel/data/raw/{subject_id}/{session_id}/{image_type}"
 
 
-subj_ids = crumb.ls('subject_id', fullpath=False)
+subj_ids = crumb['subject_id']
 
 assert subj_ids == ['0040000', '0040001', '0040002', '0040003', '0040004', ....]
 
@@ -117,6 +117,13 @@ If I want to know what are the existing `subject_ids`:
 subject_ids = crumb.ls('subject_id', fullpath=False)
 ```
 
+or
+
+```python
+subject_ids = crumb['subject_id']
+```
+
+
 Now, if I wanted to get the path to all the `anat_1` images, I could do this:
 
 ```python
@@ -125,9 +132,16 @@ anat_crumb = crumb.replace(image_type='anat_1')
 anat_paths = anat_crumb.ls('image')
 ```
 
+or
+
+```python
+crumb['image_type'] = 'anat_1'
+
+anat_paths = crumb.ls('image')
+```
+
 More functionalities, ideas and comments are welcome.
-I am working on a few improvemens, such as calling `replace` from `__setitem__`
-and `ls` from `__getitem__`.
+
 
 Dependencies
 ============
