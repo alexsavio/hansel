@@ -51,12 +51,12 @@ crumb = crumb.replace('base_dir', '/home/hansel')
 assert str(crumb) == "/home/hansel/data/raw/{subject_id}/{session_id}/{image_type}"
 
 
-subject_ids = crumb.ls('subject_id', fullpath=False)
+subj_ids = crumb.ls('subject_id', fullpath=False)
 
-assert subject_ids == ['0040000', '0040001', '0040002', '0040003', '0040004', ....]
+assert subj_ids == ['0040000', '0040001', '0040002', '0040003', '0040004', ....]
 
 
-subject_paths = crumb.ls('subject_id', fullpath=True)
+subj_paths = crumb.ls('subject_id', fullpath=True)
 
 
 anat_crumb = crumb.replace(image_type='anat_1')
