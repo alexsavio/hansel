@@ -1,11 +1,10 @@
 hansel
 ======
 
-| Flexible parametric file paths to make queries, build folder trees and
-| smart folder structure access.
+Flexible parametric file paths to make queries, build folder trees and smart
+folder structure access.
 
-| |Build Status|
-| |Coverage Status|
+|Build Status| |Coverage Status|
 
 Usage
 =====
@@ -69,16 +68,15 @@ Imagine this folder tree:
 Long Intro
 ----------
 
-| I often find myself in a work related with structured folder paths,
-  such as the
-| one shown above.
+I often find myself in a work related with structured folder paths, such as the
+one shown above.
 
-| I have tried many ways of "modelling" these situations: loops,
-| dictionaries, configuration files, etc. I always end up doing a
-| different thing for the same problem over and over again.
+I have tried many ways of solving these situations: loops, dictionaries,
+configuration files, etc. I always end up doing a different thing for the same
+problem over and over again.
 
-| This week I grew tired of it and decided to make a representation of a
-| structured folder tree in a string and access it the most easy way.
+This week I grew tired of it and decided to make a representation of a
+structured folder tree in a string and access it the most easy way.
 
 If you look at the folder structure above I have:
 
@@ -96,9 +94,8 @@ With ``hansel`` I can represent this folder structure like this:
 
     crumb = Crumb("{base_dir}/data/raw/{subject_id}/{session_id}/{image_type}")
 
-| Let's say we have the structure above hanging from a base directory
-  like
-| ``/home/hansel/``.
+Let's say we have the structure above hanging from a base directory
+  like ``/home/hansel/``.
 
 I can use the ``replace`` function to make set the ``base_dir``
 parameter:
@@ -118,11 +115,9 @@ If I want to know the path to the existing ``subject_ids`` folders:
 
     subject_paths = anat_crumb.ls('subject_id')
 
-| The output of ``ls`` can be ``str`` or ``Crumb`` or ``pathlib.Path``.
-  They will be ``Path`` if there
-| are no crumb arguments left in the crumb path. You can choose this
-  using the ``make_crumbs``
-| argument:
+The output of ``ls`` can be ``str`` or ``Crumb`` or ``pathlib.Path``.
+They will be ``Path`` if there are no crumb arguments left in the crumb path.
+You can choose this using the ``make_crumbs`` argument:
 
 .. code:: python
 
@@ -162,8 +157,8 @@ More functionalities, ideas and comments are welcome.
 Dependencies
 ============
 
-| Please see the requirements.txt file. Before installing this package,
-| install its dependencies with:
+Please see the requirements.txt file. Before installing this package,
+install its dependencies with:
 
     pip install -r requirements.txt
 
@@ -174,8 +169,8 @@ This package uses setuptools. You can install it running:
 
     python setup.py install
 
-| If you already have the dependencies listed in requirements.txt
-| installed, to install in your home directory, use:
+If you already have the dependencies listed in requirements.txt
+installed, to install in your home directory, use:
 
     python setup.py install --user
 
@@ -205,18 +200,17 @@ or if you have write privileges:
 
     git clone git@github.com:alexsavio/hansel.git
 
-| If you are going to create patches for this project, create a branch
-  for
-| it from the master branch.
+If you are going to create patches for this project, create a branch
+for it from the master branch.
 
 We tag stable releases in the repository with the version number.
 
 Testing
 -------
 
-| We are using `py.test <http://pytest.org/>`__ to help us with the
-  testing.
-| If you don't have pytest installed you can run the tests using:
+We are using `py.test <http://pytest.org/>`__ to help us with the testing.
+
+If you don't have pytest installed you can run the tests using:
 
     ./runtests.py
 
