@@ -268,14 +268,13 @@ class Crumb(object):
         splt = crumb_path.split(op.sep)
         for crumb in splt:
             if op.isdir(crumb):
-                if not op.exists(crumb):
-                    return False
-            else:
-                if cls._is_crumb_arg(crumb):
-                    crumb = cls._arg_name(crumb)
+                continue
 
-                if cls._arg_start_sym in crumb or cls._arg_end_sym in crumb:
-                    return False
+            if cls._is_crumb_arg(crumb):
+                crumb = cls._arg_name(crumb)
+
+            if cls._arg_start_sym in crumb or cls._arg_end_sym in crumb:
+                return False
 
         return True
 
@@ -353,7 +352,7 @@ class Crumb(object):
         for k in kwargs:
             if k not in args:
                 raise KeyError("Could not find argument {}"
-                               " in `spath` {}.".format(k, self._path))
+                               " in `path` {}.".format(k, self._path))
 
             args[k] = kwargs[k]
 
@@ -483,7 +482,7 @@ class Crumb(object):
         """
         for arg_name in kwargs:
             if arg_name not in self._argidx:
-                raise ValueError("Expected `arg_name` to be one of ({}),"
+                raise KeyError("Expected `arg_name` to be one of ({}),"
                                  " got {}.".format(list(self._argidx), arg_name))
 
         cr = self.copy(self)
@@ -729,6 +728,16 @@ class Crumb(object):
 
         return op.exists(rpath) or op.islink(rpath)
 
+    def __getitem__(self, item):
+        return self.ls(item, fullpath=False, duplicates=False, make_crumbs=False)
+
+    def __setitem__(self, key, value):
+        if key not in self._argidx:
+            raise KeyError("Expected `arg_name` to be one of ({}),"
+                           " got {}.".format(list(self._argidx), key))
+
+        self._path = self._replace(**{key: value})
+        self._update()
 
     def __repr__(self):
         return '{}("{}")'.format(__class__.__name__, self._path)

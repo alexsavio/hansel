@@ -65,22 +65,31 @@ def test_path_property(crumb):
     assert crumb._argidx == crumb2._argidx
 
 
-def test_replace(crumb):
-    base_dir = BASE_DIR
-    crumb2 = crumb.replace(base_dir=base_dir)
-
-    assert crumb2._path == op.join(base_dir, crumb._path.replace('{base_dir}/', ''))
-    assert 'base_dir' not in crumb2._argidx
-
-
-def test_replace1(crumb):
+def test_replace_and_setitem(crumb):
     base_dir = BASE_DIR
     crumb.path = op.join(crumb.path, '{hansel}', '{gretel}')
 
+    # use replace
     crumb2 = crumb.replace(base_dir=base_dir)
 
     assert crumb2._path == op.join(base_dir, crumb._path.replace('{base_dir}/', ''))
     assert 'base_dir' not in crumb2._argidx
+
+    # use setitem
+    crumb3 = crumb.copy(crumb)
+    crumb3['base_dir'] = base_dir
+
+    assert crumb3 is not crumb2
+    assert crumb3 == crumb2
+    assert crumb3._path == crumb2._path
+    assert 'base_dir' not in crumb3._argidx
+
+    assert crumb3.replace(**{})._path == crumb3._path
+
+    pytest.raises(KeyError, crumb2.replace, grimm='brothers')
+    pytest.raises(KeyError, crumb2._replace1, grimm='brothers')
+    pytest.raises(KeyError, crumb2._replace2, grimm='brothers')
+    pytest.raises(KeyError, crumb2.__setitem__, 'grimm', 'brothers')
 
 
 def test_firstarg(crumb):
@@ -139,6 +148,8 @@ def test_abspath(crumb):
 
     assert crumb3 != crumb2
 
+    assert Crumb(op.expanduser('~'))._abspath() == op.expanduser('~')
+
 
 def test_copy(crumb):
     copy = Crumb.copy(crumb)
@@ -195,6 +206,8 @@ def test_is_valid_a_bit(crumb):
 
     assert not Crumb.is_valid(crumb_path)
 
+    assert Crumb.is_valid(op.expanduser('~'))
+
     crumb._path = crumb_path
     pytest.raises(ValueError, crumb._check)
 
@@ -229,7 +242,7 @@ def test_ls_raises():
                   make_crumbs=True, fullpath=False)
 
 
-def test_ls1():
+def test_ls_and_getitem():
     base_dir = op.expanduser('~')
     crumb = Crumb(op.join(base_dir, '{user_folder}'))
 
@@ -251,6 +264,11 @@ def test_ls1():
     flst = crumb.ls('files', fullpath=True, duplicates=True, make_crumbs=True)
     assert all([isinstance(f, Path) for f in flst])
     assert all([f.exists() or f.is_symlink() for f in flst])
+
+    flst1 = crumb.ls('files', fullpath=False, duplicates=False, make_crumbs=False)
+    flst2 = crumb['files']
+    assert all([isinstance(f, str) for f in flst1])
+    assert flst1 == flst2
 
     flst = crumb.ls('user_folder', fullpath=True, duplicates=True, make_crumbs=True)
     assert all([isinstance(f, Crumb) for f in flst])
@@ -327,6 +345,12 @@ def test_exists(tmp_crumb):
     _ = tmp_crumb.mktree(list(ParameterGrid(values_map)))
 
     assert tmp_crumb.exists()
+
+    assert not Crumb._exists('/_/asdfasdfasdf?/{hansel}')
+
+
+def test_repr(crumb):
+    assert crumb.__repr__() == 'Crumb("{base_dir}/raw/{subject_id}/{session_id}/{modality}/{image}")'
 
 if __name__ == '__main__':
     import os.path as op
