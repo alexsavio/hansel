@@ -737,15 +737,3 @@ class Crumb(object):
         return str(self._path)
 
 
-if __name__ == "__main__":
-
-    from hansel import Crumb
-
-    #base_dir = op.expanduser('~/data/cobre')
-    #spath2 = "{base_dir}/raw/{subject_id}/{session_id}/{modality}/{image}"
-    base_dir = op.expanduser('~/data/ftlad')
-    spath2 = "{base_dir}/data/{year}/{subject_id}/{session_id}/{image}"
-
-    cr = Crumb(spath2)
-    cr2 = cr.replace(base_dir=base_dir)
-
