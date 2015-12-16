@@ -11,6 +11,38 @@ smart folder structure access.
 Usage
 =====
 
+Quick Intro
+-----------
+
+```python
+from hansel import Crumb
+
+crumb = Crumb("{base_dir}/data/raw/{subject_id}/{session_id}/{image_type}")
+
+crumb = crumb.replace('base_dir', '/home/hansel')
+
+assert str(crumb) == "/home/hansel/data/raw/{subject_id}/{session_id}/{image_type}"
+
+
+anat_crumb = crumb2.replace(modality='anat')
+
+subjec_paths_crumbs = anat_crumb.ls('subject_id')
+
+
+subject_ids = crumb.ls('subject_id', fullpath=False)
+
+assert subject_ids == ['0040000', '0040001', '0040002', '0040003', '0040004', ....]
+
+
+anat_crumb = crumb.replace(image_type='anat_1')
+
+anat_paths = anat_crumb.ls('image')
+```
+
+
+Long Intro
+----------
+
 I often find myself in a work related with structured folder paths. For
 example:
 
@@ -76,23 +108,21 @@ Now that the root path of my dataset is set, I can start querying my crumb path.
 If I want to know the path to the existing `subject_ids` folders:
 
 ```python
-anat_crumb = crumb2.replace(modality='anat')
-
-anat_crumb.ls('subject_id')
+subject_paths = anat_crumb.ls('subject_id')
+```
 
 If I want to know what are the existing `subject_ids`:
 
 ```python
 subject_ids = crumb.ls('subject_id', fullpath=False)
-
-assert subject_ids == ['0040000', '0040001', '0040002', '0040003', '0040004', ....]
 ```
 
 Now, if I wanted to get the path to all the `anat_1` images, I could do this:
 
 ```python
 anat_crumb = crumb.replace(image_type='anat_1')
-anat_crumb.ls('image')
+
+anat_paths = anat_crumb.ls('image')
 ```
 
 More functionalities, ideas and comments are welcome.
