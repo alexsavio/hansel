@@ -44,23 +44,26 @@ data
 ```python
 from hansel import Crumb
 
+# create the crumb
 crumb = Crumb("{base_dir}/data/raw/{subject_id}/{session_id}/{image_type}")
 
+# set the base_dir path
 crumb = crumb.replace('base_dir', '/home/hansel')
 
 assert str(crumb) == "/home/hansel/data/raw/{subject_id}/{session_id}/{image_type}"
 
-
+# get the ids of the subjects
 subj_ids = crumb['subject_id']
 
 assert subj_ids == ['0040000', '0040001', '0040002', '0040003', '0040004', ....]
 
+# get the paths to the subject folders, the output can be strings or crumbs, you select
+subj_paths = crumb.ls('subject_id', make_crumbs=True)
 
-subj_paths = crumb.ls('subject_id', fullpath=True)
-
-
+# set the image_type
 anat_crumb = crumb.replace(image_type='anat_1')
 
+# get the paths to the anat_1 folders
 anat_paths = anat_crumb.ls('image')
 ```
 
@@ -109,6 +112,14 @@ If I want to know the path to the existing `subject_ids` folders:
 
 ```python
 subject_paths = anat_crumb.ls('subject_id')
+```
+
+The output of `ls` can be `str` or `Crumb` or `pathlib.Path`. They will be `Path` if there
+are no crumb arguments left in the crumb path. You can choose this using the `make_crumbs`
+argument:
+
+```python
+subject_paths = anat_crumb.ls('subject_id', make_crumbs=True)
 ```
 
 If I want to know what are the existing `subject_ids`:
