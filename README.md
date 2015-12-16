@@ -46,7 +46,7 @@ I often find myself in a work related with structured folder paths. For
 example:
 
 ```
-cobre
+data
 └── raw
     ├── 0040000
     │   └── session_1
@@ -78,12 +78,13 @@ different thing for the same problem over and over again.
 This week I grew tired of it and decided to make a representation of a
 structured folder tree in a string and access it the most easy way.
 
-If you look at the folder structure above I have: the root directory
-from where it is hanging, then I have an identifier (in this case a
-subject identification), then a session identification and a data type
-(in this case an image type).
+If you look at the folder structure above I have: 
+- the root directory from where it is hanging: `...data/raw`,
+- many identifiers (in this case a subject identification), e.g., `0040000`, 
+- session identification, `session_1` and 
+- a data type (in this case an image type), `anat_1` and `rest_1`.
 
-With hansel I can represent the folder structure like this:
+With `hansel` I can represent this folder structure like this:
 
 ```python
 from hansel import Crumb
