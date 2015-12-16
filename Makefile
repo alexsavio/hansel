@@ -1,6 +1,10 @@
-.PHONY: help clean clean-pyc clean-build list test test-all coverage docs release sdist install develop install_deps
+.PHONY: help clean clean-pyc clean-build list test test-all coverage docs release sdist install deps develop tag
 
 project-name = hansel
+
+version-var := "__version__ = "
+version-string := $(shell grep $(version-var) $(project-name)/version.py)
+version := $(subst __version__ = ,,$(version-string))
 
 help:
 	@echo "clean-build - remove build artifacts"
@@ -14,6 +18,8 @@ help:
 	@echo "sdist - package"
 	@echo "install - install"
 	@echo "develop - install in development mode"
+	@echo "deps - install dependencies"
+	@echo "tag - create a git tag with current version"
 
 install: install_deps
 	python setup.py install
@@ -21,8 +27,8 @@ install: install_deps
 develop: install_deps
 	python setup.py develop
 
-install_deps:
-	./install_deps.py requirements.txt
+deps:
+	pip install -r requirements.txt
 
 clean: clean-build clean-pyc
 
@@ -61,7 +67,12 @@ docs:
 	$(MAKE) -C docs html
 	open docs/_build/html/index.html
 
-release: clean
+tag: clean
+	@echo "Creating git tag v$(version)"
+	git tag v$(version)
+	git push --tags
+
+release: clean tag
 	python setup.py sdist upload
 	python setup.py bdist_wheel upload
 
