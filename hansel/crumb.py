@@ -398,11 +398,6 @@ class Crumb(object):
 
     def _is_firstarg(self, arg_name):
         """ Return True if `arg_name` is the first argument."""
-        # argidx = self._find_arg(arg_name)
-        # for an in self._argidx:
-        #     if self._find_arg(an) < argidx:
-        #         return False
-        # return True
         # Take into account that self._argidx is OrderedDict
         return arg_name == self._firstarg()[0]
 

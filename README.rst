@@ -108,6 +108,13 @@ parameter:
 
     assert str(crumb) == "/home/hansel/data/raw/{subject_id}/{session_id}/{image_type}"
 
+if you don't need a copy of `crumb`, you can use the `[]` operator:
+
+.. code:: python
+
+    crumb['base_dir'] = '/home/hansel'
+
+
 Now that the root path of my dataset is set, I can start querying my
 crumb path.
 
@@ -153,6 +160,10 @@ or
     crumb['image_type'] = 'anat_1'
 
     anat_paths = crumb.ls('image')
+
+
+There are more features such as creating folder trees with a value of maps for the crumbs and also
+check the feasibility of a crumb path.
 
 More functionalities, ideas and comments are welcome.
 
