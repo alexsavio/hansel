@@ -1,4 +1,4 @@
-.PHONY: help clean clean-pyc clean-build list test test-cov test-all coverage docs release sdist install deps develop tag
+.PHONY: help clean clean-pyc clean-build list test test-dbg test-cov test-all coverage docs release sdist install deps develop tag
 
 project-name = hansel
 
@@ -12,6 +12,7 @@ help:
 	@echo "lint - check style with flake8"
 	@echo "test - run tests quickly with the default Python"
 	@echo "test-cov - run tests with the default Python and report coverage"
+	@echo "test-dbg - run tests and debug with ipdb"
 	@echo "testall - run tests on every Python version with tox"
 	@echo "coverage - check code coverage quickly with the default Python"
 	@echo "docs - generate Sphinx HTML documentation, including API docs"
@@ -53,6 +54,9 @@ test:
 
 test-cov:
 	py.test --cov-report term-missing --cov=$(project-name)
+
+test-dbg:
+	py.test --ipdb
 
 test-all:
 	tox
