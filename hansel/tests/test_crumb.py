@@ -10,6 +10,7 @@ import os.path  as op
 import shutil
 from   copy     import copy
 from   pathlib  import Path
+from   tempfile import TemporaryDirectory
 
 from   six      import string_types
 from   hansel   import Crumb
@@ -59,7 +60,7 @@ def test_path_property(crumb):
     assert crumb.path != crumb2._path
     assert crumb._argidx != crumb2._argidx
 
-    crumb.path =  crumb2.path
+    crumb.path = crumb2.path
 
     assert crumb.path == crumb.path
     assert crumb._argidx == crumb2._argidx
@@ -78,6 +79,9 @@ def test_replace_and_setitem(crumb):
     # use setitem
     crumb3 = crumb.copy(crumb)
     crumb3['base_dir'] = base_dir
+
+    assert crumb3._replace1(**dict()) == crumb3._path
+    assert crumb3._replace2(**dict()) == crumb3._path
 
     assert crumb3 is not crumb2
     assert crumb3 == crumb2
@@ -140,6 +144,7 @@ def test_abspath(crumb):
     assert crumb is not crumb2
     assert crumb2.isabs()
     assert crumb != crumb2
+    assert 'base_dir' in crumb2._argidx
 
     crumb3 = crumb.abspath(first_is_basedir=True)
     assert crumb3._path == op.join(op.abspath(op.curdir), crumb._path.replace('{base_dir}/', ''))
@@ -150,13 +155,19 @@ def test_abspath(crumb):
 
     assert Crumb(op.expanduser('~'))._abspath() == op.expanduser('~')
 
+    base_dir = BASE_DIR
+    crumb2 = crumb.replace(base_dir=base_dir)
+    crumbc = crumb2.abspath(first_is_basedir=False)
+    assert crumbc == crumb2
+    assert crumbc is not crumb2
+
 
 def test_copy(crumb):
     copy = Crumb.copy(crumb)
     assert crumb is not copy
     assert crumb == copy
 
-    pytest.raises(ValueError, crumb.copy, {})
+    pytest.raises(TypeError, crumb.copy, {})
 
 
 def test_equal_no_copy(crumb):
@@ -180,7 +191,7 @@ def test_equal_copy(crumb):
     crumb2._path += '/'
     assert crumb2 != crumb
 
-    crumb2.path == op.join(crumb._path, '{test}')
+    crumb2._path == op.join(crumb._path, '{test}')
     assert crumb2 != crumb
 
     crumb2._argidx['hansel'] = []
@@ -202,17 +213,16 @@ def test_is_valid_a_bit(crumb):
     crumb_path = crumb._path
     crumb_path = crumb_path[:3] + Crumb._arg_start_sym + crumb_path[3:-1]
 
+    assert isinstance(Crumb.from_path(Path(crumb_path)), Path)
     pytest.raises(ValueError, Crumb.from_path, crumb_path)
+    pytest.raises(TypeError, crumb.from_path, {})
 
     assert not Crumb.is_valid(crumb_path)
-
     assert Crumb.is_valid(op.expanduser('~'))
 
     crumb._path = crumb_path
     pytest.raises(ValueError, crumb._check)
-
     pytest.raises(ValueError, crumb.isabs)
-
     pytest.raises(ValueError, crumb.abspath)
 
 
@@ -312,19 +322,57 @@ def test_rem_deps(crumb):
     assert not crumb._remaining_deps(values)
 
 
+# def test_remdeps2(tmp_crumb):
+#     values_dict = {'session_id': ['session_' + str(i) for i in range(2)],
+#                    'subject_id': ['subj_' + str(i) for i in range(3)],
+#                    'modality':   ['anat', 'rest', 'pet'],
+#                    'image':      ['mprage.nii', 'rest.nii', 'pet.nii'],
+#                    }
+#
+#     del values_dict['subject_id']
+#     del values_dict['image']
+#     values_map = list(ParameterGrid(values_dict))
+#
+#     assert tmp_crumb._remaining_deps(['image']) == ['modality', 'base_dir']
+
+
 def test_touch(tmp_crumb):
+    assert not op.exists(tmp_crumb._path)
     path = tmp_crumb.touch()
     assert path == tmp_crumb.split()[0]
     assert op.exists(path)
 
 
+def test__touch():
+    base_dir = TemporaryDirectory()
+    path = op.join(base_dir.name, 'hansel')
+
+    assert not op.exists(path)
+
+    nupath = Crumb._touch(path)
+    assert nupath == path
+    assert op.exists(nupath)
+
+    pytest.raises(IOError, Crumb._touch, nupath, exist_ok=False)
+
+    #pytest.raises(IOError, Crumb._touch, path + '\\', exist_ok=False)
+
+
 def test_mktree1(tmp_crumb):
+
+    assert not op.exists(tmp_crumb._path)
+
     nupaths = tmp_crumb.mktree(None)
 
     assert all([op.exists(npath) for npath in nupaths])
 
+    pytest.raises(TypeError, tmp_crumb.mktree, 'hansel')
 
-def test_mktree2(tmp_crumb):
+
+def test_mktree_dicts(tmp_crumb):
+
+    assert not op.exists(tmp_crumb._path)
+
     values_map = {'session_id': ['session_' + str(i) for i in range(2)],
                   'subject_id': ['subj_' + str(i) for i in range(3)]}
 
@@ -332,8 +380,47 @@ def test_mktree2(tmp_crumb):
 
     assert all([op.exists(npath) for npath in nupaths])
 
+    values_map['grimm'] = ['Jacob', 'Wilhelm']
+    pytest.raises(ValueError, tmp_crumb.mktree, list(ParameterGrid(values_map)))
+
+
+def test_mktree_tuples(tmp_crumb):
+
+    assert not op.exists(tmp_crumb._path)
+
+    values_dict = {'session_id': ['session_' + str(i) for i in range(2)],
+                   'subject_id': ['subj_' + str(i) for i in range(3)]}
+
+    values_map = list(ParameterGrid(values_dict))
+    values_tups = [tuple(d.items()) for d in values_map]
+
+    nupaths = tmp_crumb.mktree(values_tups)
+
+    assert all([op.exists(npath) for npath in nupaths])
+
+
+def test_mktree_raises(tmp_crumb):
+    assert not op.exists(tmp_crumb._path)
+
+    values_dict = {'session_id': ['session_' + str(i) for i in range(2)],
+                   'subject_id': ['subj_' + str(i) for i in range(3)],
+                   'modality':   ['anat', 'rest', 'pet'],
+                   'image':      ['mprage.nii', 'rest.nii', 'pet.nii'],
+                   }
+
+    del values_dict['session_id']
+    del values_dict['modality']
+    pytest.raises(KeyError, tmp_crumb.mktree, list(ParameterGrid(values_dict)))
+
+
+def test_arg_values(tmp_crumb):
+    # the most of _arg_values is being tested in test_ls
+    pytest.raises(ValueError, tmp_crumb._arg_values, 'session_id')
+
 
 def test_exists(tmp_crumb):
+    assert not op.exists(tmp_crumb._path)
+
     values_map = {'session_id': ['session_' + str(i) for i in range(2)],
                   'subject_id': ['subj_' + str(i) for i in range(3)]}
 

@@ -130,7 +130,7 @@ class Crumb(object):
         elif isinstance(crumb, string_types):
             return cls.from_path(crumb)
         else:
-            raise ValueError("Expected a Crumb or a str to copy, got {}.".format(type(crumb)))
+            raise TypeError("Expected a Crumb or a str to copy, got {}.".format(type(crumb)))
 
     def _set_argidx(self):
         """ Initialize the self._argidx dict. It holds arg_name -> index.
@@ -330,7 +330,7 @@ class Crumb(object):
             crumb_path = crumb_path._path
 
         if not isinstance(crumb_path, string_types):
-            raise ValueError("Expected `crumb_path` to be a {}, got {}.".format(string_types, type(crumb_path)))
+            raise TypeError("Expected `crumb_path` to be a {}, got {}.".format(string_types, type(crumb_path)))
 
         return crumb_path
 
@@ -355,7 +355,7 @@ class Crumb(object):
             else:
                 return Path(crumb_path)
         else:
-            raise ValueError("Expected a `val` to be a `str`, got {}.".format(type(crumb_path)))
+            raise TypeError("Expected a `val` to be a `str`, got {}.".format(type(crumb_path)))
 
     def _replace1(self, **kwargs):
         if not kwargs:
@@ -676,8 +676,8 @@ class Crumb(object):
         if values_map is None:
             return [self.touch()]
 
-        if not isinstance(values_map, (Sequence, Mapping)):
-            raise ValueError("Expected keys in `values_map` to be a Sequence, "
+        if not isinstance(values_map, (list, dict)):
+            raise TypeError("Expected keys in `values_map` to be a Sequence, "
                              "got {}.".format(type(values_map)))
 
         paths = []
@@ -687,7 +687,7 @@ class Crumb(object):
 
             if not set(aval.keys()).issubset(set(self._argidx.keys())):
                 raise ValueError("Expected keys in `values_map` item to be a subset of {}, "
-                                 "got {}.".format(self._argidx.keys(), values_map.keys()))
+                                 "got {}.".format(self._argidx.keys(), aval.keys()))
 
             rem_deps = self._remaining_deps(list(aval.keys()))
             if rem_deps:
