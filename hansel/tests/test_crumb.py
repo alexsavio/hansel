@@ -49,6 +49,10 @@ def tmp_crumb(request):
     return crumb2  # provide the fixture value
 
 
+def test__get_path(tmp_crumb):
+    pytest.raises(TypeError, tmp_crumb._get_path, {})
+    pytest.raises(TypeError, tmp_crumb._get_path, [])
+
 def test_path_property(crumb):
 
     assert crumb.path == crumb._path
