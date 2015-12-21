@@ -32,7 +32,7 @@ def crumb(request):
     return crumb  # provide the fixture value
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def tmp_crumb(request):
     from tempfile import TemporaryDirectory
 
@@ -42,8 +42,8 @@ def tmp_crumb(request):
 
     def fin():
         print("teardown tmp_crumb")
-        shutil.rmtree(base_dir.name)
-        #os.removedirs(base_dir.name)
+    #    shutil.rmtree(base_dir.name)
+    #    #os.removedirs(base_dir.name)
 
     request.addfinalizer(fin)
     return crumb2  # provide the fixture value
@@ -52,6 +52,9 @@ def tmp_crumb(request):
 def test__get_path(tmp_crumb):
     pytest.raises(TypeError, tmp_crumb._get_path, {})
     pytest.raises(TypeError, tmp_crumb._get_path, [])
+
+    assert tmp_crumb._get_path(tmp_crumb) == tmp_crumb._path
+
 
 def test_path_property(crumb):
 
@@ -94,9 +97,9 @@ def test_replace_and_setitem(crumb):
 
     assert crumb3.replace(**{})._path == crumb3._path
 
-    pytest.raises(KeyError, crumb2.replace, grimm='brothers')
-    pytest.raises(KeyError, crumb2._replace1, grimm='brothers')
-    pytest.raises(KeyError, crumb2._replace2, grimm='brothers')
+    pytest.raises(KeyError, crumb2.replace,     grimm='brothers')
+    pytest.raises(KeyError, crumb2._replace1,   grimm='brothers')
+    pytest.raises(KeyError, crumb2._replace2,   grimm='brothers')
     pytest.raises(KeyError, crumb2.__setitem__, 'grimm', 'brothers')
 
 
@@ -232,6 +235,7 @@ def test_is_valid_a_bit(crumb):
 
 def test_arg_name(crumb):
     pytest.raises(ValueError, crumb._arg_name, 'hansel')
+    assert not crumb._is_crumb_arg(Path(op.expanduser('~')))
 
 
 def test_has_crumbs(crumb):
@@ -260,31 +264,59 @@ def test_ls_and_getitem():
     base_dir = op.expanduser('~')
     crumb = Crumb(op.join(base_dir, '{user_folder}'))
 
-    lst = crumb.ls('user_folder', fullpath=False, duplicates=True, make_crumbs=False)
+    lst = crumb.ls('user_folder',
+                   fullpath     = False,
+                   duplicates   = True,
+                   make_crumbs  = False,
+                   check_exists = False)
     assert set(lst) == set(os.listdir(base_dir))
 
     crumb = Crumb(op.join(base_dir, '{user_folder}', '{files}'))
-    lst = crumb.ls('user_folder', fullpath=False, duplicates=True, make_crumbs=False)
+    lst = crumb.ls('user_folder',
+                   fullpath     = False,
+                   duplicates   = True,
+                   make_crumbs  = False,
+                   check_exists = False)
     assert set(lst) == set([d for d in os.listdir(base_dir) if op.isdir(op.join(base_dir, d))])
 
-    flst = crumb.ls('user_folder', fullpath=True, duplicates=True, make_crumbs=False)
+    flst = crumb.ls('user_folder',
+                    fullpath     = True,
+                    duplicates   = True,
+                    make_crumbs  = False,
+                    check_exists = False)
     assert all([isinstance(f, string_types) for f in flst])
     assert all([not op.exists(f) for f in flst])
 
-    flst = crumb.ls('files', fullpath=True, duplicates=True, make_crumbs=False)
+    flst = crumb.ls('files',
+                    fullpath     = True,
+                    duplicates   = True,
+                    make_crumbs  = False,
+                    check_exists = False)
     assert all([isinstance(f, string_types) for f in flst])
     assert all([op.exists(f) or op.islink(f) for f in flst])
 
-    flst = crumb.ls('files', fullpath=True, duplicates=True, make_crumbs=True)
+    flst = crumb.ls('files',
+                    fullpath     = True,
+                    duplicates   = True,
+                    make_crumbs  = True,
+                    check_exists = False)
     assert all([isinstance(f, Path) for f in flst])
     assert all([f.exists() or f.is_symlink() for f in flst])
 
-    flst1 = crumb.ls('files', fullpath=False, duplicates=False, make_crumbs=False)
+    flst1 = crumb.ls('files',
+                     fullpath     = False,
+                     duplicates   = False,
+                     make_crumbs  = False,
+                     check_exists = True)
     flst2 = crumb['files']
     assert all([isinstance(f, str) for f in flst1])
     assert flst1 == flst2
 
-    flst = crumb.ls('user_folder', fullpath=True, duplicates=True, make_crumbs=True)
+    flst = crumb.ls('user_folder',
+                     fullpath     = True,
+                     duplicates   = True,
+                     make_crumbs  = True,
+                     check_exists = False)
     assert all([isinstance(f, Crumb) for f in flst])
     # check if all crumbs exist
     assert all([c.exists() for c in flst])
@@ -341,7 +373,7 @@ def test_rem_deps(crumb):
 
 
 def test_touch(tmp_crumb):
-    assert not op.exists(tmp_crumb._path)
+    assert not op.exists(tmp_crumb.split()[0])
     path = tmp_crumb.touch()
     assert path == tmp_crumb.split()[0]
     assert op.exists(path)
@@ -364,7 +396,7 @@ def test__touch():
 
 def test_mktree1(tmp_crumb):
 
-    assert not op.exists(tmp_crumb._path)
+    assert not op.exists(tmp_crumb.split()[0])
 
     nupaths = tmp_crumb.mktree(None)
 
@@ -375,7 +407,7 @@ def test_mktree1(tmp_crumb):
 
 def test_mktree_dicts(tmp_crumb):
 
-    assert not op.exists(tmp_crumb._path)
+    assert not op.exists(tmp_crumb.split()[0])
 
     values_map = {'session_id': ['session_' + str(i) for i in range(2)],
                   'subject_id': ['subj_' + str(i) for i in range(3)]}
@@ -390,10 +422,12 @@ def test_mktree_dicts(tmp_crumb):
 
 def test_mktree_tuples(tmp_crumb):
 
-    assert not op.exists(tmp_crumb._path)
+    assert not op.exists(tmp_crumb.split()[0])
 
-    values_dict = {'session_id': ['session_' + str(i) for i in range(2)],
-                   'subject_id': ['subj_' + str(i) for i in range(3)]}
+    session_ids = ['session_' + str(i) for i in range(2)]
+    subj_ids = ['subj_' + str(i) for i in range(3)]
+    values_dict = {'session_id': session_ids,
+                   'subject_id': subj_ids}
 
     values_map = list(ParameterGrid(values_dict))
     values_tups = [tuple(d.items()) for d in values_map]
@@ -402,9 +436,23 @@ def test_mktree_tuples(tmp_crumb):
 
     assert all([op.exists(npath) for npath in nupaths])
 
+    ls_session_ids = tmp_crumb.ls('session_id',
+                                  fullpath     = False,
+                                  make_crumbs  = False,
+                                  duplicates   = False,
+                                  check_exists = False)
+    assert ls_session_ids == session_ids
+
+    ls_subj_ids = tmp_crumb.ls('subject_id',
+                               fullpath     = False,
+                               make_crumbs  = False,
+                               duplicates   = False,
+                               check_exists = False)
+    assert ls_subj_ids == subj_ids
+
 
 def test_mktree_raises(tmp_crumb):
-    assert not op.exists(tmp_crumb._path)
+    assert not op.exists(tmp_crumb.split()[0])
 
     values_dict = {'session_id': ['session_' + str(i) for i in range(2)],
                    'subject_id': ['subj_' + str(i) for i in range(3)],
@@ -417,18 +465,115 @@ def test_mktree_raises(tmp_crumb):
     pytest.raises(KeyError, tmp_crumb.mktree, list(ParameterGrid(values_dict)))
 
 
+def test_ls_with_check(tmp_crumb):
+    assert not op.exists(tmp_crumb._path)
+
+    values_dict = {'session_id': ['session_' + str(i) for i in range(2)],
+                   'subject_id': ['subj_' + str(i) for i in range(3)],
+                   'modality':   ['anat'],
+                   'image':      ['mprage1.nii', 'mprage2.nii', 'mprage3.nii'],
+                   }
+
+    paths = tmp_crumb.mktree(list(ParameterGrid(values_dict)))
+
+    assert op.exists(tmp_crumb.split()[0])
+
+    assert all([op.exists(p) for p in paths])
+
+    images = tmp_crumb.ls('image',
+                          fullpath     = True,
+                          make_crumbs  = True,
+                          duplicates   = False,
+                          check_exists = True)
+
+    modalities = tmp_crumb.ls('modality',
+                              fullpath     = True,
+                              make_crumbs  = True,
+                              duplicates   = False,
+                              check_exists = True)
+
+    assert all([img.exists() for img in images])
+    assert all([mod.exists() for mod in modalities])
+
+    images[0].rmdir()
+
+    images2 = tmp_crumb.ls('image',
+                           fullpath     = True,
+                           make_crumbs  = True,
+                           duplicates   = False,
+                           check_exists = True)
+
+    assert images != images2
+    assert len(images) == len(images2) + 1
+    assert not all([img.exists() for img in images])
+    assert     all([img.exists() for img in images2])
+
+    images[1].rmdir()
+    images[2].rmdir()
+
+    images2 = tmp_crumb.ls('image',
+                           fullpath     = True,
+                           make_crumbs  = True,
+                           duplicates   = False,
+                           check_exists = True)
+
+    assert not all([img.exists() for img in images])
+    assert     all([img.exists() for img in images2])
+
+    modalities2 = tmp_crumb.ls('modality',
+                               fullpath     = True,
+                               make_crumbs  = True,
+                               duplicates   = False,
+                               check_exists = True)
+
+    str_modalities2 = tmp_crumb.ls('modality',
+                                   fullpath     = True,
+                                   make_crumbs  = False,
+                                   duplicates   = False,
+                                   check_exists = True)
+
+    assert images != images2
+    assert len(images) == len(images2) + 3
+
+    assert modalities == modalities2
+    assert all([mod.exists() for mod in modalities])
+    assert all([mod.exists() for mod in modalities2])
+    assert all([mod._path == smod for mod, smod in zip(modalities2, str_modalities2)])
+
+    os.removedirs(modalities2[0].split()[0])
+
+    modalities3 = tmp_crumb.ls('modality',
+                               fullpath     = True,
+                               make_crumbs  = True,
+                               duplicates   = False,
+                               check_exists = True)
+
+    assert modalities2 != modalities3
+    assert not all([mod.exists() for mod in modalities2])
+    assert     all([mod.exists() for mod in modalities3])
+
+    pytest.raises(IOError, modalities2[0].__getitem__, 'image')
+
+    img_crumb = tmp_crumb.replace(image='mprage1.nii')
+    img_crumb['modality'] = 'anat'
+
+    assert img_crumb['session_id'].count('session_1') > img_crumb['session_id'].count('session_0')
+
+    img_crumb['session_id'] = 'session_0'
+
+    assert 'subj_0' not in img_crumb['subject_id']
+
+
 def test_arg_values(tmp_crumb):
     # the most of _arg_values is being tested in test_ls
     pytest.raises(ValueError, tmp_crumb._arg_values, 'session_id')
 
 
 def test_exists(tmp_crumb):
-    assert not op.exists(tmp_crumb._path)
+    assert not op.exists(tmp_crumb.split()[0])
 
     values_map = {'session_id': ['session_' + str(i) for i in range(2)],
                   'subject_id': ['subj_' + str(i) for i in range(3)]}
-
-    shutil.rmtree(tmp_crumb.split()[0])
 
     pytest.raises(IOError, tmp_crumb._arg_values, 'subject_id')
     assert not tmp_crumb.exists()
@@ -437,11 +582,23 @@ def test_exists(tmp_crumb):
 
     assert tmp_crumb.exists()
 
-    assert not Crumb._exists('/_/asdfasdfasdf?/{hansel}')
+    assert not Crumb._split_exists('/_/asdfasdfasdf?/{hansel}')
+
+
+def test_contains(tmp_crumb):
+    assert 'modality'   in tmp_crumb
+    assert 'subject_id' in tmp_crumb
+    assert 'image'      in tmp_crumb
+    assert 'raw'    not in tmp_crumb
+
+    tmp_crumb['image'] = 'image'
+
+    assert 'image' not in tmp_crumb
 
 
 def test_repr(crumb):
     assert crumb.__repr__() == 'Crumb("{base_dir}/raw/{subject_id}/{session_id}/{modality}/{image}")'
+
 
 if __name__ == '__main__':
     import os.path as op
@@ -449,21 +606,35 @@ if __name__ == '__main__':
     from hansel import Crumb
     from hansel.utils import ParameterGrid
 
+    # crumb = Crumb("{base_dir}/raw/{subject_id}/{session_id}/{modality}/{image}")
+    # base_dir = TemporaryDirectory()
+    # crumb2 = crumb.replace(base_dir=base_dir.name)
+    #
+    # values_map = {'session_id': ['session_' + str(i) for i in range(2)],
+    #               'subject_id': ['subj_' + str(i) for i in range(3)],
+    #               'modality':   ['anat', 'rest', 'pet'],
+    #               }
+    #
+    # nupaths = crumb2.mktree(list(ParameterGrid(values_map)))
+    #
+    # assert all([op.exists(npath) for npath in nupaths])
+    #
+    # anat_crumb = crumb2.replace(modality='anat')
+    #
+    # anat_crumb.ls('subject_id')
+
+
+    base_dir = op.expanduser('~/data/cobre')
     crumb = Crumb("{base_dir}/raw/{subject_id}/{session_id}/{modality}/{image}")
-    base_dir = TemporaryDirectory()
-    crumb2 = crumb.replace(base_dir=base_dir.name)
 
-    values_map = {'session_id': ['session_' + str(i) for i in range(2)],
-                  'subject_id': ['subj_' + str(i) for i in range(3)],
-                  'modality':   ['anat', 'rest', 'pet'],
-                  }
+    crumb['base_dir'] = base_dir
+    crumb['session_id'] = 'session_1'
 
-    nupaths = crumb2.mktree(list(ParameterGrid(values_map)))
+    rest_crumb = Crumb.copy(crumb)
+    anat_crumb = Crumb.copy(crumb)
 
-    assert all([op.exists(npath) for npath in nupaths])
+    rest_crumb['modality'] = 'rest_1'
+    rest_crumb['image'] = 'rest.nii.gz'
 
-    anat_crumb = crumb2.replace(modality='anat')
-
-    anat_crumb.ls('subject_id')
-
-
+    anat_crumb['modality'] = 'anat_1'
+    anat_crumb['image'] = 'mprage.nii.gz'

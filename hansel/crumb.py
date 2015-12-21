@@ -511,7 +511,7 @@ class Crumb(object):
         argidx = self._find_arg(arg_name)
         return OrderedDict([(arg, idx) for arg, idx in self._argidx.items() if idx <= argidx])
 
-    def ls(self, arg_name, fullpath=True, duplicates=True, make_crumbs=True):
+    def ls(self, arg_name, fullpath=True, duplicates=True, make_crumbs=True, check_exists=False):
         """
         Return the list of values for the argument crumb `arg_name`.
         This will also unfold any other argument crumb that appears before in the
@@ -536,6 +536,11 @@ class Crumb(object):
             for each element of the result. This will depende if the result item still has
             crumb arguments or not.
 
+        check_exists: bool
+            If True will return only str, Crumb or Path if it exists
+            in the file path, otherwise it may create file paths
+            that don't have to exist.
+
         Returns
         -------
         values: list of str or Crumb
@@ -554,20 +559,30 @@ class Crumb(object):
             raise NotImplementedError("Can't list paths that starts"
                                       " with an argument.")
 
-        #if make_crumbs and not fullpath:
-        #    raise ValueError("`make_crumbs` can only work if `fullpath` is also True.")
-        if not fullpath:
-            make_crumbs = False
+        if make_crumbs and not fullpath:
+            raise ValueError("`make_crumbs` can only work if `fullpath` is also True.")
 
         arg_deps = self._arg_deps(arg_name)
-        args_vals = None
+        values_map = None
         for arg in arg_deps:
-            args_vals = self._arg_values(arg, args_vals)
+            values_map = self._arg_values(arg, values_map)
 
+        if check_exists:
+            return self._ls_check_exists(arg_name, values_map=values_map,
+                                         fullpath=fullpath,
+                                         duplicates=duplicates,
+                                         make_crumbs=make_crumbs)
+        else:
+            return self._ls_no_check_exists(arg_name, values_map=values_map,
+                                            fullpath=fullpath,
+                                            duplicates=duplicates,
+                                            make_crumbs=make_crumbs)
+
+    def _ls_no_check_exists(self, arg_name, values_map, fullpath, duplicates, make_crumbs):
         if not fullpath:  # this means we can return the list of crumbs directly
-            values = [dict(val)[arg_name] for val in args_vals]
+            values = [dict(val)[arg_name] for val in values_map]
         else:  # this means we have to build the full paths
-            values = [self._replace(**dict(val)) for val in args_vals]
+            values = [self._replace(**dict(val)) for val in values_map]
 
         if not duplicates:
             values = remove_duplicates(values)
@@ -576,6 +591,24 @@ class Crumb(object):
             values = [self.from_path(val) for val in values]
 
         return values
+
+    def _ls_check_exists(self, arg_name, values_map, fullpath, duplicates, make_crumbs):
+
+        paths = [self._replace(**dict(val)) for val in values_map]
+        paths = [self.from_path(val) for val in paths]
+        paths = [val for val in paths if val.exists()]
+
+        if not fullpath:
+            argidx = self._argidx[arg_name]
+            values = [str(val).split(op.sep)[argidx] for val in paths]
+        else:
+            if make_crumbs:
+                values = paths
+            else:
+                values = [str(val) for val in paths]
+
+        return values
+
 
     def _remaining_deps(self, arg_names):
         """ Return the name of the arguments that are dependencies of `arg_names`.
@@ -601,7 +634,7 @@ class Crumb(object):
     def touch(self):
         """ Create a leaf directory and all intermediate ones
         using the non crumbed part of `crumb_path`.
-        If the target directory already exists, raise an OSError
+        If the target directory already exists, raise an IOError
         if exist_ok is False. Otherwise no exception is raised.
         Parameters
         ----------
@@ -621,7 +654,7 @@ class Crumb(object):
     def _touch(cls, crumb_path, exist_ok=True):
         """ Create a leaf directory and all intermediate ones
         using the non crumbed part of `crumb_path`.
-        If the target directory already exists, raise an OSError
+        If the target directory already exists, raise an IOError
         if exist_ok is False. Otherwise no exception is raised.
         Parameters
         ----------
@@ -709,11 +742,16 @@ class Crumb(object):
             return False
 
         last, _ = self._lastarg()
-        paths = self.ls(last, fullpath=True, make_crumbs=False, duplicates=True)
-        return all([self._exists(lp) for lp in paths])
+        paths = self.ls(last,
+                        fullpath     = True,
+                        make_crumbs  = False,
+                        duplicates   = True,
+                        check_exists = False)
+
+        return all([self._split_exists(lp) for lp in paths])
 
     @classmethod
-    def _exists(cls, crumb_path):
+    def _split_exists(cls, crumb_path):
         """ Return True if the part without crumb arguments of `crumb_path`
         is an existing path or a symlink, False otherwise.
         Returns
@@ -723,12 +761,16 @@ class Crumb(object):
         if cls.has_crumbs(crumb_path):
             rpath = cls._split(crumb_path)[0]
         else:
-            rpath = crumb_path
+            rpath = str(crumb_path)
 
         return op.exists(rpath) or op.islink(rpath)
 
     def __getitem__(self, item):
-        return self.ls(item, fullpath=False, duplicates=False, make_crumbs=False)
+        return self.ls(item,
+                       fullpath    = False,
+                       duplicates  = False,
+                       make_crumbs = False,
+                       check_exists= True)
 
     def __setitem__(self, key, value):
         if key not in self._argidx:
@@ -737,6 +779,9 @@ class Crumb(object):
 
         self._path = self._replace(**{key: value})
         self._update()
+
+    def __contains__(self, item):
+        return item in self._argidx
 
     def __repr__(self):
         return '{}("{}")'.format(__class__.__name__, self._path)
