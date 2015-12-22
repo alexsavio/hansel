@@ -750,6 +750,25 @@ class Crumb(object):
 
         return all([self._split_exists(lp) for lp in paths])
 
+    def has_files(self):
+        """ Return True if the current crumb path has any file in its
+        possible paths.
+        Returns
+        -------
+        has_files: bool
+        """
+        if not op.exists(self.split()[0]):
+            return False
+
+        last, _ = self._lastarg()
+        paths = self.ls(last,
+                        fullpath     = True,
+                        make_crumbs  = True,
+                        duplicates   = True,
+                        check_exists = True)
+
+        return any([op.isfile(str(lp)) for lp in paths])
+
     @classmethod
     def _split_exists(cls, crumb_path):
         """ Return True if the part without crumb arguments of `crumb_path`

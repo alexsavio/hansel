@@ -596,6 +596,32 @@ def test_contains(tmp_crumb):
     assert 'image' not in tmp_crumb
 
 
+def test_has_files(tmp_crumb):
+    assert not op.exists(tmp_crumb._path)
+
+    assert not tmp_crumb.has_files()
+
+    values_dict = {'session_id': ['session_' + str(i) for i in range(2)],
+                   'subject_id': ['subj_' + str(i) for i in range(3)],
+                   'modality':   ['anat'],
+                   'image':      ['mprage1.nii', 'mprage2.nii', 'mprage3.nii'],
+                   }
+
+    paths = tmp_crumb.mktree(list(ParameterGrid(values_dict)))
+
+    assert op.exists(tmp_crumb.split()[0])
+
+    assert not tmp_crumb.has_files()
+
+    pa = Path(paths[0])
+    pa.rmdir()
+    pa.touch()
+
+    assert pa.exists()
+    assert pa.is_file()
+    assert tmp_crumb.has_files()
+
+
 def test_repr(crumb):
     assert crumb.__repr__() == 'Crumb("{base_dir}/raw/{subject_id}/{session_id}/{modality}/{image}")'
 
