@@ -13,7 +13,7 @@ from   pathlib  import Path
 from   tempfile import TemporaryDirectory
 
 from   six      import string_types
-from   hansel   import Crumb
+from   hansel   import Crumb, mktree
 from   hansel.utils import ParameterGrid
 
 
@@ -394,75 +394,36 @@ def test__touch():
     #pytest.raises(IOError, Crumb._touch, path + '\\', exist_ok=False)
 
 
-def test_mktree1(tmp_crumb):
-
-    assert not op.exists(tmp_crumb.split()[0])
-
-    nupaths = tmp_crumb.mktree(None)
-
-    assert all([op.exists(npath) for npath in nupaths])
-
-    pytest.raises(TypeError, tmp_crumb.mktree, 'hansel')
+def test_arg_values(tmp_crumb):
+    # the most of _arg_values is being tested in test_ls
+    pytest.raises(ValueError, tmp_crumb._arg_values, 'session_id')
 
 
-def test_mktree_dicts(tmp_crumb):
-
+def test_exists(tmp_crumb):
     assert not op.exists(tmp_crumb.split()[0])
 
     values_map = {'session_id': ['session_' + str(i) for i in range(2)],
                   'subject_id': ['subj_' + str(i) for i in range(3)]}
 
-    nupaths = tmp_crumb.mktree(list(ParameterGrid(values_map)))
+    pytest.raises(IOError, tmp_crumb._arg_values, 'subject_id')
+    assert not tmp_crumb.exists()
 
-    assert all([op.exists(npath) for npath in nupaths])
+    _ = mktree(tmp_crumb, list(ParameterGrid(values_map)))
 
-    values_map['grimm'] = ['Jacob', 'Wilhelm']
-    pytest.raises(ValueError, tmp_crumb.mktree, list(ParameterGrid(values_map)))
+    assert tmp_crumb.exists()
 
-
-def test_mktree_tuples(tmp_crumb):
-
-    assert not op.exists(tmp_crumb.split()[0])
-
-    session_ids = ['session_' + str(i) for i in range(2)]
-    subj_ids = ['subj_' + str(i) for i in range(3)]
-    values_dict = {'session_id': session_ids,
-                   'subject_id': subj_ids}
-
-    values_map = list(ParameterGrid(values_dict))
-    values_tups = [tuple(d.items()) for d in values_map]
-
-    nupaths = tmp_crumb.mktree(values_tups)
-
-    assert all([op.exists(npath) for npath in nupaths])
-
-    ls_session_ids = tmp_crumb.ls('session_id',
-                                  fullpath     = False,
-                                  make_crumbs  = False,
-                                  duplicates   = False,
-                                  check_exists = False)
-    assert ls_session_ids == session_ids
-
-    ls_subj_ids = tmp_crumb.ls('subject_id',
-                               fullpath     = False,
-                               make_crumbs  = False,
-                               duplicates   = False,
-                               check_exists = False)
-    assert ls_subj_ids == subj_ids
+    assert not Crumb._split_exists('/_/asdfasdfasdf?/{hansel}')
 
 
-def test_mktree_raises(tmp_crumb):
-    assert not op.exists(tmp_crumb.split()[0])
+def test_contains(tmp_crumb):
+    assert 'modality'   in tmp_crumb
+    assert 'subject_id' in tmp_crumb
+    assert 'image'      in tmp_crumb
+    assert 'raw'    not in tmp_crumb
 
-    values_dict = {'session_id': ['session_' + str(i) for i in range(2)],
-                   'subject_id': ['subj_' + str(i) for i in range(3)],
-                   'modality':   ['anat', 'rest', 'pet'],
-                   'image':      ['mprage.nii', 'rest.nii', 'pet.nii'],
-                   }
+    tmp_crumb['image'] = 'image'
 
-    del values_dict['session_id']
-    del values_dict['modality']
-    pytest.raises(KeyError, tmp_crumb.mktree, list(ParameterGrid(values_dict)))
+    assert 'image' not in tmp_crumb
 
 
 def test_ls_with_check(tmp_crumb):
@@ -474,7 +435,7 @@ def test_ls_with_check(tmp_crumb):
                    'image':      ['mprage1.nii', 'mprage2.nii', 'mprage3.nii'],
                    }
 
-    paths = tmp_crumb.mktree(list(ParameterGrid(values_dict)))
+    paths = mktree(tmp_crumb, list(ParameterGrid(values_dict)))
 
     assert op.exists(tmp_crumb.split()[0])
 
@@ -564,38 +525,6 @@ def test_ls_with_check(tmp_crumb):
     assert 'subj_0' not in img_crumb['subject_id']
 
 
-def test_arg_values(tmp_crumb):
-    # the most of _arg_values is being tested in test_ls
-    pytest.raises(ValueError, tmp_crumb._arg_values, 'session_id')
-
-
-def test_exists(tmp_crumb):
-    assert not op.exists(tmp_crumb.split()[0])
-
-    values_map = {'session_id': ['session_' + str(i) for i in range(2)],
-                  'subject_id': ['subj_' + str(i) for i in range(3)]}
-
-    pytest.raises(IOError, tmp_crumb._arg_values, 'subject_id')
-    assert not tmp_crumb.exists()
-
-    _ = tmp_crumb.mktree(list(ParameterGrid(values_map)))
-
-    assert tmp_crumb.exists()
-
-    assert not Crumb._split_exists('/_/asdfasdfasdf?/{hansel}')
-
-
-def test_contains(tmp_crumb):
-    assert 'modality'   in tmp_crumb
-    assert 'subject_id' in tmp_crumb
-    assert 'image'      in tmp_crumb
-    assert 'raw'    not in tmp_crumb
-
-    tmp_crumb['image'] = 'image'
-
-    assert 'image' not in tmp_crumb
-
-
 def test_has_files(tmp_crumb):
     assert not op.exists(tmp_crumb._path)
 
@@ -607,7 +536,7 @@ def test_has_files(tmp_crumb):
                    'image':      ['mprage1.nii', 'mprage2.nii', 'mprage3.nii'],
                    }
 
-    paths = tmp_crumb.mktree(list(ParameterGrid(values_dict)))
+    paths = mktree(tmp_crumb, list(ParameterGrid(values_dict)))
 
     assert op.exists(tmp_crumb.split()[0])
 
