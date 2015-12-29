@@ -45,7 +45,7 @@ Imagine this folder tree:
     from hansel import Crumb
 
     # create the crumb
-    crumb = Crumb("{base_dir}/data/raw/{subject_id}/{session_id}/{image_type}")
+    crumb = Crumb("{base_dir}/data/raw/{subject_id}/{session_id}/{image_type}/{image}")
 
     # set the base_dir path
     crumb = crumb.replace('base_dir', '/home/hansel')
@@ -57,7 +57,7 @@ Imagine this folder tree:
 
     assert subj_ids == ['0040000', '0040001', '0040002', '0040003', '0040004', ....]
 
-    # get the paths to the subject folders, the output can be strings or crumbs, you select
+    # get the paths to the subject folders, the output can be strings or crumbs, you choose with the make_crumbs boolean argument
     subj_paths = crumb.ls('subject_id', make_crumbs=True)
 
     # set the image_type
