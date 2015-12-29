@@ -4,7 +4,7 @@ hansel
 Flexible parametric file paths to make queries, build folder trees and smart
 folder structure access.
 
-|Build Status| |Coverage Status|
+|PyPI| |Build Status| |Coverage Status|
 
 Usage
 =====
@@ -236,6 +236,9 @@ Otherwise you can run the tests executing:
 or
 
     py.test
+
+.. |PyPI| image:: https://img.shields.io/pypi/v/hansel.svg
+        :target: https://pypi.python.org/pypi/hansel
 
 .. |Build Status| image:: https://travis-ci.org/alexsavio/hansel.svg?branch=master
    :target: https://travis-ci.org/alexsavio/hansel
