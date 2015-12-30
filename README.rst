@@ -180,8 +180,8 @@ install its dependencies with:
 Install
 =======
 
-I am only testing this tool on Python 3.4 and 3.5. Maybe it works on Python 2.7 as well as for the parts related with
-strings (very few) I am using `six`.
+I am only testing this tool on Python 3.4 and 3.5.
+Maybe it works on Python 2.7 too, having `six` and `pathlib2` installed.
 
 This package uses setuptools. You can install it running:
 

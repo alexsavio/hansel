@@ -513,6 +513,12 @@ def test_ls_with_check(tmp_crumb):
     assert not all([mod.exists() for mod in modalities2])
     assert     all([mod.exists() for mod in modalities3])
 
+    assert tmp_crumb.unfold() == tmp_crumb.ls('image',
+                                              fullpath     = True,
+                                              make_crumbs  = True,
+                                              duplicates   = False,
+                                              check_exists = True)
+
     pytest.raises(IOError, modalities2[0].__getitem__, 'image')
 
     img_crumb = tmp_crumb.replace(image='mprage1.nii')
@@ -523,7 +529,6 @@ def test_ls_with_check(tmp_crumb):
     img_crumb['session_id'] = 'session_0'
 
     assert 'subj_0' not in img_crumb['subject_id']
-
 
 def test_has_files(tmp_crumb):
     assert not op.exists(tmp_crumb._path)

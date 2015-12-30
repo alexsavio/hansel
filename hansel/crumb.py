@@ -13,7 +13,7 @@ from   pathlib     import Path
 
 from   six import string_types
 
-from   hansel.utils import remove_duplicates
+from   hansel.utils import remove_duplicates, list_children
 
 
 class Crumb(object):
@@ -430,24 +430,6 @@ class Crumb(object):
                              " the previous arguments are not filled"
                              " in `paths`.".format(arg_name))
 
-        def list_children(path, just_dirs=False):
-            if not op.exists(path):
-                raise IOError("Expected an existing path, but could not"
-                              " find {}.".format(path))
-
-            if op.isfile(path):
-                if just_dirs:
-                    vals = []
-                else:
-                    vals = [path]
-            else:
-                if just_dirs: # this means we have to list only folders
-                    vals = [d for d in os.listdir(path) if op.isdir(op.join(path, d))]
-                else:   # this means we have to list files
-                    vals = os.listdir(path)
-
-            return vals
-
         aidx = self._find_arg(arg_name)
 
         # check if the path is absolute, do it absolute
@@ -609,7 +591,6 @@ class Crumb(object):
 
         return values
 
-
     def _remaining_deps(self, arg_names):
         """ Return the name of the arguments that are dependencies of `arg_names`.
         Parameters
@@ -720,6 +701,18 @@ class Crumb(object):
                         check_exists = True)
 
         return any([op.isfile(str(lp)) for lp in paths])
+
+    def unfold(self):
+        """ Return a list of all the existing paths until the last crumb argument.
+        Returns
+        -------
+        paths: list of pathlib.Path
+        """
+        return self.ls(self._lastarg()[0],
+                       fullpath    = True,
+                       duplicates  = False,
+                       make_crumbs = True,
+                       check_exists= True)
 
     @classmethod
     def _split_exists(cls, crumb_path):

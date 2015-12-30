@@ -4,6 +4,9 @@
 """
 Utilities to make crumbs
 """
+import os
+import os.path as op
+
 from collections import Mapping
 from functools import partial, reduce
 from itertools import product
@@ -23,6 +26,38 @@ def remove_duplicates(lst):
         Filtered and sorted `lst` with non duplicated elements of `lst`.
     """
     return sorted(list(set(lst)))
+
+
+def list_children(path, just_dirs=False):
+    """ Return the immediate elements (files and folders) in `path`.
+
+    Parameters
+    ----------
+    path: str
+
+    just_dirs: bool
+        If True will return only folders.
+
+    Returns
+    -------
+    paths: list of str
+    """
+    if not op.exists(path):
+        raise IOError("Expected an existing path, but could not"
+                      " find {}.".format(path))
+
+    if op.isfile(path):
+        if just_dirs:
+            vals = []
+        else:
+            vals = [path]
+    else:
+        if just_dirs: # this means we have to list only folders
+            vals = [d for d in os.listdir(path) if op.isdir(op.join(path, d))]
+        else:   # this means we have to list files
+            vals = os.listdir(path)
+
+    return vals
 
 
 class ParameterGrid(object):
