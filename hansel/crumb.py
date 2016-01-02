@@ -568,60 +568,16 @@ class Crumb(object):
 
         if not fullpath and not make_crumbs:
             paths = [dict(val)[arg_name] for val in values_map]
-            if rm_dups:
-                paths = remove_duplicates(paths)
-
         else:
             paths = self._build_paths(values_map)
-            if rm_dups:
-                paths = remove_duplicates(paths)
 
-            if fullpath and make_crumbs:
-                paths = [self.from_path(path) for path in paths]
+        if rm_dups:
+            paths = remove_duplicates(paths)
+
+        if fullpath and make_crumbs:
+            paths = [self.from_path(path) for path in paths]
 
         return paths
-
-        # if check_exists:
-        #     return self._ls_check_exists(arg_name, values_map=values_map,
-        #                                  fullpath=fullpath,
-        #                                  rm_dups=rm_dups,
-        #                                  make_crumbs=make_crumbs)
-        # else:
-        #     return self._ls_no_check_exists(arg_name, values_map=values_map,
-        #                                     fullpath=fullpath,
-        #                                     rm_dups=rm_dups,
-        #                                     make_crumbs=make_crumbs)
-    #
-    # def _ls_no_check_exists(self, arg_name, values_map, fullpath, rm_dups, make_crumbs):
-    #     if not fullpath:  # this means we can return the list of crumbs directly
-    #         values = [dict(val)[arg_name] for val in values_map]
-    #     else:  # this means we have to build the full paths
-    #         values = [self._replace(**dict(val)) for val in values_map]
-    #
-    #     if not rm_dups:
-    #         values = remove_duplicates(values)
-    #
-    #     if fullpath and make_crumbs:
-    #         values = [self.from_path(val) for val in values]
-    #
-    #     return values
-    #
-    # def _ls_check_exists(self, arg_name, values_map, fullpath, rm_dups, make_crumbs):
-    #
-    #     paths = [self._replace(**dict(val)) for val in values_map]
-    #     paths = [self.from_path(val) for val in paths]
-    #     paths = [val for val in paths if val.exists()]
-    #
-    #     if not fullpath:
-    #         argidx = self._argidx[arg_name]
-    #         values = [str(val).split(op.sep)[argidx] for val in paths]
-    #     else:
-    #         if make_crumbs:
-    #             values = paths
-    #         else:
-    #             values = [str(val) for val in paths]
-    #
-    #     return values
 
     def _remaining_deps(self, arg_names):
         """ Return the name of the arguments that are dependencies of `arg_names`.
