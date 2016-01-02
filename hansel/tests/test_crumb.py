@@ -266,7 +266,7 @@ def test_ls_and_getitem():
 
     lst = crumb.ls('user_folder',
                    fullpath     = False,
-                   duplicates   = True,
+                   rm_dups      = False,
                    make_crumbs  = False,
                    check_exists = False)
     assert set(lst) == set(os.listdir(base_dir))
@@ -274,14 +274,14 @@ def test_ls_and_getitem():
     crumb = Crumb(op.join(base_dir, '{user_folder}', '{files}'))
     lst = crumb.ls('user_folder',
                    fullpath     = False,
-                   duplicates   = True,
+                   rm_dups      = False,
                    make_crumbs  = False,
                    check_exists = False)
     assert set(lst) == set([d for d in os.listdir(base_dir) if op.isdir(op.join(base_dir, d))])
 
     flst = crumb.ls('user_folder',
                     fullpath     = True,
-                    duplicates   = True,
+                    rm_dups      = False,
                     make_crumbs  = False,
                     check_exists = False)
     assert all([isinstance(f, string_types) for f in flst])
@@ -289,7 +289,7 @@ def test_ls_and_getitem():
 
     flst = crumb.ls('files',
                     fullpath     = True,
-                    duplicates   = True,
+                    rm_dups      = False,
                     make_crumbs  = False,
                     check_exists = False)
     assert all([isinstance(f, string_types) for f in flst])
@@ -297,7 +297,7 @@ def test_ls_and_getitem():
 
     flst = crumb.ls('files',
                     fullpath     = True,
-                    duplicates   = True,
+                    rm_dups      = False,
                     make_crumbs  = True,
                     check_exists = False)
     assert all([isinstance(f, Path) for f in flst])
@@ -305,7 +305,7 @@ def test_ls_and_getitem():
 
     flst1 = crumb.ls('files',
                      fullpath     = False,
-                     duplicates   = False,
+                     rm_dups      = False,
                      make_crumbs  = False,
                      check_exists = True)
     flst2 = crumb['files']
@@ -314,14 +314,14 @@ def test_ls_and_getitem():
 
     flst = crumb.ls('user_folder',
                      fullpath     = True,
-                     duplicates   = True,
+                     rm_dups      = False,
                      make_crumbs  = True,
                      check_exists = False)
     assert all([isinstance(f, Crumb) for f in flst])
     # check if all crumbs exist
     assert all([c.exists() for c in flst])
 
-    #TODO: missing test ls with duplicates=False
+    #TODO: missing test ls with rm_dups=False
 
 
 def test_ls3():
@@ -443,14 +443,14 @@ def test_ls_with_check(tmp_crumb):
 
     images = tmp_crumb.ls('image',
                           fullpath     = True,
+                          rm_dups      = True,
                           make_crumbs  = True,
-                          duplicates   = False,
                           check_exists = True)
 
     modalities = tmp_crumb.ls('modality',
                               fullpath     = True,
+                              rm_dups      = True,
                               make_crumbs  = True,
-                              duplicates   = False,
                               check_exists = True)
 
     assert all([img.exists() for img in images])
@@ -460,8 +460,8 @@ def test_ls_with_check(tmp_crumb):
 
     images2 = tmp_crumb.ls('image',
                            fullpath     = True,
+                           rm_dups      = True,
                            make_crumbs  = True,
-                           duplicates   = False,
                            check_exists = True)
 
     assert images != images2
@@ -474,8 +474,8 @@ def test_ls_with_check(tmp_crumb):
 
     images2 = tmp_crumb.ls('image',
                            fullpath     = True,
+                           rm_dups      = True,
                            make_crumbs  = True,
-                           duplicates   = False,
                            check_exists = True)
 
     assert not all([img.exists() for img in images])
@@ -483,14 +483,14 @@ def test_ls_with_check(tmp_crumb):
 
     modalities2 = tmp_crumb.ls('modality',
                                fullpath     = True,
+                               rm_dups      = True,
                                make_crumbs  = True,
-                               duplicates   = False,
                                check_exists = True)
 
     str_modalities2 = tmp_crumb.ls('modality',
                                    fullpath     = True,
+                                   rm_dups      = True,
                                    make_crumbs  = False,
-                                   duplicates   = False,
                                    check_exists = True)
 
     assert images != images2
@@ -499,14 +499,17 @@ def test_ls_with_check(tmp_crumb):
     assert modalities == modalities2
     assert all([mod.exists() for mod in modalities])
     assert all([mod.exists() for mod in modalities2])
+
+    assert all([isinstance(smod, str)   for smod in str_modalities2])
+    assert all([isinstance(mod,  Crumb) for  mod in modalities2])
     assert all([mod._path == smod for mod, smod in zip(modalities2, str_modalities2)])
 
     os.removedirs(modalities2[0].split()[0])
 
     modalities3 = tmp_crumb.ls('modality',
                                fullpath     = True,
+                               rm_dups      = True,
                                make_crumbs  = True,
-                               duplicates   = False,
                                check_exists = True)
 
     assert modalities2 != modalities3
@@ -515,8 +518,8 @@ def test_ls_with_check(tmp_crumb):
 
     assert tmp_crumb.unfold() == tmp_crumb.ls('image',
                                               fullpath     = True,
+                                              rm_dups      = False,
                                               make_crumbs  = True,
-                                              duplicates   = False,
                                               check_exists = True)
 
     pytest.raises(IOError, modalities2[0].__getitem__, 'image')
@@ -558,6 +561,55 @@ def test_has_files(tmp_crumb):
 
 def test_repr(crumb):
     assert crumb.__repr__() == 'Crumb("{base_dir}/raw/{subject_id}/{session_id}/{modality}/{image}")'
+
+
+def test_joinpath(tmp_crumb):
+    nupath = op.join('hansel', 'gretel')
+    nucrumb = tmp_crumb.joinpath(nupath)
+    assert op.join(tmp_crumb._path, nupath) == nucrumb._path
+    assert 'hansel' not in nucrumb
+
+    nupath = op.join('{hansel}', '{gretel}')
+    nucrumb = tmp_crumb.joinpath(nupath)
+    assert op.join(tmp_crumb._path, nupath) == nucrumb._path
+    assert 'hansel' in nucrumb
+
+
+def test_lt(tmp_crumb):
+    tst1 = tmp_crumb < tmp_crumb
+    tst2 = tmp_crumb._path < tmp_crumb._path
+    assert(not tst1)
+    assert tst1 == tst2
+
+    tmp_crumb2 = Crumb.copy(tmp_crumb)
+    tst1 = tmp_crumb2 < tmp_crumb2
+    tst2 = tmp_crumb2._path < tmp_crumb2._path
+    assert(not tst1)
+    assert tst1 == tst2
+
+    tmp_crumb2 = tmp_crumb2.joinpath('hansel')
+    tst1 = tmp_crumb2 < tmp_crumb2
+    tst2 = tmp_crumb2._path < tmp_crumb2._path
+    assert(not tst1)
+    assert tst1 == tst2
+
+    tmp_crumb._path = op.sep + 'aaalex' + tmp_crumb2._path
+    tst1 = tmp_crumb < tmp_crumb2
+    tst2 = tmp_crumb._path < tmp_crumb2._path
+    assert(tst1)
+    assert tst1 == tst2
+
+    tmp_crumb._path = op.sep + 'zealous' + tmp_crumb2._path
+    tst1 = tmp_crumb < tmp_crumb2
+    tst2 = tmp_crumb._path < tmp_crumb2._path
+    assert(not tst1)
+    assert tst1 == tst2
+
+    assert     tmp_crumb >= tmp_crumb2
+    assert not tmp_crumb <= tmp_crumb2
+
+    assert     tmp_crumb > tmp_crumb2
+    assert not tmp_crumb < tmp_crumb2
 
 
 if __name__ == '__main__':

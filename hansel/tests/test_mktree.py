@@ -56,15 +56,15 @@ def test_mktree_tuples(tmp_crumb):
 
     ls_session_ids = tmp_crumb.ls('session_id',
                                   fullpath     = False,
+                                  rm_dups      = True,
                                   make_crumbs  = False,
-                                  duplicates   = False,
                                   check_exists = False)
     assert ls_session_ids == session_ids
 
     ls_subj_ids = tmp_crumb.ls('subject_id',
                                fullpath     = False,
+                               rm_dups      = True,
                                make_crumbs  = False,
-                               duplicates   = False,
                                check_exists = False)
     assert ls_subj_ids == subj_ids
 

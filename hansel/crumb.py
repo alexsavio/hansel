@@ -96,24 +96,6 @@ class Crumb(object):
         """
         return '{' + arg_name + '}'
 
-    def __eq__(self, other):
-        """ Return True if `self` and `other` are equal, False otherwise.
-        Parameters
-        ----------
-        other: Crumb
-
-        Returns
-        -------
-        is_equal: bool
-        """
-        if self._path != other._path:
-            return False
-
-        if self._argidx != other._argidx:
-            return False
-
-        return True
-
     @classmethod
     def copy(cls, crumb):
         """ Return a deep copy of the given `crumb`.
@@ -493,7 +475,45 @@ class Crumb(object):
         argidx = self._find_arg(arg_name)
         return OrderedDict([(arg, idx) for arg, idx in self._argidx.items() if idx <= argidx])
 
-    def ls(self, arg_name, fullpath=True, duplicates=True, make_crumbs=True, check_exists=False):
+    def values_map(self, arg_name, check_exists=False):
+        """
+
+        Parameters
+        ----------
+        arg_name: str
+
+        check_exists: bool
+
+        Returns
+        -------
+        values_map
+        """
+        arg_deps = self._arg_deps(arg_name)
+        values_map = None
+        for arg in arg_deps:
+            values_map = self._arg_values(arg, values_map)
+
+        if check_exists:
+            paths = [self.from_path(path) for path in self._build_paths(values_map)]
+            values_map_checked = [args for args, path in zip(values_map, paths) if path.exists()]
+        else:
+            values_map_checked = values_map
+
+        return values_map_checked
+
+    def _build_paths(self, values_map):
+        """ Return a list of paths from each tuple of args from `values_map`
+        Parameters
+        ----------
+        values_map: list of sequences of 2-tuple
+
+        Returns
+        -------
+        paths: list of str
+        """
+        return [self._replace(**dict(val)) for val in values_map]
+
+    def ls(self, arg_name, fullpath=True, rm_dups=False, make_crumbs=True, check_exists=False):
         """
         Return the list of values for the argument crumb `arg_name`.
         This will also unfold any other argument crumb that appears before in the
@@ -509,8 +529,8 @@ class Crumb(object):
             If False will only return the values for the argument with name
             `arg_name`.
 
-        duplicates: bool
-            If False will remove and sort the duplicate values from the result.
+        rm_dups: bool
+            If True will remove and sort the duplicate values from the result.
             Otherwise it will leave it as it is.
 
         make_crumbs: bool
@@ -530,7 +550,7 @@ class Crumb(object):
         Examples
         --------
         >>> cr = Crumb(op.join(op.expanduser('~'), '{user_folder}'))
-        >>> user_folders = cr.ls('user_folder', fullpath=True, duplicates=True, make_crumbs=True)
+        >>> user_folders = cr.ls('user_folder', fullpath=True, rm_dups=True, make_crumbs=True)
         """
         if arg_name not in self._argidx:
             raise ValueError("Expected `arg_name` to be one of ({}),"
@@ -544,52 +564,64 @@ class Crumb(object):
         if make_crumbs and not fullpath:
             raise ValueError("`make_crumbs` can only work if `fullpath` is also True.")
 
-        arg_deps = self._arg_deps(arg_name)
-        values_map = None
-        for arg in arg_deps:
-            values_map = self._arg_values(arg, values_map)
+        values_map = self.values_map(arg_name, check_exists=check_exists)
 
-        if check_exists:
-            return self._ls_check_exists(arg_name, values_map=values_map,
-                                         fullpath=fullpath,
-                                         duplicates=duplicates,
-                                         make_crumbs=make_crumbs)
+        if not fullpath and not make_crumbs:
+            paths = [dict(val)[arg_name] for val in values_map]
+            if rm_dups:
+                paths = remove_duplicates(paths)
+
         else:
-            return self._ls_no_check_exists(arg_name, values_map=values_map,
-                                            fullpath=fullpath,
-                                            duplicates=duplicates,
-                                            make_crumbs=make_crumbs)
+            paths = self._build_paths(values_map)
+            if rm_dups:
+                paths = remove_duplicates(paths)
 
-    def _ls_no_check_exists(self, arg_name, values_map, fullpath, duplicates, make_crumbs):
-        if not fullpath:  # this means we can return the list of crumbs directly
-            values = [dict(val)[arg_name] for val in values_map]
-        else:  # this means we have to build the full paths
-            values = [self._replace(**dict(val)) for val in values_map]
+            if fullpath and make_crumbs:
+                paths = [self.from_path(path) for path in paths]
 
-        if not duplicates:
-            values = remove_duplicates(values)
+        return paths
 
-        if fullpath and make_crumbs:
-            values = [self.from_path(val) for val in values]
-
-        return values
-
-    def _ls_check_exists(self, arg_name, values_map, fullpath, duplicates, make_crumbs):
-
-        paths = [self._replace(**dict(val)) for val in values_map]
-        paths = [self.from_path(val) for val in paths]
-        paths = [val for val in paths if val.exists()]
-
-        if not fullpath:
-            argidx = self._argidx[arg_name]
-            values = [str(val).split(op.sep)[argidx] for val in paths]
-        else:
-            if make_crumbs:
-                values = paths
-            else:
-                values = [str(val) for val in paths]
-
-        return values
+        # if check_exists:
+        #     return self._ls_check_exists(arg_name, values_map=values_map,
+        #                                  fullpath=fullpath,
+        #                                  rm_dups=rm_dups,
+        #                                  make_crumbs=make_crumbs)
+        # else:
+        #     return self._ls_no_check_exists(arg_name, values_map=values_map,
+        #                                     fullpath=fullpath,
+        #                                     rm_dups=rm_dups,
+        #                                     make_crumbs=make_crumbs)
+    #
+    # def _ls_no_check_exists(self, arg_name, values_map, fullpath, rm_dups, make_crumbs):
+    #     if not fullpath:  # this means we can return the list of crumbs directly
+    #         values = [dict(val)[arg_name] for val in values_map]
+    #     else:  # this means we have to build the full paths
+    #         values = [self._replace(**dict(val)) for val in values_map]
+    #
+    #     if not rm_dups:
+    #         values = remove_duplicates(values)
+    #
+    #     if fullpath and make_crumbs:
+    #         values = [self.from_path(val) for val in values]
+    #
+    #     return values
+    #
+    # def _ls_check_exists(self, arg_name, values_map, fullpath, rm_dups, make_crumbs):
+    #
+    #     paths = [self._replace(**dict(val)) for val in values_map]
+    #     paths = [self.from_path(val) for val in paths]
+    #     paths = [val for val in paths if val.exists()]
+    #
+    #     if not fullpath:
+    #         argidx = self._argidx[arg_name]
+    #         values = [str(val).split(op.sep)[argidx] for val in paths]
+    #     else:
+    #         if make_crumbs:
+    #             values = paths
+    #         else:
+    #             values = [str(val) for val in paths]
+    #
+    #     return values
 
     def _remaining_deps(self, arg_names):
         """ Return the name of the arguments that are dependencies of `arg_names`.
@@ -630,6 +662,19 @@ class Crumb(object):
             The new path created.
         """
         return self._touch(self._path)
+
+    def joinpath(self, suffix):
+        """ Return a copy of the current crumb with the `suffix` path appended.
+        If suffix has crumb arguments, the whole crumb will be updated.
+        Parameters
+        ----------
+        suffix: str
+
+        Returns
+        -------
+        cr: Crumb
+        """
+        return Crumb(op.join(self._path, suffix))
 
     @classmethod
     def _touch(cls, crumb_path, exist_ok=True):
@@ -678,7 +723,7 @@ class Crumb(object):
         paths = self.ls(last,
                         fullpath     = True,
                         make_crumbs  = False,
-                        duplicates   = True,
+                        rm_dups   = True,
                         check_exists = False)
 
         return all([self._split_exists(lp) for lp in paths])
@@ -697,7 +742,7 @@ class Crumb(object):
         paths = self.ls(last,
                         fullpath     = True,
                         make_crumbs  = True,
-                        duplicates   = True,
+                        rm_dups      = False,
                         check_exists = True)
 
         return any([op.isfile(str(lp)) for lp in paths])
@@ -710,7 +755,7 @@ class Crumb(object):
         """
         return self.ls(self._lastarg()[0],
                        fullpath    = True,
-                       duplicates  = False,
+                       rm_dups     = True,
                        make_crumbs = True,
                        check_exists= True)
 
@@ -729,10 +774,20 @@ class Crumb(object):
 
         return op.exists(rpath) or op.islink(rpath)
 
-    def __getitem__(self, item):
-        return self.ls(item,
+    def __getitem__(self, arg_name):
+        """ Return the existing values of the crumb argument `arg_name`
+        without removing duplicates.
+        Parameters
+        ----------
+        arg_name: str
+
+        Returns
+        -------
+        values: list of str
+        """
+        return self.ls(arg_name,
                        fullpath    = False,
-                       duplicates  = False,
+                       rm_dups     = False,
                        make_crumbs = False,
                        check_exists= True)
 
@@ -744,6 +799,21 @@ class Crumb(object):
         self._path = self._replace(**{key: value})
         self._update()
 
+    def __ge__(self, other):
+        return self._path >= str(other)
+
+    def __le__(self, other):
+        return self._path <= str(other)
+
+    def __gt__(self, other):
+        return self._path > str(other)
+
+    def __lt__(self, other):
+        return self._path < str(other)
+
+    def __hash__(self):
+        return self._path.__hash__()
+
     def __contains__(self, item):
         return item in self._argidx
 
@@ -753,4 +823,21 @@ class Crumb(object):
     def __str__(self):
         return str(self._path)
 
+    def __eq__(self, other):
+        """ Return True if `self` and `other` are equal, False otherwise.
+        Parameters
+        ----------
+        other: Crumb
+
+        Returns
+        -------
+        is_equal: bool
+        """
+        if self._path != other._path:
+            return False
+
+        if self._argidx != other._argidx:
+            return False
+
+        return True
 
