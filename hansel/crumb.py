@@ -43,15 +43,15 @@ class Crumb(object):
     # specify partial functions from _utils with _arg_start_sym and _arg_end_sym
     # everything would be much simpler if I hardcoded these symbols but I still
     # feel that this flexibility is nice to have.
-    # _arg_format   = partial(_arg_format,     start_sym=_arg_start_sym, end_sym=_arg_end_sym)
+    # _arg_format   = partial(_arg_format,   start_sym=_arg_start_sym, end_sym=_arg_end_sym)
     _is_crumb_arg = partial(_is_crumb_arg, start_sym=_arg_start_sym, end_sym=_arg_end_sym)
     _arg_name     = partial(_arg_name,     start_sym=_arg_start_sym, end_sym=_arg_end_sym)
     is_valid      = partial(is_valid,      start_sym=_arg_start_sym, end_sym=_arg_end_sym)
-    has_crumbs    = partial(has_crumbs,      start_sym=_arg_start_sym, end_sym=_arg_end_sym)
+    has_crumbs    = partial(has_crumbs,    start_sym=_arg_start_sym, end_sym=_arg_end_sym)
     _replace      = partial(_replace,      start_sym=_arg_start_sym, end_sym=_arg_end_sym)
-    _split        = partial(_split,      start_sym=_arg_start_sym, end_sym=_arg_end_sym)
-    _touch        = partial(_touch,      start_sym=_arg_start_sym, end_sym=_arg_end_sym)
-    _split_exists = partial(_split_exists,      start_sym=_arg_start_sym, end_sym=_arg_end_sym)
+    _split        = partial(_split,        start_sym=_arg_start_sym, end_sym=_arg_end_sym)
+    _touch        = partial(_touch,        start_sym=_arg_start_sym, end_sym=_arg_end_sym)
+    _split_exists = partial(_split_exists, start_sym=_arg_start_sym, end_sym=_arg_end_sym)
 
 
     def __init__(self, crumb_path, ignore_list=()):
@@ -206,24 +206,20 @@ class Crumb(object):
 
     @classmethod
     def from_path(cls, crumb_path):
-        """ Create an instance of Crumb or pathlib.Path out of `crumb_path`.
-        It will return a Crumb if `crumb_path` has crumbs or
+        """ Create an instance of Crumb out of `crumb_path`.
         Parameters
         ----------
-        val: str, Crumb or pathlib.Path
+        val: str or Crumb or pathlib.Path
 
         Returns
         -------
-        path: Crumb or pathlib.Path
+        path: Crumb
         """
         if isinstance(crumb_path, (cls, Path)):
             return crumb_path
 
         if isinstance(crumb_path, string_types):
-            if cls.has_crumbs(crumb_path):
-                return cls(crumb_path)
-            else:
-                return Path(crumb_path)
+            return cls(crumb_path)
         else:
             raise TypeError("Expected a `val` to be a `str`, got {}.".format(type(crumb_path)))
 
@@ -419,9 +415,8 @@ class Crumb(object):
             Otherwise it will leave it as it is.
 
         make_crumbs: bool
-            If `fullpath` and `make_crumbs` is True will create a Crumb or a pathlib.Path
-            for each element of the result. This will depende if the result item still has
-            crumb arguments or not.
+            If `fullpath` and `make_crumbs` is True will create a Crumb for
+            each element of the result.
 
         check_exists: bool
             If True will return only str, Crumb or Path if it exists
@@ -524,6 +519,9 @@ class Crumb(object):
         -------
         exists: bool
         """
+        if not self.has_crumbs(self._path):
+            return op.exists(str(self)) or op.islink(str(self))
+
         if not op.exists(self.split()[0]):
             return False
 

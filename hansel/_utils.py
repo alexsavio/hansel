@@ -127,8 +127,12 @@ def _replace(crumb_path, start_sym='{', end_sym='}', **kwargs):
 def _split(crumb_path, start_sym='{', end_sym='}'):
     """ Return a list of sub-strings of `crumb_path` where the
         path parts are separated from the crumb arguments.
+        If 'crumb_path` has not crumb arguments, return `crumb_path`.
     """
     crumb_path = _get_path(crumb_path)
+
+    if not has_crumbs(crumb_path, start_sym, end_sym):
+        return crumb_path
 
     if not is_valid(crumb_path, start_sym, end_sym):
         raise ValueError('Crumb path {} is not valid.'.format(crumb_path))
