@@ -5,15 +5,21 @@
 Crumb class: the smart path model class.
 """
 
-import os
 import os.path     as op
 from   copy        import deepcopy
 from   collections import OrderedDict, Mapping, Sequence
 from   pathlib     import Path
+from   functools   import partial
 
 from   six import string_types
 
-from   hansel.utils import remove_duplicates, list_children
+from   .utils import remove_duplicates, list_children
+from   ._utils import (_get_path, _arg_name,
+                       _is_crumb_arg, _replace,
+                       _split_exists, _split,
+                       _touch, has_crumbs, is_valid,
+                       #_arg_format,
+                       )
 
 
 class Crumb(object):
@@ -23,6 +29,9 @@ class Crumb(object):
     crumb_path: str
         A file or folder path with crumb arguments. See Examples.
 
+    ignore_list: sequence of str
+        A list of `fnmatch` patterns of filenames to be ignored.
+
     Examples
     --------
     >>> crumb = Crumb("{base_dir}/raw/{subject_id}/{session_id}/{modality}/{image}")
@@ -31,9 +40,24 @@ class Crumb(object):
     _arg_start_sym = '{'
     _arg_end_sym   = '}'
 
-    def __init__(self, crumb_path):
-        self._path   = self._get_path(crumb_path)
+    # specify partial functions from _utils with _arg_start_sym and _arg_end_sym
+    # everything would be much simpler if I hardcoded these symbols but I still
+    # feel that this flexibility is nice to have.
+    # _arg_format   = partial(_arg_format,     start_sym=_arg_start_sym, end_sym=_arg_end_sym)
+    _is_crumb_arg = partial(_is_crumb_arg, start_sym=_arg_start_sym, end_sym=_arg_end_sym)
+    _arg_name     = partial(_arg_name,     start_sym=_arg_start_sym, end_sym=_arg_end_sym)
+    is_valid      = partial(is_valid,      start_sym=_arg_start_sym, end_sym=_arg_end_sym)
+    has_crumbs    = partial(has_crumbs,      start_sym=_arg_start_sym, end_sym=_arg_end_sym)
+    _replace      = partial(_replace,      start_sym=_arg_start_sym, end_sym=_arg_end_sym)
+    _split        = partial(_split,      start_sym=_arg_start_sym, end_sym=_arg_end_sym)
+    _touch        = partial(_touch,      start_sym=_arg_start_sym, end_sym=_arg_end_sym)
+    _split_exists = partial(_split_exists,      start_sym=_arg_start_sym, end_sym=_arg_end_sym)
+
+
+    def __init__(self, crumb_path, ignore_list=()):
+        self._path   = _get_path(crumb_path)
         self._argidx = OrderedDict()
+        self._ignore = ignore_list
         self._update()
 
     @property
@@ -62,39 +86,11 @@ class Crumb(object):
         self._clean()
         self._check()
         self._set_argidx()
-        self._set_replace_func()
+        # self._set_replace_func()
 
     def _clean(self):
         """ Clean up the private utility members, i.e., _argidx. """
         self._argidx = OrderedDict()
-
-    @classmethod
-    def _arg_name(cls, arg):
-        """ Return the name of the argument given its crumb representation.
-        Parameters
-        ----------
-        arg_crumb: str
-
-        Returns
-        -------
-        arg_name: str
-        """
-        if not cls._is_crumb_arg(arg):
-            raise ValueError("Expected an well formed crumb argument, "
-                             "got {}.".format(arg))
-        return arg[1:-1]
-
-    def _arg_format(self, arg_name):
-        """ Return the argument for its string `format()` representation.
-        Parameters
-        ----------
-        arg_name: str
-
-        Returns
-        -------
-        arg_format: str
-        """
-        return '{' + arg_name + '}'
 
     @classmethod
     def copy(cls, crumb):
@@ -108,7 +104,7 @@ class Crumb(object):
         copy: Crumb
         """
         if isinstance(crumb, cls):
-            return cls(crumb._path)
+            return cls(crumb._path, ignore_list=crumb._ignore)
         elif isinstance(crumb, string_types):
             return cls.from_path(crumb)
         else:
@@ -122,13 +118,6 @@ class Crumb(object):
         for idx, f in enumerate(fs):
             if self._is_crumb_arg(f):
                 self._argidx[self._arg_name(f)] = idx
-
-    def _set_replace_func(self):
-        """ Set the fastest replace algorithm depending on how
-        many arguments the path has."""
-        self._replace = self._replace2
-        if len(self._argidx) > 5:
-            self._replace = self._replace1
 
     def _find_arg(self, arg_name):
         """ Return the index in the current path of the crumb
@@ -215,107 +204,6 @@ class Crumb(object):
         """
         return self._split(self._path)
 
-    def _default_map(self):
-        """ Return the dict with the default format values of the
-            crumb arguments."""
-        return {v: self._arg_format(v) for v in self._argidx}
-
-    @classmethod
-    def _split(cls, crumb_path):
-        """ Return a list of sub-strings of `crumb_path` where the
-            path parts are separated from the crumb arguments.
-        """
-        crumb_path = cls._get_path(crumb_path)
-
-        splt = []
-        tmp = '/' if crumb_path.startswith(op.sep) else ''
-        for i in crumb_path.split(op.sep):
-            if i.startswith(cls._arg_start_sym):
-                splt.append(tmp)
-                tmp = ''
-                splt.append(i)
-            else:
-                tmp = op.join(tmp, i)
-
-        return splt
-
-    @classmethod
-    def is_valid(cls, crumb_path):
-        """ Return True if `crumb_path` is a well formed path with crumb arguments,
-        False otherwise.
-        Parameters
-        ----------
-        crumb_path: str
-
-        Returns
-        -------
-        is_valid: bool
-        """
-        crumb_path = cls._get_path(crumb_path)
-
-        splt = crumb_path.split(op.sep)
-        for crumb in splt:
-            if op.isdir(crumb):
-                continue
-
-            if cls._is_crumb_arg(crumb):
-                crumb = cls._arg_name(crumb)
-
-            if cls._arg_start_sym in crumb or cls._arg_end_sym in crumb:
-                return False
-
-        return True
-
-    @classmethod
-    def _is_crumb_arg(cls, crumb_arg):
-        """ Returns True if `crumb_arg` is a well formed
-        crumb argument.
-        Parameters
-        ----------
-        crumb_arg: str
-            The string representing a crumb argument, e.g., "{sample_id}"
-
-        Returns
-        -------
-        is_crumb_arg: bool
-        """
-        if not isinstance(crumb_arg, string_types):
-            return False
-
-        return crumb_arg.startswith(cls._arg_start_sym) and crumb_arg.endswith(cls._arg_end_sym)
-
-    @classmethod
-    def has_crumbs(cls, crumb_path):
-        """ Return True if the `crumb_path.split(op.sep)` has item which is a crumb argument
-        that starts with '{' and ends with '}'."""
-        crumb_path = cls._get_path(crumb_path)
-
-        splt = crumb_path.split(op.sep)
-        for i in splt:
-            if cls._is_crumb_arg(i):
-                return True
-
-        return False
-
-    @classmethod
-    def _get_path(cls, crumb_path):
-        """ Return the path string from `crumb_path`.
-        Parameters
-        ----------
-        crumb_path: str or Crumb
-
-        Returns
-        -------
-        path: str
-        """
-        if isinstance(crumb_path, cls):
-            crumb_path = crumb_path._path
-
-        if not isinstance(crumb_path, string_types):
-            raise TypeError("Expected `crumb_path` to be a {}, got {}.".format(string_types, type(crumb_path)))
-
-        return crumb_path
-
     @classmethod
     def from_path(cls, crumb_path):
         """ Create an instance of Crumb or pathlib.Path out of `crumb_path`.
@@ -339,34 +227,31 @@ class Crumb(object):
         else:
             raise TypeError("Expected a `val` to be a `str`, got {}.".format(type(crumb_path)))
 
-    def _replace1(self, **kwargs):
-        if not kwargs:
-            return self._path
+    # def _set_replace_func(self):
+    #     """ Set the fastest replace algorithm depending on how
+    #     many arguments the path has."""
+    #     self._replace = self._replace2
+    #     if len(self._argidx) > 5:
+    #         self._replace = self._replace1
 
-        args = self._default_map()
-        for k in kwargs:
-            if k not in args:
-                raise KeyError("Could not find argument {}"
-                               " in `path` {}.".format(k, self._path))
-
-            args[k] = kwargs[k]
-
-        return self._path.format_map(args)
-
-    def _replace2(self, **kwargs):
-        if not kwargs:
-            return self._path
-
-        path = self._path
-        for k in kwargs:
-            karg = self._arg_format(k)
-            if k not in path:
-                raise KeyError("Could not find argument {} in"
-                               " `path` {}.".format(k, self._path))
-
-            path = path.replace(karg, kwargs[k])
-
-        return path
+    # def _replace2(self, start_sym='{', end_sym='}', **kwargs):
+    #
+    #     if start_sym != '{' or end_sym != '}':
+    #         raise NotImplementedError
+    #
+    #     if not kwargs:
+    #         return self._path
+    #
+    #     args = {v: self._arg_format(v) for v in self._argidx}
+    #
+    #     for k in kwargs:
+    #         if k not in args:
+    #             raise KeyError("Could not find argument {}"
+    #                            " in `path` {}.".format(k, self._path))
+    #
+    #         args[k] = kwargs[k]
+    #
+    #     return self._path.format_map(args)
 
     def _lastarg(self):
         """ Return the name and idx of the last argument."""
@@ -426,14 +311,14 @@ class Crumb(object):
         vals = []
         if arg_values is None:
             base = op.sep.join(splt[:aidx])
-            vals = [[(arg_name, val)] for val in list_children(base, just_dirs=just_dirs)]
+            vals = [[(arg_name, val)] for val in list_children(base, just_dirs=just_dirs, ignore=self._ignore)]
         else:
             for aval in arg_values:
                 #  create the part of the crumb path that is already specified
-                path = self._split(self._replace(**dict(aval)))[0]
+                path = self._split(self._replace(self._path, **dict(aval)))[0]
 
                 #  list the children of `path`
-                subpaths = list_children(path, just_dirs=just_dirs)
+                subpaths = list_children(path, just_dirs=just_dirs, ignore=self._ignore)
 
                 #  extend `val` tuples with the new list of values for `aval`
                 vals.extend([aval + [(arg_name, sp)] for sp in subpaths])
@@ -457,7 +342,7 @@ class Crumb(object):
                                  " got {}.".format(list(self._argidx), arg_name))
 
         cr = self.copy(self)
-        cr._path = cr._replace(**kwargs)
+        cr._path = cr._replace(self._path, **kwargs)
         return Crumb.from_path(cr._path)
 
     def _arg_deps(self, arg_name):
@@ -476,7 +361,7 @@ class Crumb(object):
         return OrderedDict([(arg, idx) for arg, idx in self._argidx.items() if idx <= argidx])
 
     def values_map(self, arg_name, check_exists=False):
-        """
+        """ Return a list of tuples of crumb arguments with their values.
 
         Parameters
         ----------
@@ -486,7 +371,7 @@ class Crumb(object):
 
         Returns
         -------
-        values_map
+        values_map: list of lists of 2-tuples
         """
         arg_deps = self._arg_deps(arg_name)
         values_map = None
@@ -511,7 +396,7 @@ class Crumb(object):
         -------
         paths: list of str
         """
-        return [self._replace(**dict(val)) for val in values_map]
+        return [self._replace(self._path, **dict(val)) for val in values_map]
 
     def ls(self, arg_name, fullpath=True, rm_dups=False, make_crumbs=True, check_exists=False):
         """
@@ -575,7 +460,7 @@ class Crumb(object):
             paths = remove_duplicates(paths)
 
         if fullpath and make_crumbs:
-            paths = [self.from_path(path) for path in paths]
+            paths = sorted([self.from_path(path) for path in paths])
 
         return paths
 
@@ -632,39 +517,6 @@ class Crumb(object):
         """
         return Crumb(op.join(self._path, suffix))
 
-    @classmethod
-    def _touch(cls, crumb_path, exist_ok=True):
-        """ Create a leaf directory and all intermediate ones
-        using the non crumbed part of `crumb_path`.
-        If the target directory already exists, raise an IOError
-        if exist_ok is False. Otherwise no exception is raised.
-        Parameters
-        ----------
-        crumb_path: str
-
-        exist_ok: bool
-            Default = True
-
-        Returns
-        -------
-        nupath: str
-            The new path created.
-        """
-        if cls.has_crumbs(crumb_path):
-            nupath = cls._split(crumb_path)[0]
-        else:
-            nupath = crumb_path
-
-        if op.exists(nupath) and not exist_ok:
-            raise IOError("Folder {} already exists.".format(nupath))
-
-        try:
-            os.makedirs(nupath, exist_ok=exist_ok)
-        except:
-            raise
-        else:
-            return nupath
-
     def exists(self):
         """ Return True if the current crumb path is a possibly existing path,
         False otherwise.
@@ -715,21 +567,6 @@ class Crumb(object):
                        make_crumbs = True,
                        check_exists= True)
 
-    @classmethod
-    def _split_exists(cls, crumb_path):
-        """ Return True if the part without crumb arguments of `crumb_path`
-        is an existing path or a symlink, False otherwise.
-        Returns
-        -------
-        exists: bool
-        """
-        if cls.has_crumbs(crumb_path):
-            rpath = cls._split(crumb_path)[0]
-        else:
-            rpath = str(crumb_path)
-
-        return op.exists(rpath) or op.islink(rpath)
-
     def __getitem__(self, arg_name):
         """ Return the existing values of the crumb argument `arg_name`
         without removing duplicates.
@@ -752,7 +589,7 @@ class Crumb(object):
             raise KeyError("Expected `arg_name` to be one of ({}),"
                            " got {}.".format(list(self._argidx), key))
 
-        self._path = self._replace(**{key: value})
+        self._path = self._replace(self._path, **{key: value})
         self._update()
 
     def __ge__(self, other):
@@ -793,6 +630,9 @@ class Crumb(object):
             return False
 
         if self._argidx != other._argidx:
+            return False
+
+        if self._ignore != other._ignore:
             return False
 
         return True

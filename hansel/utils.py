@@ -6,11 +6,12 @@ Utilities to make crumbs
 """
 import os
 import os.path as op
-
-from collections import Mapping
-from functools import partial, reduce
-from itertools import product
 import operator
+import fnmatch
+
+from   collections import Mapping
+from   functools   import partial, reduce
+from   itertools   import product
 
 
 def remove_duplicates(lst):
@@ -28,7 +29,17 @@ def remove_duplicates(lst):
     return sorted(list(set(lst)))
 
 
-def list_children(path, just_dirs=False):
+def remove_ignored(strs, ignore):
+    """ Remove from `strs` the matches to the `fnmatch` (glob) patterns and
+    return the result in a list."""
+    nustrs = strs.copy()
+    for ign in ignore:
+        nustrs = [item for item in nustrs if not fnmatch.fnmatch(item, ign)]
+
+    return nustrs
+
+
+def list_children(path, just_dirs=False, ignore=[]):
     """ Return the immediate elements (files and folders) in `path`.
 
     Parameters
@@ -37,6 +48,9 @@ def list_children(path, just_dirs=False):
 
     just_dirs: bool
         If True will return only folders.
+
+    ignore: sequence of str
+        Sequence of glob patterns to ignore from the listing.
 
     Returns
     -------
@@ -56,6 +70,9 @@ def list_children(path, just_dirs=False):
             vals = [d for d in os.listdir(path) if op.isdir(op.join(path, d))]
         else:   # this means we have to list files
             vals = os.listdir(path)
+
+    if ignore:
+        vals = remove_ignored(vals, ignore)
 
     return vals
 

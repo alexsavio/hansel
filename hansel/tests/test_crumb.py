@@ -12,10 +12,10 @@ from   copy     import copy
 from   pathlib  import Path
 from   tempfile import TemporaryDirectory
 
-from   six      import string_types
-from   hansel   import Crumb, mktree
-from   hansel.utils import ParameterGrid
-
+from   six           import string_types
+from   hansel        import Crumb, mktree
+from   hansel.utils  import ParameterGrid
+from   hansel._utils import _get_path
 
 BASE_DIR = op.expanduser('~/data/cobre')
 
@@ -50,10 +50,10 @@ def tmp_crumb(request):
 
 
 def test__get_path(tmp_crumb):
-    pytest.raises(TypeError, tmp_crumb._get_path, {})
-    pytest.raises(TypeError, tmp_crumb._get_path, [])
+    pytest.raises(TypeError, _get_path, {})
+    pytest.raises(TypeError, _get_path, [])
 
-    assert tmp_crumb._get_path(tmp_crumb) == tmp_crumb._path
+    assert _get_path(tmp_crumb) == tmp_crumb._path
 
 
 def test_path_property(crumb):
@@ -87,8 +87,9 @@ def test_replace_and_setitem(crumb):
     crumb3 = crumb.copy(crumb)
     crumb3['base_dir'] = base_dir
 
-    assert crumb3._replace1(**dict()) == crumb3._path
-    assert crumb3._replace2(**dict()) == crumb3._path
+    assert crumb3._replace(crumb_path=crumb3._path, **dict()) == crumb3._path
+    #assert crumb3._replace1(**dict()) == crumb3._path
+    #assert crumb3._replace2(**dict()) == crumb3._path
 
     assert crumb3 is not crumb2
     assert crumb3 == crumb2
@@ -98,8 +99,9 @@ def test_replace_and_setitem(crumb):
     assert crumb3.replace(**{})._path == crumb3._path
 
     pytest.raises(KeyError, crumb2.replace,     grimm='brothers')
-    pytest.raises(KeyError, crumb2._replace1,   grimm='brothers')
-    pytest.raises(KeyError, crumb2._replace2,   grimm='brothers')
+    pytest.raises(KeyError, crumb2._replace,    crumb_path=crumb2._path, grimm='brothers')
+    #pytest.raises(KeyError, crumb2._replace1,  crumb_path=crumb2._path, grimm='brothers')
+    #pytest.raises(KeyError, crumb2._replace2,   grimm='brothers')
     pytest.raises(KeyError, crumb2.__setitem__, 'grimm', 'brothers')
 
 
@@ -336,6 +338,20 @@ def test_ls3():
     assert not lst
 
 
+def test_ignore_lst():
+    import fnmatch
+
+    base_dir = op.expanduser('~')
+    crumb = Crumb(op.join(base_dir, '{user_folder}', '{files}'))
+
+    folders = crumb['user_folder']# set(fnmatch.filter(crumb['user_folder'], '.*'))
+
+    ign_crumb = Crumb(op.join(base_dir, '{user_folder}', '{files}'), ignore_list=('.*',))
+    ign_folders = ign_crumb['user_folder']
+    assert set(ign_folders) == set([item for item in folders if not fnmatch.fnmatch(item, '.*')])
+    assert set(folders) > set(ign_folders)
+
+
 def test_rem_deps(crumb):
 
     values = copy(crumb._argidx)
@@ -518,7 +534,7 @@ def test_ls_with_check(tmp_crumb):
 
     assert tmp_crumb.unfold() == tmp_crumb.ls('image',
                                               fullpath     = True,
-                                              rm_dups      = False,
+                                              rm_dups      = True,
                                               make_crumbs  = True,
                                               check_exists = True)
 
@@ -532,6 +548,7 @@ def test_ls_with_check(tmp_crumb):
     img_crumb['session_id'] = 'session_0'
 
     assert 'subj_0' not in img_crumb['subject_id']
+
 
 def test_has_files(tmp_crumb):
     assert not op.exists(tmp_crumb._path)
