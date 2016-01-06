@@ -219,8 +219,9 @@ def test_split(crumb):
 def test_is_valid_a_bit(crumb):
     assert Crumb.is_valid(crumb)
 
+    start_sym, end_sym = Crumb._start_end_syms
     crumb_path = crumb._path
-    crumb_path = crumb_path[:3] + Crumb._arg_start_sym + crumb_path[3:-1]
+    crumb_path = crumb_path[:3] + start_sym + crumb_path[3:-1]
 
     assert isinstance(Crumb.from_path(Path(crumb_path)), Path)
     pytest.raises(ValueError, Crumb.from_path, crumb_path)

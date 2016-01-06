@@ -29,16 +29,17 @@ def _get_path(crumb_path):
     return crumb_path
 
 
-def _is_crumb_arg(crumb_arg, start_sym='{', end_sym='}'):
+def _is_crumb_arg(crumb_arg, start_end_syms=('{', '}')):
     """ Returns True if `crumb_arg` is a well formed crumb argument, i.e.,
     is a string that starts with `start_sym` and ends with `end_sym`. False otherwise."""
     if not isinstance(crumb_arg, string_types):
         return False
 
+    start_sym, end_sym = start_end_syms
     return crumb_arg.startswith(start_sym) and crumb_arg.endswith(end_sym)
 
 
-def _arg_name(arg, start_sym='{', end_sym='}'):
+def _arg_name(arg, start_end_syms=('{', '}')):
     """ Return the name of the argument given its crumb representation.
     Parameters
     ----------
@@ -51,10 +52,12 @@ def _arg_name(arg, start_sym='{', end_sym='}'):
     if not _is_crumb_arg(arg):
         raise ValueError("Expected an well formed crumb argument, "
                          "got {}.".format(arg))
+
+    start_sym, end_sym = start_end_syms
     return arg[len(start_sym):-len(end_sym)]
 
 
-def _arg_format(arg_name, start_sym='{', end_sym='}'):
+def _arg_format(arg_name, start_end_syms=('{', '}')):
     """ Return the crumb argument for its string `format()` representation.
     Parameters
     ----------
@@ -64,10 +67,11 @@ def _arg_format(arg_name, start_sym='{', end_sym='}'):
     -------
     arg_format: str
     """
+    start_sym, end_sym = start_end_syms
     return start_sym + arg_name + end_sym
 
 
-def is_valid(crumb_path, start_sym='{', end_sym='}'):
+def is_valid(crumb_path, start_end_syms=('{', '}')):
     """ Return True if `crumb_path` is a well formed path with crumb arguments,
     False otherwise.
     Parameters
@@ -80,13 +84,15 @@ def is_valid(crumb_path, start_sym='{', end_sym='}'):
     """
     crumb_path = _get_path(crumb_path)
 
+    start_sym, end_sym = start_end_syms
+
     splt = crumb_path.split(op.sep)
     for crumb in splt:
         if op.isdir(crumb):
             continue
 
-        if _is_crumb_arg(crumb, start_sym=start_sym, end_sym=end_sym):
-            crumb = _arg_name(crumb, start_sym=start_sym, end_sym=end_sym)
+        if _is_crumb_arg(crumb, start_end_syms=start_end_syms):
+            crumb = _arg_name(crumb, start_end_syms=start_end_syms)
 
         if start_sym in crumb or end_sym in crumb:
             return False
@@ -94,27 +100,27 @@ def is_valid(crumb_path, start_sym='{', end_sym='}'):
     return True
 
 
-def has_crumbs(crumb_path, start_sym='{', end_sym='}'):
+def has_crumbs(crumb_path, start_end_syms=('{', '}')):
     """ Return True if the `crumb_path.split(op.sep)` has item which is a crumb argument
     that starts with '{' and ends with '}'."""
     crumb_path = _get_path(crumb_path)
 
     splt = crumb_path.split(op.sep)
     for i in splt:
-        if _is_crumb_arg(i, start_sym=start_sym, end_sym=end_sym):
+        if _is_crumb_arg(i, start_end_syms=start_end_syms):
             return True
 
     return False
 
 
-def _replace(crumb_path, start_sym='{', end_sym='}', **kwargs):
+def _replace(crumb_path, start_end_syms=('{', '}'), **kwargs):
     """ Return `crumb_path` where every crumb argument found in `kwargs` has been
     replaced by the given value in `kwargs."""
     if not kwargs:
         return crumb_path
 
     for k in kwargs:
-        karg = _arg_format(k, start_sym=start_sym, end_sym=end_sym)
+        karg = _arg_format(k, start_end_syms=start_end_syms)
         if k not in crumb_path:
             raise KeyError("Could not find argument {} in"
                            " `path` {}.".format(k, crumb_path))
@@ -124,19 +130,20 @@ def _replace(crumb_path, start_sym='{', end_sym='}', **kwargs):
     return crumb_path
 
 
-def _split(crumb_path, start_sym='{', end_sym='}'):
+def _split(crumb_path, start_end_syms=('{', '}')):
     """ Return a list of sub-strings of `crumb_path` where the
         path parts are separated from the crumb arguments.
         If 'crumb_path` has not crumb arguments, return `crumb_path`.
     """
     crumb_path = _get_path(crumb_path)
 
-    if not has_crumbs(crumb_path, start_sym, end_sym):
+    if not has_crumbs(crumb_path, start_end_syms=start_end_syms):
         return crumb_path
 
-    if not is_valid(crumb_path, start_sym, end_sym):
+    if not is_valid(crumb_path, start_end_syms=start_end_syms):
         raise ValueError('Crumb path {} is not valid.'.format(crumb_path))
 
+    start_sym, _ = start_end_syms
     splt = []
     tmp = '/' if crumb_path.startswith(op.sep) else ''
     for i in crumb_path.split(op.sep):
@@ -150,7 +157,7 @@ def _split(crumb_path, start_sym='{', end_sym='}'):
     return splt
 
 
-def _touch(crumb_path, exist_ok=True, start_sym='{', end_sym='}'):
+def _touch(crumb_path, exist_ok=True, start_end_syms=('{', '}')):
     """ Create a leaf directory and all intermediate ones
     using the non crumbed part of `crumb_path`.
     If the target directory already exists, raise an IOError
@@ -167,8 +174,8 @@ def _touch(crumb_path, exist_ok=True, start_sym='{', end_sym='}'):
     nupath: str
         The new path created.
     """
-    if has_crumbs(crumb_path, start_sym=start_sym, end_sym=end_sym):
-        nupath = _split(crumb_path, start_sym=start_sym, end_sym=end_sym)[0]
+    if has_crumbs(crumb_path, start_end_syms=start_end_syms):
+        nupath = _split(crumb_path, start_end_syms=start_end_syms)[0]
     else:
         nupath = crumb_path
 
@@ -183,7 +190,7 @@ def _touch(crumb_path, exist_ok=True, start_sym='{', end_sym='}'):
         return nupath
 
 
-def _split_exists(crumb_path, start_sym='{', end_sym='}'):
+def _split_exists(crumb_path, start_end_syms=('{', '}')):
     """ Return True if the part without crumb arguments of `crumb_path`
     is an existing path or a symlink, False otherwise.
     Returns
@@ -191,7 +198,7 @@ def _split_exists(crumb_path, start_sym='{', end_sym='}'):
     exists: bool
     """
     if has_crumbs(crumb_path):
-        rpath = _split(crumb_path, start_sym=start_sym, end_sym=end_sym)[0]
+        rpath = _split(crumb_path, start_end_syms=start_end_syms)[0]
     else:
         rpath = str(crumb_path)
 

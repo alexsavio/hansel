@@ -37,21 +37,21 @@ class Crumb(object):
     >>> crumb = Crumb("{base_dir}/raw/{subject_id}/{session_id}/{modality}/{image}")
     >>> cr = Crumb(op.join(op.expanduser('~'), '{user_folder}'))
     """
-    _arg_start_sym = '{'
-    _arg_end_sym   = '}'
+    # symbols indicating start and end of a crumb argument
+    _start_end_syms = ('{', '}')
 
     # specify partial functions from _utils with _arg_start_sym and _arg_end_sym
     # everything would be much simpler if I hardcoded these symbols but I still
     # feel that this flexibility is nice to have.
     # _arg_format   = partial(_arg_format,   start_sym=_arg_start_sym, end_sym=_arg_end_sym)
-    _is_crumb_arg = partial(_is_crumb_arg, start_sym=_arg_start_sym, end_sym=_arg_end_sym)
-    _arg_name     = partial(_arg_name,     start_sym=_arg_start_sym, end_sym=_arg_end_sym)
-    is_valid      = partial(is_valid,      start_sym=_arg_start_sym, end_sym=_arg_end_sym)
-    has_crumbs    = partial(has_crumbs,    start_sym=_arg_start_sym, end_sym=_arg_end_sym)
-    _replace      = partial(_replace,      start_sym=_arg_start_sym, end_sym=_arg_end_sym)
-    _split        = partial(_split,        start_sym=_arg_start_sym, end_sym=_arg_end_sym)
-    _touch        = partial(_touch,        start_sym=_arg_start_sym, end_sym=_arg_end_sym)
-    _split_exists = partial(_split_exists, start_sym=_arg_start_sym, end_sym=_arg_end_sym)
+    _is_crumb_arg = partial(_is_crumb_arg, start_end_syms=_start_end_syms)
+    _arg_name     = partial(_arg_name,     start_end_syms=_start_end_syms)
+    is_valid      = partial(is_valid,      start_end_syms=_start_end_syms)
+    has_crumbs    = partial(has_crumbs,    start_end_syms=_start_end_syms)
+    _replace      = partial(_replace,      start_end_syms=_start_end_syms)
+    _split        = partial(_split,        start_end_syms=_start_end_syms)
+    _touch        = partial(_touch,        start_end_syms=_start_end_syms)
+    _split_exists = partial(_split_exists, start_end_syms=_start_end_syms)
 
 
     def __init__(self, crumb_path, ignore_list=()):
@@ -134,7 +134,8 @@ class Crumb(object):
         if not self.is_valid(self._path):
             raise ValueError("The given crumb path has errors, got {}.".format(self.path))
 
-        subp = self._path.split(self._arg_start_sym)[0]
+        start_sym, _ = self._start_end_syms
+        subp = self._path.split(start_sym)[0]
         return op.isabs(subp)
 
     def abspath(self, first_is_basedir=False):
@@ -436,8 +437,10 @@ class Crumb(object):
             raise ValueError("Expected `arg_name` to be one of ({}),"
                              " got {}.".format(list(self._argidx), arg_name))
 
+        start_sym, _ = self._start_end_syms
+
         # if the first chunk of the path is a parameter, I am not interested in this (for now)
-        if self._path.startswith(self._arg_start_sym):
+        if self._path.startswith(start_sym):
             raise NotImplementedError("Can't list paths that starts"
                                       " with an argument.")
 
