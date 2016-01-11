@@ -223,7 +223,6 @@ def test_is_valid_a_bit(crumb):
     crumb_path = crumb._path
     crumb_path = crumb_path[:3] + start_sym + crumb_path[3:-1]
 
-    assert isinstance(Crumb.from_path(Path(crumb_path)), Path)
     pytest.raises(ValueError, Crumb.from_path, crumb_path)
     pytest.raises(TypeError, crumb.from_path, {})
 

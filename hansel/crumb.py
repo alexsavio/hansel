@@ -217,38 +217,12 @@ class Crumb(object):
         path: Crumb
         """
         if isinstance(crumb_path, (cls, Path)):
-            return crumb_path
+            return cls.copy(crumb_path)
 
         if isinstance(crumb_path, string_types):
             return cls(crumb_path)
         else:
             raise TypeError("Expected a `val` to be a `str`, got {}.".format(type(crumb_path)))
-
-    # def _set_replace_func(self):
-    #     """ Set the fastest replace algorithm depending on how
-    #     many arguments the path has."""
-    #     self._replace = self._replace2
-    #     if len(self._argidx) > 5:
-    #         self._replace = self._replace1
-
-    # def _replace2(self, start_sym='{', end_sym='}', **kwargs):
-    #
-    #     if start_sym != '{' or end_sym != '}':
-    #         raise NotImplementedError
-    #
-    #     if not kwargs:
-    #         return self._path
-    #
-    #     args = {v: self._arg_format(v) for v in self._argidx}
-    #
-    #     for k in kwargs:
-    #         if k not in args:
-    #             raise KeyError("Could not find argument {}"
-    #                            " in `path` {}.".format(k, self._path))
-    #
-    #         args[k] = kwargs[k]
-    #
-    #     return self._path.format_map(args)
 
     def _lastarg(self):
         """ Return the name and idx of the last argument."""
@@ -447,11 +421,13 @@ class Crumb(object):
 
         if not fullpath and not make_crumbs:
             paths = [dict(val)[arg_name] for val in values_map]
-        else:
+
+        elif fullpath and not make_crumbs:
             paths = sorted(self._build_paths(values_map))
 
-        if fullpath and make_crumbs:
-            paths = sorted([self.from_path(path) for path in paths])
+        elif fullpath and make_crumbs:
+            paths = sorted(self._build_paths(values_map))
+            paths = [self.from_path(path) for path in paths]
 
         return paths
 
