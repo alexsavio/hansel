@@ -54,19 +54,11 @@ def test_mktree_tuples(tmp_crumb):
 
     assert all([op.exists(npath) for npath in nupaths])
 
-    ls_session_ids = tmp_crumb.ls('session_id',
-                                  fullpath     = False,
-                                  rm_dups      = True,
-                                  make_crumbs  = False,
-                                  check_exists = False)
-    assert ls_session_ids == session_ids
+    ls_session_ids = tmp_crumb.ls('session_id', fullpath=False, make_crumbs=False, check_exists=False)
+    assert set(ls_session_ids) == set(session_ids)
 
-    ls_subj_ids = tmp_crumb.ls('subject_id',
-                               fullpath     = False,
-                               rm_dups      = True,
-                               make_crumbs  = False,
-                               check_exists = False)
-    assert ls_subj_ids == subj_ids
+    ls_subj_ids = tmp_crumb.ls('subject_id', fullpath=False, make_crumbs=False, check_exists=False)
+    assert set(ls_subj_ids) == set(subj_ids)
 
 
 def test_mktree_raises(tmp_crumb):

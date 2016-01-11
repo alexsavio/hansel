@@ -395,7 +395,7 @@ class Crumb(object):
         """
         return [self._replace(self._path, **dict(val)) for val in values_map]
 
-    def ls(self, arg_name, fullpath=True, rm_dups=False, make_crumbs=True, check_exists=False):
+    def ls(self, arg_name, fullpath=True, make_crumbs=True, check_exists=False):
         """
         Return the list of values for the argument crumb `arg_name`.
         This will also unfold any other argument crumb that appears before in the
@@ -410,10 +410,6 @@ class Crumb(object):
             the rest of crumbs not unfolded.
             If False will only return the values for the argument with name
             `arg_name`.
-
-        rm_dups: bool
-            If True will remove and sort the duplicate values from the result.
-            Otherwise it will leave it as it is.
 
         make_crumbs: bool
             If `fullpath` and `make_crumbs` is True will create a Crumb for
@@ -431,7 +427,7 @@ class Crumb(object):
         Examples
         --------
         >>> cr = Crumb(op.join(op.expanduser('~'), '{user_folder}'))
-        >>> user_folders = cr.ls('user_folder', fullpath=True, rm_dups=True, make_crumbs=True)
+        >>> user_folders = cr.ls('user_folder',fullpath=True,make_crumbs=True)
         """
         if arg_name not in self._argidx:
             raise ValueError("Expected `arg_name` to be one of ({}),"
@@ -452,10 +448,7 @@ class Crumb(object):
         if not fullpath and not make_crumbs:
             paths = [dict(val)[arg_name] for val in values_map]
         else:
-            paths = self._build_paths(values_map)
-
-        if rm_dups:
-            paths = remove_duplicates(paths)
+            paths = sorted(self._build_paths(values_map))
 
         if fullpath and make_crumbs:
             paths = sorted([self.from_path(path) for path in paths])
@@ -529,11 +522,7 @@ class Crumb(object):
             return False
 
         last, _ = self._lastarg()
-        paths = self.ls(last,
-                        fullpath     = True,
-                        make_crumbs  = False,
-                        rm_dups   = True,
-                        check_exists = False)
+        paths = self.ls(last, fullpath=True, make_crumbs=False, check_exists=False)
 
         return all([self._split_exists(lp) for lp in paths])
 
@@ -548,11 +537,7 @@ class Crumb(object):
             return False
 
         last, _ = self._lastarg()
-        paths = self.ls(last,
-                        fullpath     = True,
-                        make_crumbs  = True,
-                        rm_dups      = False,
-                        check_exists = True)
+        paths = self.ls(last, fullpath=True, make_crumbs=True, check_exists=True)
 
         return any([op.isfile(str(lp)) for lp in paths])
 
@@ -562,11 +547,7 @@ class Crumb(object):
         -------
         paths: list of pathlib.Path
         """
-        return self.ls(self._lastarg()[0],
-                       fullpath    = True,
-                       rm_dups     = True,
-                       make_crumbs = True,
-                       check_exists= True)
+        return self.ls(self._lastarg()[0], fullpath=True, make_crumbs=True, check_exists=True)
 
     def __getitem__(self, arg_name):
         """ Return the existing values of the crumb argument `arg_name`
@@ -579,11 +560,7 @@ class Crumb(object):
         -------
         values: list of str
         """
-        return self.ls(arg_name,
-                       fullpath    = False,
-                       rm_dups     = False,
-                       make_crumbs = False,
-                       check_exists= True)
+        return self.ls(arg_name, fullpath=False, make_crumbs=False, check_exists=True)
 
     def __setitem__(self, key, value):
         if key not in self._argidx:
