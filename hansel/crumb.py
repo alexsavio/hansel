@@ -13,11 +13,12 @@ from   functools   import partial
 
 from   six import string_types
 
-from   .utils import list_children
-from   ._utils import (_get_path, _arg_name,
+from   .utils import list_subpaths
+from   ._utils import (_get_path,
                        _is_crumb_arg, _replace,
                        _split_exists, _split,
                        _touch, has_crumbs, is_valid,
+                       _arg_params,
                        #_arg_format,
                        )
 
@@ -39,13 +40,17 @@ class Crumb(object):
     """
     # symbols indicating start and end of a crumb argument
     _start_end_syms = ('{', '}')
+    _regex_sym = ':'
 
     # specify partial functions from _utils with _arg_start_sym and _arg_end_sym
     # everything would be much simpler if I hardcoded these symbols but I still
     # feel that this flexibility is nice to have.
-    # _arg_format   = partial(_arg_format,   start_sym=_arg_start_sym, end_sym=_arg_end_sym)
+    # _arg_format   = partial(_arg_format, start_end_syms=_start_end_syms, reg_sym=_regex_sym)
+    #_arg_name     = partial(_arg_name,     start_end_syms=_start_end_syms, reg_sym=_regex_sym)
+    #_arg_regex    = partial(_arg_regex,    start_end_syms=_start_end_syms, reg_sym=_regex_sym)
+    #_arg_content  = partial(_arg_content,  start_end_syms=_start_end_syms)
     _is_crumb_arg = partial(_is_crumb_arg, start_end_syms=_start_end_syms)
-    _arg_name     = partial(_arg_name,     start_end_syms=_start_end_syms)
+    _arg_params   = partial(_arg_params,   start_end_syms=_start_end_syms, reg_sym=_regex_sym)
     is_valid      = partial(is_valid,      start_end_syms=_start_end_syms)
     has_crumbs    = partial(has_crumbs,    start_end_syms=_start_end_syms)
     _replace      = partial(_replace,      start_end_syms=_start_end_syms)
@@ -56,7 +61,8 @@ class Crumb(object):
     def __init__(self, crumb_path, ignore_list=()):
         self._path   = _get_path(crumb_path)
         self._argidx = OrderedDict()  # in which order the crumb argument appears
-        self._argval = {}  # what is the value of the argument in the current path
+        self._argval = {}  # what is the value of the argument in the current path, if any has been set.
+        self._argreg = {}  # what is the regex of the argument
         self._ignore = ignore_list
         self._update()
 
@@ -85,8 +91,7 @@ class Crumb(object):
         members for functioning."""
         self._clean()
         self._check()
-        self._set_argidx()
-        # self._set_replace_func()
+        self._set_argdicts()
 
     def _clean(self):
         """ Clean up the private utility members, i.e., _argidx. """
@@ -112,14 +117,18 @@ class Crumb(object):
         else:
             raise TypeError("Expected a Crumb or a str to copy, got {}.".format(type(crumb)))
 
-    def _set_argidx(self):
+    def _set_argdicts(self):
         """ Initialize the self._argidx dict. It holds arg_name -> index.
         The index is the position in the whole `_path.split(op.sep)` where each argument is.
         """
         fs = self._path_split()
         for idx, f in enumerate(fs):
             if self._is_crumb_arg(f):
-                self._argidx[self._arg_name(f)] = idx
+                arg_name, arg_regex = self._arg_params(f)
+                self._argidx[arg_name] = idx
+
+                if arg_regex is not None:
+                    self._argreg[arg_name] = arg_regex
 
     def _find_arg(self, arg_name):
         """ Return the index in the current path of the crumb
@@ -284,17 +293,24 @@ class Crumb(object):
         vals = []
         if arg_values is None:
             base = op.sep.join(splt[:aidx])
-            vals = [[(arg_name, val)] for val in list_children(base, just_dirs=just_dirs, ignore=self._ignore)]
+            vals = list_subpaths(base,
+                                 just_dirs=just_dirs,
+                                 ignore=self._ignore,
+                                 re=self._argreg.get(arg_name, None))
+
+            vals = [[(arg_name, val)] for val in vals]
         else:
             for aval in arg_values:
                 #  create the part of the crumb path that is already specified
                 path = self._split(self._replace(self._path, **dict(aval)))[0]
 
-                #  list the children of `path`
-                subpaths = list_children(path, just_dirs=just_dirs, ignore=self._ignore)
+                paths = list_subpaths(path,
+                                      just_dirs=just_dirs,
+                                      ignore=self._ignore,
+                                      re=self._argreg.get(arg_name, None))
 
                 #  extend `val` tuples with the new list of values for `aval`
-                vals.extend([aval + [(arg_name, sp)] for sp in subpaths])
+                vals.extend([aval + [(arg_name, sp)] for sp in paths])
 
         return vals
 

@@ -34,7 +34,6 @@ def crumb(request):
 
 @pytest.fixture
 def tmp_crumb(request):
-    from tempfile import TemporaryDirectory
 
     crumb = Crumb("{base_dir}/raw/{subject_id}/{session_id}/{modality}/{image}")
     base_dir = TemporaryDirectory(prefix='crumbtest_')
@@ -251,7 +250,7 @@ def test_is_valid_a_bit(crumb):
 
 
 def test_arg_name(crumb):
-    pytest.raises(ValueError, crumb._arg_name, 'hansel')
+    pytest.raises(ValueError, crumb._arg_params, 'hansel')
     assert not crumb._is_crumb_arg(Path(op.expanduser('~')))
 
 

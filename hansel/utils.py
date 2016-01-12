@@ -4,6 +4,7 @@
 """
 Utilities to make crumbs
 """
+import re
 import os
 import os.path as op
 import operator
@@ -29,7 +30,7 @@ def remove_duplicates(lst):
     return sorted(list(set(lst)))
 
 
-def remove_ignored(strs, ignore):
+def remove_ignored(ignore, strs):
     """ Remove from `strs` the matches to the `fnmatch` (glob) patterns and
     return the result in a list."""
     nustrs = strs.copy()
@@ -39,7 +40,27 @@ def remove_ignored(strs, ignore):
     return nustrs
 
 
-def list_children(path, just_dirs=False, ignore=[]):
+def regex_match_filter(pattern, items):
+    """ Return the items from `items` that match the regular expression in `pattern`.
+
+    Parameters
+    ----------
+    pattern: str
+        Regular expression
+
+    items: list of str
+        The items to be checked
+
+    Returns
+    -------
+    matchs: list of str
+        Matched items
+    """
+    test = re.compile(pattern)
+    return [s for s in items if test.match(s)]
+
+
+def list_children(path, just_dirs=False):
     """ Return the immediate elements (files and folders) in `path`.
 
     Parameters
@@ -51,6 +72,9 @@ def list_children(path, just_dirs=False, ignore=[]):
 
     ignore: sequence of str
         Sequence of glob patterns to ignore from the listing.
+
+    re: str
+        Regular expression that the result items must match.
 
     Returns
     -------
@@ -71,10 +95,38 @@ def list_children(path, just_dirs=False, ignore=[]):
         else:   # this means we have to list files
             vals = os.listdir(path)
 
-    if ignore:
-        vals = remove_ignored(vals, ignore)
-
     return vals
+
+
+def list_subpaths(path, just_dirs=False, ignore=None, re=None):
+    """ Return the immediate elements (files and folders) in `path`.
+
+    Parameters
+    ----------
+    path: str
+
+    just_dirs: bool
+        If True will return only folders.
+
+    ignore: sequence of str
+        Sequence of glob patterns to ignore from the listing.
+
+    re: str
+        Regular expression that the result items must match.
+
+    Returns
+    -------
+    paths: list of str
+    """
+    paths = list_children(path, just_dirs=just_dirs)
+
+    if ignore is not None:
+        paths = remove_ignored(ignore, paths)
+
+    if re is not None:
+        paths = regex_match_filter(re, paths)
+
+    return paths
 
 
 class ParameterGrid(object):
