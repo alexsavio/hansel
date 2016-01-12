@@ -15,10 +15,15 @@ from   six import string_types
 
 from   .utils import list_subpaths
 from   ._utils import (_get_path,
-                       _is_crumb_arg, _replace,
-                       _split_exists, _split,
-                       _touch, has_crumbs, is_valid,
+                       _is_crumb_arg,
+                       _replace,
+                       _split_exists,
+                       _split,
+                       _touch,
                        _arg_params,
+                       _dict_popitems,
+                       has_crumbs,
+                       is_valid,
                        #_arg_format,
                        )
 
@@ -171,7 +176,8 @@ class Crumb(object):
         if self.isabs():
             return deepcopy(self)
 
-        return self.copy(self._abspath(first_is_basedir=first_is_basedir))
+        return Crumb(self._abspath(first_is_basedir=first_is_basedir),
+                     ignore_list=self._ignore)
 
     def _path_split(self):
         return self._path.split(op.sep)
@@ -191,7 +197,7 @@ class Crumb(object):
         abspath: str
         """
         if not self.has_crumbs(self._path):
-             return op.abspath(self._path)
+            return op.abspath(self._path)
 
         splt = self._path_split()
         path = []
@@ -346,6 +352,8 @@ class Crumb(object):
         self.path = self._replace(self._path, **kwargs)
         self._update()
         self._argval.update(**kwargs)
+
+        _dict_popitems(self._argreg, **kwargs)
 
         return self
 

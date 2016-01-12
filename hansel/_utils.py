@@ -10,6 +10,16 @@ import os.path as op
 from   six import string_types
 
 
+def _dict_popitems(adict, **kwargs):
+    if not adict:
+        return
+
+    if not kwargs:
+        return
+
+    _ = [adict.pop(k) for k in kwargs]
+
+
 def _get_path(crumb_path):
     """ Return the path string from `crumb_path`.
     Parameters

@@ -163,7 +163,30 @@ def test_abspath(crumb):
 
     assert crumb3 != crumb2
 
-    assert Crumb(op.expanduser('~'))._abspath() == op.expanduser('~')
+    home_crumb = Crumb(op.expanduser('~'), ignore_list=['a*'])
+    assert home_crumb._abspath() == op.expanduser('~')
+
+    abs_home_crumb = home_crumb.abspath()
+    assert abs_home_crumb._ignore == ['a*']
+    assert abs_home_crumb._ignore == home_crumb._ignore
+
+    abs_home_crumb = home_crumb.abspath()
+    assert abs_home_crumb._ignore == ['a*']
+    assert abs_home_crumb._ignore == home_crumb._ignore
+
+    import getpass
+    username = getpass.getuser()
+    user_folder = op.join('{base}', username)
+    old_dir = os.getcwd()
+    os.chdir(op.join(op.expanduser('~'), '..'))
+    home_crumb = Crumb(user_folder, ignore_list=['a*'])
+    assert home_crumb._abspath(first_is_basedir=True) == op.expanduser('~')
+
+    abs_home_crumb = home_crumb.abspath()
+    assert abs_home_crumb._ignore == ['a*']
+    assert abs_home_crumb._ignore == home_crumb._ignore
+
+    os.chdir(old_dir)
 
     base_dir = BASE_DIR
     crumb2 = crumb.replace(base_dir=base_dir)
