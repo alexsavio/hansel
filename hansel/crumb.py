@@ -53,11 +53,10 @@ class Crumb(object):
     _touch        = partial(_touch,        start_end_syms=_start_end_syms)
     _split_exists = partial(_split_exists, start_end_syms=_start_end_syms)
 
-
     def __init__(self, crumb_path, ignore_list=()):
         self._path   = _get_path(crumb_path)
-        self._argidx = OrderedDict() # in which order the crumb argument appears
-        self._argval = {} # what is the value of the argument in the current path
+        self._argidx = OrderedDict()  # in which order the crumb argument appears
+        self._argval = {}  # what is the value of the argument in the current path
         self._ignore = ignore_list
         self._update()
 
@@ -92,7 +91,6 @@ class Crumb(object):
     def _clean(self):
         """ Clean up the private utility members, i.e., _argidx. """
         self._argidx = OrderedDict()
-        self._argval = {}
 
     @classmethod
     def copy(cls, crumb):
@@ -300,8 +298,24 @@ class Crumb(object):
 
         return vals
 
+    def _check_argidx(self, arg_names):
+        """ Raise a KeyError if any of the arguments in arg_names is not a crumb
+        argument name in self path.
+        Parameters
+        ----------
+        arg_names: sequence of str
+            Names of crumb arguments
+
+        Raises
+        ------
+        KeyError
+        """
+        if not set(arg_names).issubset(set(self._argidx.keys())):
+            raise KeyError("Expected `arg_names` to be a subset of ({}),"
+                           " got {}.".format(list(self._argidx.keys()), arg_names))
+
     def setitems(self, **kwargs):
-        """ Set the crumb arguments in path to the given values in kwargs and updates
+        """ Set the crumb arguments in path to the given values in kwargs and update
         self accordingly.
         Parameters
         ----------
@@ -311,17 +325,12 @@ class Crumb(object):
         -------
         crumb: Crumb
         """
-        for arg_name in kwargs:
-            if arg_name not in self._argidx:
-                raise KeyError("Expected `arg_name` to be one of ({}),"
-                               " got {}.".format(list(self._argidx), arg_name))
+        self._check_argidx(kwargs.keys())
 
         self.path = self._replace(self._path, **kwargs)
-        argval = deepcopy(self._argval)
-
         self._update()
-        self._argval = argval
         self._argval.update(**kwargs)
+
         return self
 
     def replace(self, **kwargs):
@@ -431,10 +440,7 @@ class Crumb(object):
         >>> cr = Crumb(op.join(op.expanduser('~'), '{user_folder}'))
         >>> user_folders = cr.ls('user_folder',fullpath=True,make_crumbs=True)
         """
-        if arg_name not in self._argidx:
-            raise ValueError("Expected `arg_name` to be one of ({}),"
-                             " got {}.".format(tuple(self._argidx) + tuple(self._argval),
-                                               arg_name))
+        self._check_argidx([arg_name])
 
         start_sym, _ = self._start_end_syms
 

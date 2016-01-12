@@ -269,7 +269,7 @@ def test_str(crumb):
 def test_ls_raises():
     crumb = Crumb(op.join('{home}', '{user_folder}'))
 
-    pytest.raises(ValueError, crumb.ls, 'hansel')
+    pytest.raises(KeyError, crumb.ls, 'hansel')
 
     pytest.raises(NotImplementedError, crumb.ls, 'home')
 
