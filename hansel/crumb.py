@@ -13,7 +13,7 @@ from   functools   import partial
 
 from   six import string_types
 
-from   .utils import remove_duplicates, list_children
+from   .utils import list_children
 from   ._utils import (_get_path, _arg_name,
                        _is_crumb_arg, _replace,
                        _split_exists, _split,
@@ -432,7 +432,7 @@ class Crumb(object):
         >>> cr = Crumb(op.join(op.expanduser('~'), '{user_folder}'))
         >>> user_folders = cr.ls('user_folder',fullpath=True,make_crumbs=True)
         """
-        if arg_name not in self._argidx and arg_name not in self._argval:
+        if arg_name not in self._argidx:
             raise ValueError("Expected `arg_name` to be one of ({}),"
                              " got {}.".format(tuple(self._argidx) + tuple(self._argval),
                                                arg_name))
@@ -449,11 +449,7 @@ class Crumb(object):
         values_map = self.values_map(arg_name, check_exists=check_exists)
 
         if fullpath:
-            if make_crumbs:
-                paths = sorted(self._build_paths(values_map))
-                paths = [self.from_path(path) for path in paths]  # TODO: set _argval
-            else:
-                paths = sorted(self._build_paths(values_map))
+            paths = sorted(self._build_paths(values_map, make_crumbs=make_crumbs))
 
         else:
             paths = [dict(val)[arg_name] for val in values_map]
@@ -565,16 +561,16 @@ class Crumb(object):
         -------
         values: list of str
         """
-        return self.ls(arg_name, fullpath=False, make_crumbs=False, check_exists=True)
+        if arg_name in self._argval:
+            return self._argval[arg_name]
+        else:
+            return self.ls(arg_name, fullpath=False, make_crumbs=False, check_exists=True)
 
     def __setitem__(self, key, value):
         if key not in self._argidx:
             raise KeyError("Expected `arg_name` to be one of ({}),"
                            " got {}.".format(list(self._argidx), key))
-
-        #return self.replace(**{key: value})
-        self._path = self._replace(self._path, **{key: value})
-        self._update()
+        _ = self.setitems(**{key: value})
 
     def __ge__(self, other):
         return self._path >= str(other)
@@ -614,6 +610,9 @@ class Crumb(object):
             return False
 
         if self._argidx != other._argidx:
+            return False
+
+        if self._argval != other._argval:
             return False
 
         if self._ignore != other._ignore:

@@ -82,6 +82,8 @@ def test_replace_and_setitem(crumb):
 
     assert crumb2._path == op.join(base_dir, crumb._path.replace('{base_dir}/', ''))
     assert 'base_dir' not in crumb2._argidx
+    assert 'base_dir' in crumb2._argval
+    assert crumb2['base_dir'] == base_dir
 
     # use setitem
     crumb3 = crumb.copy(crumb)
@@ -216,6 +218,19 @@ def test_split(crumb):
             assert Crumb._is_crumb_arg(s) or isinstance(s, string_types)
 
 
+def test_from_path(crumb):
+    cr = Crumb.copy(crumb)
+    assert cr is not crumb
+    assert cr == crumb
+
+    cr2 = crumb.from_path(crumb)
+    assert cr2 is not crumb
+    assert cr2 == crumb
+
+    assert cr2 is not cr
+    assert cr2 == cr
+
+
 def test_is_valid_a_bit(crumb):
     assert Crumb.is_valid(crumb)
 
@@ -258,7 +273,8 @@ def test_ls_raises():
 
     pytest.raises(NotImplementedError, crumb.ls, 'home')
 
-    pytest.raises(ValueError, crumb.ls, 'user',
+    crumb['home'] = op.expanduser('~')
+    pytest.raises(ValueError, crumb.ls, 'user_folder',
                   make_crumbs=True, fullpath=False)
 
 
@@ -473,11 +489,18 @@ def test_ls_with_check(tmp_crumb):
     pytest.raises(IOError, modalities2[0].__getitem__, 'image')
 
     img_crumb = tmp_crumb.replace(image='mprage1.nii')
+    assert 'image' in img_crumb._argval
+    assert img_crumb['image'] == 'mprage1.nii'
+
     img_crumb['modality'] = 'anat'
+    assert 'modality' in img_crumb._argval
+    assert img_crumb['modality'] == 'anat'
 
     assert img_crumb['session_id'].count('session_1') > img_crumb['session_id'].count('session_0')
 
     img_crumb['session_id'] = 'session_0'
+    assert 'session_id' in img_crumb._argval
+    assert img_crumb['session_id'] == 'session_0'
 
     assert 'subj_0' not in img_crumb['subject_id']
 
