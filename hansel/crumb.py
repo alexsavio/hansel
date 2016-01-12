@@ -399,8 +399,7 @@ class Crumb(object):
             return [self._replace(self._path, **dict(val)) for val in values_map]
 
     def ls(self, arg_name, fullpath=True, make_crumbs=True, check_exists=False):
-        """
-        Return the list of values for the argument crumb `arg_name`.
+        """ Return the list of values for the argument crumb `arg_name`.
         This will also unfold any other argument crumb that appears before in the
         path.
         Parameters
@@ -478,10 +477,10 @@ class Crumb(object):
         return rem_deps
 
     def touch(self):
-        """ Create a leaf directory and all intermediate ones
-        using the non crumbed part of `crumb_path`.
-        If the target directory already exists, raise an IOError
-        if exist_ok is False. Otherwise no exception is raised.
+        """ Create a leaf directory and all intermediate ones using the non
+        crumbed part of `crumb_path`.
+        If the target directory already exists, raise an IOError if exist_ok
+        is False. Otherwise no exception is raised.
         Parameters
         ----------
         crumb_path: str
