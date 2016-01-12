@@ -162,8 +162,53 @@ or
     anat_paths = crumb.ls('image')
 
 
-There are more features such as creating folder trees with a value of maps for the crumbs and also
-check the feasibility of a crumb path.
+There are more features and possibilities:
+
+- such as creating folder trees with a value of maps for the crumbs:
+
+.. code:: python
+
+    from crumb import mktree, ParameterGrid
+
+    crumb = Crumb("/home/hansel/raw/{subject_id}/{session_id}/{modality}/{image}")
+
+    values_map = {'session_id': ['session_' + str(i) for i in range(2)],
+                  'subject_id': ['subj_' + str(i) for i in range(3)]}
+
+    mktree(crumb, list(ParameterGrid(values_map)))
+
+
+- check the feasibility of a crumb path:
+
+.. code:: python
+
+    crumb = Crumb("/home/hansel/raw/{subject_id}/{session_id}/{modality}/{image}")
+    # ask if there is any subject with the image 'rest.png'.
+    crumb['image'] = 'rest.png'
+    assert crumb.exists()
+
+
+- check which subjects have 'rest.png' and 'pet.png' files:
+
+.. code:: python
+
+    crumb = Crumb("/home/hansel/raw/{subject_id}/{session_id}/{modality}/{image}")
+    # ask if there is any subject with the image 'rest.png'.
+    rest_crumb = crumb.replace(image='rest.png')
+    pet_crumb  = crumb.replace(image='pet.png')
+    set(pet_crumb['subject_id']).intersection(set(rest_crumb['subject_id']))
+
+
+- unfold the whole crumb path to get the whole filetree in a list of paths:
+
+.. code:: python
+
+    crumb = Crumb("/home/hansel/raw/{subject_id}/{session_id}/{modality}/{image}")
+    crumbs = crumb.unfold()
+
+    # and you can ask for the value of the crumb argument in each element
+    crumbs[0]['subject_id']
+
 
 More functionalities, ideas and comments are welcome.
 
