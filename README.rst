@@ -162,13 +162,16 @@ or
     anat_paths = crumb.ls('image')
 
 
-There are more features and possibilities:
+More features
+-------------
 
-- such as creating folder trees with a value of maps for the crumbs:
+There are more possibilities such as:
+
+- creating folder trees with a value of maps for the crumbs:
 
 .. code:: python
 
-    from crumb import mktree, ParameterGrid
+    from hansel import mktree, ParameterGrid
 
     crumb = Crumb("/home/hansel/raw/{subject_id}/{session_id}/{modality}/{image}")
 
@@ -183,20 +186,23 @@ There are more features and possibilities:
 .. code:: python
 
     crumb = Crumb("/home/hansel/raw/{subject_id}/{session_id}/{modality}/{image}")
-    # ask if there is any subject with the image 'rest.png'.
-    crumb['image'] = 'rest.png'
+
+    # ask if there is any subject with the image 'lollipop.png'.
+    crumb['image'] = 'lollipop.png'
     assert crumb.exists()
 
 
-- check which subjects have 'rest.png' and 'pet.png' files:
+- check which subjects have 'jujube.png' and 'toffee.png' files:
 
 .. code:: python
 
     crumb = Crumb("/home/hansel/raw/{subject_id}/{session_id}/{modality}/{image}")
-    # ask if there is any subject with the image 'rest.png'.
-    rest_crumb = crumb.replace(image='rest.png')
-    pet_crumb  = crumb.replace(image='pet.png')
-    set(pet_crumb['subject_id']).intersection(set(rest_crumb['subject_id']))
+
+    toffee_crumb = crumb.replace(image='toffee.png')
+    jujube_crumb = crumb.replace(image='jujube.png')
+
+    # using sets functionality
+    set(toffee_crumb['subject_id']).intersection(set(jujube_crumb['subject_id']))
 
 
 - unfold the whole crumb path to get the whole filetree in a list of paths:
