@@ -56,7 +56,8 @@ class Crumb(object):
 
     def __init__(self, crumb_path, ignore_list=()):
         self._path   = _get_path(crumb_path)
-        self._argidx = OrderedDict()
+        self._argidx = OrderedDict() # in which order the crumb argument appears
+        self._argval = {} # what is the value of the argument in the current path
         self._ignore = ignore_list
         self._update()
 
@@ -91,6 +92,7 @@ class Crumb(object):
     def _clean(self):
         """ Clean up the private utility members, i.e., _argidx. """
         self._argidx = OrderedDict()
+        self._argval = {}
 
     @classmethod
     def copy(cls, crumb):
@@ -104,7 +106,9 @@ class Crumb(object):
         copy: Crumb
         """
         if isinstance(crumb, cls):
-            return cls(crumb._path, ignore_list=crumb._ignore)
+            nucr = cls(crumb._path, ignore_list=crumb._ignore)
+            nucr._argval = deepcopy(crumb._argval)
+            return nucr
         elif isinstance(crumb, string_types):
             return cls.from_path(crumb)
         else:
@@ -296,6 +300,30 @@ class Crumb(object):
 
         return vals
 
+    def setitems(self, **kwargs):
+        """ Set the crumb arguments in path to the given values in kwargs and updates
+        self accordingly.
+        Parameters
+        ----------
+        kwargs: strings
+
+        Returns
+        -------
+        crumb: Crumb
+        """
+        for arg_name in kwargs:
+            if arg_name not in self._argidx:
+                raise KeyError("Expected `arg_name` to be one of ({}),"
+                               " got {}.".format(list(self._argidx), arg_name))
+
+        self.path = self._replace(self._path, **kwargs)
+        argval = deepcopy(self._argval)
+
+        self._update()
+        self._argval = argval
+        self._argval.update(**kwargs)
+        return self
+
     def replace(self, **kwargs):
         """ Return a copy of self with the crumb arguments in
         `kwargs` replaced by its values.
@@ -307,14 +335,8 @@ class Crumb(object):
         -------
         crumb:
         """
-        for arg_name in kwargs:
-            if arg_name not in self._argidx:
-                raise KeyError("Expected `arg_name` to be one of ({}),"
-                                 " got {}.".format(list(self._argidx), arg_name))
-
         cr = self.copy(self)
-        cr._path = cr._replace(self._path, **kwargs)
-        return Crumb.from_path(cr._path)
+        return cr.setitems(**kwargs)
 
     def _arg_deps(self, arg_name):
         """ Return a subdict of `self._argidx` with the
@@ -357,17 +379,24 @@ class Crumb(object):
 
         return values_map_checked
 
-    def _build_paths(self, values_map):
+    def _build_paths(self, values_map, make_crumbs=False):
         """ Return a list of paths from each tuple of args from `values_map`
         Parameters
         ----------
         values_map: list of sequences of 2-tuple
 
+        make_crumbs: bool
+            If `make_crumbs` is True will create a Crumb for
+            each element of the result.
+
         Returns
         -------
-        paths: list of str
+        paths: list of str or list of Crumb
         """
-        return [self._replace(self._path, **dict(val)) for val in values_map]
+        if make_crumbs:
+            return [self.replace(**dict(val)) for val in values_map]
+        else:
+            return [self._replace(self._path, **dict(val)) for val in values_map]
 
     def ls(self, arg_name, fullpath=True, make_crumbs=True, check_exists=False):
         """
@@ -403,31 +432,31 @@ class Crumb(object):
         >>> cr = Crumb(op.join(op.expanduser('~'), '{user_folder}'))
         >>> user_folders = cr.ls('user_folder',fullpath=True,make_crumbs=True)
         """
-        if arg_name not in self._argidx:
+        if arg_name not in self._argidx and arg_name not in self._argval:
             raise ValueError("Expected `arg_name` to be one of ({}),"
-                             " got {}.".format(list(self._argidx), arg_name))
+                             " got {}.".format(tuple(self._argidx) + tuple(self._argval),
+                                               arg_name))
 
         start_sym, _ = self._start_end_syms
 
         # if the first chunk of the path is a parameter, I am not interested in this (for now)
         if self._path.startswith(start_sym):
-            raise NotImplementedError("Can't list paths that starts"
-                                      " with an argument.")
+            raise NotImplementedError("Can't list paths that start with an argument.")
 
         if make_crumbs and not fullpath:
             raise ValueError("`make_crumbs` can only work if `fullpath` is also True.")
 
         values_map = self.values_map(arg_name, check_exists=check_exists)
 
-        if not fullpath and not make_crumbs:
+        if fullpath:
+            if make_crumbs:
+                paths = sorted(self._build_paths(values_map))
+                paths = [self.from_path(path) for path in paths]  # TODO: set _argval
+            else:
+                paths = sorted(self._build_paths(values_map))
+
+        else:
             paths = [dict(val)[arg_name] for val in values_map]
-
-        elif fullpath and not make_crumbs:
-            paths = sorted(self._build_paths(values_map))
-
-        elif fullpath and make_crumbs:
-            paths = sorted(self._build_paths(values_map))
-            paths = [self.from_path(path) for path in paths]
 
         return paths
 
@@ -543,6 +572,7 @@ class Crumb(object):
             raise KeyError("Expected `arg_name` to be one of ({}),"
                            " got {}.".format(list(self._argidx), key))
 
+        #return self.replace(**{key: value})
         self._path = self._replace(self._path, **{key: value})
         self._update()
 
