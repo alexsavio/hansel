@@ -174,6 +174,15 @@ def test_abspath(crumb):
     assert abs_home_crumb._ignore == ['a*']
     assert abs_home_crumb._ignore == home_crumb._ignore
 
+    base_dir = BASE_DIR
+    crumb2 = crumb.replace(base_dir=base_dir)
+    crumbc = crumb2.abspath(first_is_basedir=False)
+    assert crumbc == crumb2
+    assert crumbc is not crumb2
+
+
+def test_abspath2():
+    # do a real test with user folder and ignore_list
     import getpass
     username = getpass.getuser()
     user_folder = op.join('{base}', username)
@@ -187,12 +196,6 @@ def test_abspath(crumb):
     assert abs_home_crumb._ignore == home_crumb._ignore
 
     os.chdir(old_dir)
-
-    base_dir = BASE_DIR
-    crumb2 = crumb.replace(base_dir=base_dir)
-    crumbc = crumb2.abspath(first_is_basedir=False)
-    assert crumbc == crumb2
-    assert crumbc is not crumb2
 
 
 def test_copy(crumb):
