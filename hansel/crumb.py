@@ -165,7 +165,6 @@ class Crumb(object):
             the first argument will be replaced by the absolute path to the current dir,
             otherwise the absolute path to the current dir will be added as a prefix.
 
-
         Returns
         -------
         abs_crumb: Crumb
@@ -190,7 +189,6 @@ class Crumb(object):
             If True and the current crumb path starts with a crumb argument and first_is_basedir,
             the first argument will be replaced by the absolute path to the current dir,
             otherwise the absolute path to the current dir will be added as a prefix.
-
 
         Returns
         -------
@@ -478,12 +476,12 @@ class Crumb(object):
         values_map = self.values_map(arg_name, check_exists=check_exists)
 
         if fullpath:
-            paths = sorted(self._build_paths(values_map, make_crumbs=make_crumbs))
+            paths = self._build_paths(values_map, make_crumbs=make_crumbs)
 
         else:
             paths = [dict(val)[arg_name] for val in values_map]
 
-        return paths
+        return sorted(paths)
 
     def _remaining_deps(self, arg_names):
         """ Return the name of the arguments that are dependencies of `arg_names`.
