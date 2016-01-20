@@ -7,7 +7,6 @@ import pytest
 
 import os
 import os.path  as op
-import shutil
 from   copy     import copy
 from   pathlib  import Path
 from   tempfile import TemporaryDirectory
@@ -41,8 +40,6 @@ def tmp_crumb(request):
 
     def fin():
         print("teardown tmp_crumb")
-    #    shutil.rmtree(base_dir.name)
-    #    #os.removedirs(base_dir.name)
 
     request.addfinalizer(fin)
     return crumb2  # provide the fixture value
@@ -423,13 +420,14 @@ def test_arg_values(tmp_crumb):
 def test_exists(tmp_crumb):
     assert not op.exists(tmp_crumb.split()[0])
 
-    values_map = {'session_id': ['session_' + str(i) for i in range(2)],
-                  'subject_id': ['subj_' + str(i) for i in range(3)]}
+    values_dict = {'session_id': ['session_{:02}'.format(i) for i in range(2)],
+                   'subject_id': ['subj_{:03}'.format(i)    for i in range(3)],
+                  }
 
     pytest.raises(IOError, tmp_crumb._arg_values, 'subject_id')
     assert not tmp_crumb.exists()
 
-    _ = mktree(tmp_crumb, list(ParameterGrid(values_map)))
+    _ = mktree(tmp_crumb, list(ParameterGrid(values_dict)))
 
     assert tmp_crumb.exists()
 
@@ -444,14 +442,15 @@ def test_contains(tmp_crumb):
 
     tmp_crumb['image'] = 'image'
 
-    assert 'image' not in tmp_crumb
+    assert 'image' not in tmp_crumb._argidx
+    assert 'image' in tmp_crumb
 
 
 def test_ls_with_check(tmp_crumb):
     assert not op.exists(tmp_crumb._path)
 
-    values_dict = {'session_id': ['session_' + str(i) for i in range(2)],
-                   'subject_id': ['subj_' + str(i) for i in range(3)],
+    values_dict = {'session_id': ['session_{:02}'.format(i) for i in range(2)],
+                   'subject_id': ['subj_{:03}'.format(i)    for i in range(3)],
                    'modality':   ['anat'],
                    'image':      ['mprage1.nii', 'mprage2.nii', 'mprage3.nii'],
                    }
@@ -460,7 +459,8 @@ def test_ls_with_check(tmp_crumb):
 
     assert op.exists(tmp_crumb.split()[0])
 
-    assert all([op.exists(p) for p in paths])
+    assert all([op.exists(p._path) for p in paths])
+    assert all([p.exists() for p in paths])
 
     images = tmp_crumb.ls('image', fullpath=True, make_crumbs=True, check_exists=True)
 
@@ -521,13 +521,39 @@ def test_ls_with_check(tmp_crumb):
     assert 'modality' in img_crumb._argval
     assert img_crumb['modality'] == 'anat'
 
-    assert img_crumb['session_id'].count('session_1') > img_crumb['session_id'].count('session_0')
+    assert img_crumb['session_id'].count('session_01') > img_crumb['session_id'].count('session_00')
 
-    img_crumb['session_id'] = 'session_0'
+    img_crumb['session_id'] = 'session_00'
     assert 'session_id' in img_crumb._argval
-    assert img_crumb['session_id'] == 'session_0'
+    assert img_crumb['session_id'] == 'session_00'
 
-    assert 'subj_0' not in img_crumb['subject_id']
+    assert 'subj_000' not in img_crumb['subject_id']
+
+
+def test_regex(tmp_crumb):
+    assert not op.exists(tmp_crumb._path)
+
+    values_dict = {'session_id': ['session_{:02}'.format(i) for i in range(  2)],
+                   'subject_id': ['subj_{:03}'.format(i)    for i in range(100)],
+                   'modality':   ['anat'],
+                   'image':      ['mprage1.nii'],
+                   }
+
+    _ = mktree(tmp_crumb, list(ParameterGrid(values_dict)))
+
+    # crumb = Crumb(tmp_crumb._path.replace('{subject_id}', '{subject_id:subj_02*}'))  # fnmatch
+    crumb = Crumb(tmp_crumb._path.replace('{subject_id}', '{subject_id:^subj_02.*$}'))  # re.match
+
+    assert crumb['subject_id'] == [ 'subj_020',
+                                    'subj_021',
+                                    'subj_022',
+                                    'subj_023',
+                                    'subj_024',
+                                    'subj_025',
+                                    'subj_026',
+                                    'subj_027',
+                                    'subj_028',
+                                    'subj_029']
 
 
 def test_has_files(tmp_crumb):
@@ -535,8 +561,8 @@ def test_has_files(tmp_crumb):
 
     assert not tmp_crumb.has_files()
 
-    values_dict = {'session_id': ['session_' + str(i) for i in range(2)],
-                   'subject_id': ['subj_' + str(i) for i in range(3)],
+    values_dict = {'session_id': ['session_{:02}'.format(i) for i in range( 2)],
+                   'subject_id': ['subj_{:03}'.format(i)    for i in range( 3)],
                    'modality':   ['anat'],
                    'image':      ['mprage1.nii', 'mprage2.nii', 'mprage3.nii'],
                    }
@@ -547,7 +573,7 @@ def test_has_files(tmp_crumb):
 
     assert not tmp_crumb.has_files()
 
-    pa = Path(paths[0])
+    pa = Path(str(paths[0]))
     pa.rmdir()
     pa.touch()
 

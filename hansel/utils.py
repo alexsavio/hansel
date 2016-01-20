@@ -40,9 +40,8 @@ def remove_ignored(ignore, strs):
     return nustrs
 
 
-def regex_match_filter(pattern, items):
-    """ Return the items from `items` that match the regular expression in `pattern`.
-
+def fnmatch_filter(pattern, items):
+    """ Return the items from `items` that match the fnmatch expression in `pattern`.
     Parameters
     ----------
     pattern: str
@@ -53,7 +52,25 @@ def regex_match_filter(pattern, items):
 
     Returns
     -------
-    matchs: list of str
+    matches: list of str
+        Matched items
+    """
+    return [item for item in items if fnmatch.fnmatch(item, pattern)]
+
+
+def regex_match_filter(pattern, items):
+    """ Return the items from `items` that match the regular expression in `pattern`.
+    Parameters
+    ----------
+    pattern: str
+        Regular expression
+
+    items: list of str
+        The items to be checked
+
+    Returns
+    -------
+    matches: list of str
         Matched items
     """
     test = re.compile(pattern)
@@ -62,7 +79,6 @@ def regex_match_filter(pattern, items):
 
 def list_children(path, just_dirs=False):
     """ Return the immediate elements (files and folders) in `path`.
-
     Parameters
     ----------
     path: str
@@ -98,9 +114,8 @@ def list_children(path, just_dirs=False):
     return vals
 
 
-def list_subpaths(path, just_dirs=False, ignore=None, re=None):
+def list_subpaths(path, just_dirs=False, ignore=None, pattern=None):
     """ Return the immediate elements (files and folders) in `path`.
-
     Parameters
     ----------
     path: str
@@ -111,7 +126,7 @@ def list_subpaths(path, just_dirs=False, ignore=None, re=None):
     ignore: sequence of str
         Sequence of glob patterns to ignore from the listing.
 
-    re: str
+    pattern: str
         Regular expression that the result items must match.
 
     Returns
@@ -120,11 +135,12 @@ def list_subpaths(path, just_dirs=False, ignore=None, re=None):
     """
     paths = list_children(path, just_dirs=just_dirs)
 
-    if ignore is not None:
+    if ignore and ignore is not None:
         paths = remove_ignored(ignore, paths)
 
-    if re is not None:
-        paths = regex_match_filter(re, paths)
+    if pattern and pattern is not None:
+        #paths = fnmatch_filter(pattern, paths)
+        paths = regex_match_filter(pattern, paths)
 
     return paths
 

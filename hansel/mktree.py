@@ -56,4 +56,6 @@ def mktree(crumb, values_map):
 
         paths.append(crumb.replace(**aval))
 
-    return [crumb._touch(str(path)) for path in paths]
+    _ = [crumb._touch(str(path)) for path in paths]
+
+    return paths
