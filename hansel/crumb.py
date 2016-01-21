@@ -60,7 +60,7 @@ class Crumb(object):
     _arg_params   = partial(_arg_params,   start_end_syms=_start_end_syms, reg_sym=_regex_sym)
     is_valid      = partial(is_valid,      start_end_syms=_start_end_syms)
     has_crumbs    = partial(has_crumbs,    start_end_syms=_start_end_syms)
-    _replace      = partial(_replace,      start_end_syms=_start_end_syms)
+    _replace      = partial(_replace,      start_end_syms=_start_end_syms) # this is set inside the class
     _split        = partial(_split,        start_end_syms=_start_end_syms)
     _touch        = partial(_touch,        start_end_syms=_start_end_syms)
     _split_exists = partial(_split_exists, start_end_syms=_start_end_syms)
@@ -104,10 +104,15 @@ class Crumb(object):
         self._clean()
         self._check()
         self._set_argdicts()
-        self._set_match_method()
+        self._set_match_function()
+        self._set_replace_function()
 
-    def _set_match_method(self):
-        """ Will update self._match_filter with a regular expression
+    def _set_replace_function(self):
+        """ Set self._replace function as a partial function, adding regex=self._argreg."""
+        self._replace = partial(self._replace, regexes=self._argreg)
+
+    def _set_match_function(self):
+        """ Update self._match_filter with a regular expression
         matching function depending on the value of self._re_method."""
         if self._re_method == 'fnmatch':
             self._match_filter = fnmatch_filter
@@ -327,7 +332,6 @@ class Crumb(object):
             for aval in arg_values:
                 #  create the part of the crumb path that is already specified
                 path = self._split(self._replace(self._path,
-                                                 regexes=self._argreg,
                                                  **dict(aval)))[0]
 
                 paths = list_subpaths(path,

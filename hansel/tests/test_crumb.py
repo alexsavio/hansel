@@ -569,8 +569,39 @@ def test_regex(tmp_crumb):
                   tmp_crumb._path.replace('{subject_id}', '{subject_id:subj_02*}'),
                   regex='hansel')
 
+
+def test_regex_replace(tmp_crumb):
+    assert not op.exists(tmp_crumb._path)
+
+    values_dict = {'session_id': ['session_{:02}'.format(i) for i in range(  2)],
+                   'subject_id': ['subj_{:03}'.format(i)    for i in range(100)],
+                   'modality':   ['anat'],
+                   'image':      ['mprage1.nii'],
+                   }
+
+    _ = mktree(tmp_crumb, list(ParameterGrid(values_dict)))
+
+    crumb = Crumb(tmp_crumb._path.replace('{subject_id}', '{subject_id:subj_02*}'),
+                  regex='fnmatch')  # fnmatch
+
     anat_crumb = crumb.replace(modality='anat')
     assert anat_crumb.exists()
+
+    fn_subj_ids = {cr['subject_id'] for cr in anat_crumb.ls('session_id', check_exists=True)}
+
+    assert fn_subj_ids == { 'subj_020',
+                            'subj_021',
+                            'subj_022',
+                            'subj_023',
+                            'subj_024',
+                            'subj_025',
+                            'subj_026',
+                            'subj_027',
+                            'subj_028',
+                            'subj_029'}
+
+    sessions = {cr['session_id'] for cr in anat_crumb.ls('session_id', check_exists=True)}
+    assert sessions == set(values_dict['session_id'])
 
 
 def test_has_files(tmp_crumb):
