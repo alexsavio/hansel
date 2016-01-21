@@ -17,7 +17,7 @@ def _dict_popitems(adict, **kwargs):
     if not kwargs:
         return
 
-    _ = [adict.pop(k) for k in kwargs]
+    _ = [adict.pop(k) for k in kwargs if k in adict]
 
 
 def _get_path(crumb_path):
