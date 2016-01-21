@@ -28,7 +28,10 @@ def test_mktree_dicts(tmp_crumb):
     assert not op.exists(tmp_crumb.split()[0])
 
     values_map = {'session_id': ['session_{}'.format(i) for i in range(2)],
-                  'subject_id': ['subj_{}'.format(i)    for i in range(3)]}
+                  'subject_id': ['subj_{}'.format(i)    for i in range(3)],
+                  'modality':   ['anat'],
+                  'image':      ['mprage1.nii'],
+                  }
 
     nupaths = mktree(tmp_crumb, list(ParameterGrid(values_map)))
 

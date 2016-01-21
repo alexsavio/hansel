@@ -7,6 +7,7 @@ import pytest
 
 import os
 import os.path  as op
+import shutil
 from   copy     import copy
 from   pathlib  import Path
 from   tempfile import TemporaryDirectory
@@ -422,6 +423,8 @@ def test_exists(tmp_crumb):
 
     values_dict = {'session_id': ['session_{:02}'.format(i) for i in range(2)],
                    'subject_id': ['subj_{:03}'.format(i)    for i in range(3)],
+                   'modality':   ['anat'],
+                   'image':      ['mprage1.nii', 'mprage2.nii', 'mprage3.nii'],
                   }
 
     pytest.raises(IOError, tmp_crumb._arg_values, 'subject_id')
@@ -432,6 +435,18 @@ def test_exists(tmp_crumb):
     assert tmp_crumb.exists()
 
     assert not Crumb._split_exists('/_/asdfasdfasdf?/{hansel}')
+
+
+def test_exists2(tmp_crumb):
+    assert not op.exists(tmp_crumb.split()[0])
+
+    values_dict = {'session_id': ['session_{:02}'.format(i) for i in range(2)],
+                   'subject_id': ['subj_{:03}'.format(i)    for i in range(3)],
+                  }
+
+    _ = mktree(tmp_crumb, list(ParameterGrid(values_dict)))
+
+    assert not tmp_crumb.exists()
 
 
 def test_contains(tmp_crumb):
@@ -493,15 +508,15 @@ def test_ls_with_check(tmp_crumb):
     assert images != images2
     assert len(images) == len(images2) + 3
 
-    assert modalities == modalities2
-    assert all([mod.exists() for mod in modalities])
-    assert all([mod.exists() for mod in modalities2])
+    assert modalities != modalities2
+    assert not all([mod.exists() for mod in modalities])
+    assert     all([mod.exists() for mod in modalities2])
 
     assert all([isinstance(smod, str)   for smod in str_modalities2])
     assert all([isinstance(mod,  Crumb) for  mod in modalities2])
     assert all([mod._path == smod for mod, smod in zip(sorted(modalities2), sorted(str_modalities2))])
 
-    os.removedirs(modalities2[0].split()[0])
+    shutil.rmtree(modalities2[0].split()[0], ignore_errors=True)
 
     modalities3 = tmp_crumb.ls('modality', fullpath=True, make_crumbs=True, check_exists=True)
 
@@ -521,7 +536,7 @@ def test_ls_with_check(tmp_crumb):
     assert 'modality' in img_crumb._argval
     assert img_crumb['modality'] == 'anat'
 
-    assert img_crumb['session_id'].count('session_01') > img_crumb['session_id'].count('session_00')
+    assert img_crumb['session_id'].count('session_01') == img_crumb['session_id'].count('session_00')
 
     img_crumb['session_id'] = 'session_00'
     assert 'session_id' in img_crumb._argval
