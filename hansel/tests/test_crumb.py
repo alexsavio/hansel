@@ -569,6 +569,9 @@ def test_regex(tmp_crumb):
                   tmp_crumb._path.replace('{subject_id}', '{subject_id:subj_02*}'),
                   regex='hansel')
 
+    anat_crumb = crumb.replace(modality='anat')
+    assert anat_crumb.exists()
+
 
 def test_has_files(tmp_crumb):
     assert not op.exists(tmp_crumb._path)
