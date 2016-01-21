@@ -577,12 +577,9 @@ class Crumb(object):
 
         last, _ = self._lastarg()
 
-        paths = self.ls(last, fullpath=True, make_crumbs=False, check_exists=True)
+        paths = self.ls(last, fullpath=True, make_crumbs=False, check_exists=False)
 
-        if not paths:
-            return False
-        else:
-            return all([self._split_exists(lp) for lp in paths])
+        return any([self._split_exists(lp) for lp in paths])
 
     def has_files(self):
         """ Return True if the current crumb path has any file in its
