@@ -577,7 +577,7 @@ class Crumb(object):
 
         last, _ = self._lastarg()
 
-        paths = self.ls(last, fullpath=True, make_crumbs=False, check_exists=False)
+        paths = self.ls(last, fullpath=True, make_crumbs=False, check_exists=True)
 
         return all([self._split_exists(lp) for lp in paths])
 
