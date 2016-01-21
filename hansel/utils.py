@@ -114,7 +114,7 @@ def list_children(path, just_dirs=False):
     return vals
 
 
-def list_subpaths(path, just_dirs=False, ignore=None, pattern=None):
+def list_subpaths(path, just_dirs=False, ignore=None, pattern=None, filter_func=fnmatch_filter):
     """ Return the immediate elements (files and folders) in `path`.
     Parameters
     ----------
@@ -129,6 +129,11 @@ def list_subpaths(path, just_dirs=False, ignore=None, pattern=None):
     pattern: str
         Regular expression that the result items must match.
 
+    filter_func: func
+        The function to match the patterns.
+        Must have as arguments: (pattern, paths) and return
+        a subset of paths.
+
     Returns
     -------
     paths: list of str
@@ -139,8 +144,7 @@ def list_subpaths(path, just_dirs=False, ignore=None, pattern=None):
         paths = remove_ignored(ignore, paths)
 
     if pattern and pattern is not None:
-        #paths = fnmatch_filter(pattern, paths)
-        paths = regex_match_filter(pattern, paths)
+        paths = filter_func(pattern, paths)
 
     return paths
 

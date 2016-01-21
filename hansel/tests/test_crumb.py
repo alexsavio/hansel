@@ -541,19 +541,33 @@ def test_regex(tmp_crumb):
 
     _ = mktree(tmp_crumb, list(ParameterGrid(values_dict)))
 
-    # crumb = Crumb(tmp_crumb._path.replace('{subject_id}', '{subject_id:subj_02*}'))  # fnmatch
-    crumb = Crumb(tmp_crumb._path.replace('{subject_id}', '{subject_id:^subj_02.*$}'))  # re.match
+    crumb = Crumb(tmp_crumb._path.replace('{subject_id}', '{subject_id:^subj_02.*$}'),
+                  regex='re')  # re.match
 
-    assert crumb['subject_id'] == [ 'subj_020',
-                                    'subj_021',
-                                    'subj_022',
-                                    'subj_023',
-                                    'subj_024',
-                                    'subj_025',
-                                    'subj_026',
-                                    'subj_027',
-                                    'subj_028',
-                                    'subj_029']
+    re_subj_ids = crumb['subject_id']
+
+    assert re_subj_ids == [ 'subj_020',
+                            'subj_021',
+                            'subj_022',
+                            'subj_023',
+                            'subj_024',
+                            'subj_025',
+                            'subj_026',
+                            'subj_027',
+                            'subj_028',
+                            'subj_029']
+
+    crumb = Crumb(tmp_crumb._path.replace('{subject_id}', '{subject_id:subj_02*}'),
+                  regex='fnmatch')  # fnmatch
+
+    fn_subj_ids = crumb['subject_id']
+
+    assert fn_subj_ids == re_subj_ids
+
+    pytest.raises(ValueError,
+                  Crumb,
+                  tmp_crumb._path.replace('{subject_id}', '{subject_id:subj_02*}'),
+                  regex='hansel')
 
 
 def test_has_files(tmp_crumb):

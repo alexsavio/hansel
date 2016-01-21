@@ -13,7 +13,7 @@ from   functools   import partial
 
 from   six import string_types
 
-from   .utils import list_subpaths
+from   .utils  import list_subpaths, fnmatch_filter, regex_match_filter
 from   ._utils import (_get_path,
                        _is_crumb_arg,
                        _replace,
@@ -38,6 +38,12 @@ class Crumb(object):
     ignore_list: sequence of str
         A list of `fnmatch` patterns of filenames to be ignored.
 
+    regex: str
+        Choices: 'fnmatch' or 're'
+        If 'fnmatch' will use fnmatch regular expressions to
+        match any expression you may have in a crumb argument.
+        If 're' will use re.match.
+
     Examples
     --------
     >>> crumb = Crumb("{base_dir}/raw/{subject_id}/{session_id}/{modality}/{image}")
@@ -59,11 +65,12 @@ class Crumb(object):
     _touch        = partial(_touch,        start_end_syms=_start_end_syms)
     _split_exists = partial(_split_exists, start_end_syms=_start_end_syms)
 
-    def __init__(self, crumb_path, ignore_list=None):
+    def __init__(self, crumb_path, ignore_list=None, regex='fnmatch'):
         self._path   = _get_path(crumb_path)
         self._argidx = OrderedDict()  # in which order the crumb argument appears
         self._argval = {}  # what is the value of the argument in the current path, if any has been set.
         self._argreg = {}  # what is the regex of the argument
+        self._re_method = regex
 
         if ignore_list is None:
             ignore_list = []
@@ -97,6 +104,18 @@ class Crumb(object):
         self._clean()
         self._check()
         self._set_argdicts()
+        self._set_match_method()
+
+    def _set_match_method(self):
+        """ Will update self._match_filter with a regular expression
+        matching function depending on the value of self._re_method."""
+        if self._re_method == 'fnmatch':
+            self._match_filter = fnmatch_filter
+        elif self._re_method == 're':
+            self._match_filter = regex_match_filter
+        else:
+            raise ValueError('Expected regex method value to be `fnmatch`'
+                             ' or `re`, got {}.'.format(self._re_method))
 
     def _clean(self):
         """ Clean up the private utility members, i.e., _argidx. """
@@ -300,7 +319,8 @@ class Crumb(object):
             vals = list_subpaths(base,
                                  just_dirs=just_dirs,
                                  ignore=self._ignore,
-                                 pattern=self._argreg.get(arg_name, ''))
+                                 pattern=self._argreg.get(arg_name, ''),
+                                 filter_func=self._match_filter)
 
             vals = [[(arg_name, val)] for val in vals]
         else:
@@ -313,7 +333,8 @@ class Crumb(object):
                 paths = list_subpaths(path,
                                       just_dirs=just_dirs,
                                       ignore=self._ignore,
-                                      pattern=self._argreg.get(arg_name, ''))
+                                      pattern=self._argreg.get(arg_name, ''),
+                                      filter_func=self._match_filter)
 
                 #  extend `val` tuples with the new list of values for `aval`
                 vals.extend([aval + [(arg_name, sp)] for sp in paths])
