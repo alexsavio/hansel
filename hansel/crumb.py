@@ -167,9 +167,8 @@ class Crumb(object):
         return self._argidx.get(arg_name, -1)
 
     def isabs(self):
-        """ Return True if the current crumb path has an
-        absolute path, False otherwise.
-        This means that if it is valid and does not start with a `op.sep` character
+        """ Return True if the current crumb path has an absolute path, False otherwise.
+        This means that its path is valid and starts with a `op.sep` character
         or hard disk letter.
         """
         if not self.is_valid(self._path):
@@ -385,6 +384,7 @@ class Crumb(object):
     def replace(self, **kwargs):
         """ Return a copy of self with the crumb arguments in
         `kwargs` replaced by its values.
+        As an analogy to the `str.format` function this function could be called `format`.
         Parameters
         ----------
         kwargs: strings
@@ -397,9 +397,8 @@ class Crumb(object):
         return cr.setitems(**kwargs)
 
     def _arg_deps(self, arg_name):
-        """ Return a subdict of `self._argidx` with the
-         values from the crumb arguments that come before
-         `arg_name` in the crumb path.
+        """ Return a subdict of `self._argidx` with the values from the
+        crumb arguments that come before `arg_name` in the crumb path.
         Parameters
         ----------
         arg_name: str
@@ -413,7 +412,6 @@ class Crumb(object):
 
     def values_map(self, arg_name, check_exists=False):
         """ Return a list of tuples of crumb arguments with their values.
-
         Parameters
         ----------
         arg_name: str

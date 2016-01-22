@@ -4,14 +4,14 @@ Changelog
 =========
 
 Version 0.4.1
-=============
+-------------
 
 - Fix CHANGES.rst to correct restview in PyPI
 - Thanks to restview: https://pypi.python.org/pypi/restview
 
 
 Version 0.4.0
-==============
+-------------
 
 - Fill CHANGES.rst
 - All outputs from `Crumb.ls` function will be sorted.
@@ -22,14 +22,14 @@ Version 0.4.0
 
 
 Version 0.3.1
-==============
+-------------
 
 - Fix README
 - Code clean up.
 
 
 Version 0.3.0
-==============
+-------------
 
 - Add `_argval` member, a dict which stores crumb arguments replacements.
 - Add tests.
@@ -38,20 +38,20 @@ Version 0.3.0
 
 
 Version 0.2.0
-==============
+-------------
 
 - Add `ignore_list` parameter in `Crumb` constructor.
 
 
 Version 0.1.1
-==============
+-------------
 
 - Add `Crumb.unfold` function.
 - Move `mktree` out of `Crumb` class.
 
 
 Version 0.1.0
-==============
+-------------
 
 - Simplify code.
 - Increase test coverage.
