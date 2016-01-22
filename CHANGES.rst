@@ -3,6 +3,12 @@
 Changelog
 =========
 
+Version 0.4.1
+=============
+
+- Fix CHANGES.rst to correct restview in PyPI
+- Thanks to restview: https://pypi.python.org/pypi/restview
+
 
 Version 0.4.0
 ==============
