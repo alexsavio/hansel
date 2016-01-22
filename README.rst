@@ -307,14 +307,14 @@ There are more possibilities such as:
 
 - Use ``re.match`` or ``fnmatch`` expressions to filter your paths:
 
-    The syntax for crumb arguments with a regular expression is: "{<arg_name>:<reg_regex>}"
+    The syntax for crumb arguments with a regular expression is: ``"{<arg_name>:<reg_regex>}"``
 
     .. code:: python
 
         # only the session_0 folders
-        >>> s1_imgs = Crumb("/home/hansel/raw/{subject_id}/{session_id:*_0}/{modality}/{image}")
-        >>> s1_imgs = crumb.unfold()
-        >>> print(s1_imgs)
+        >>> s0_imgs = Crumb("/home/hansel/raw/{subject_id}/{session_id:*_0}/{modality}/{image}")
+        >>> s0_imgs = crumb.unfold()
+        >>> print(s0_imgs)
         [Crumb("/home/hansel/data/raw/0040000/session_0/anat_1/mprage.nii.gz"),
          Crumb("/home/hansel/data/raw/0040000/session_0/rest_1/rest.nii.gz"),
          Crumb("/home/hansel/data/raw/0040001/session_0/anat_1/mprage.nii.gz"),
@@ -322,14 +322,15 @@ There are more possibilities such as:
          ...
 
     The default is for ``fnmatch`` expressions. If you prefer using ``re.match`` for filtering,
-    change the ``regex`` argument to ``'re'`` in the constructor.
+    set the ``regex`` argument to ``'re'`` in the constructor.
 
     .. code:: python
 
         # only the ``session_0`` folders
-        >>> s1_imgs = Crumb("/home/hansel/raw/{subject_id}/{session_id:^.*_0$}/{modality}/{image}", regex='re')
-        >>> s1_imgs = crumb.unfold()
-        >>> print(s1_imgs)
+        >>> s0_imgs = Crumb("/home/hansel/raw/{subject_id}/{session_id:^.*_0$}/{modality}/{image}",
+        >>>                 regex='re')
+        >>> s0_imgs = crumb.unfold()
+        >>> print(s0_imgs)
         [Crumb("/home/hansel/data/raw/0040000/session_0/anat_1/mprage.nii.gz"),
          Crumb("/home/hansel/data/raw/0040000/session_0/rest_1/rest.nii.gz"),
          Crumb("/home/hansel/data/raw/0040001/session_0/anat_1/mprage.nii.gz"),
