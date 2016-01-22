@@ -58,7 +58,8 @@ Imagine this folder tree:
     >>> print(subj_ids)
     ['0040000', '0040001', '0040002', '0040003', '0040004', '0040005', ...
 
-    # get the paths to the subject folders, the output can be strings or crumbs, you choose with the make_crumbs boolean argument
+    # get the paths to the subject folders, the output can be strings or crumbs,
+    # you choose with the make_crumbs boolean argument
     >>> subj_paths = crumb.ls('subject_id')
     >>> print(subj_paths)
     [Crumb("/home/hansel/data/raw/0040000/{session_id}/{image_type}/{image}"),
@@ -235,7 +236,7 @@ crumbs in ``anat_paths``.
 
     >>> files = [cr['image'] for cr in anat_paths]
     >>> print(files)
-    ['mprage.nii.gz', 'mprage.nii.gz', 'mprage.nii.gz', 'mprage.nii.gz', 'mprage.nii.gz', ...
+    ['mprage.nii.gz', 'mprage.nii.gz', 'mprage.nii.gz', 'mprage.nii.gz', ...
 
 
 More features
