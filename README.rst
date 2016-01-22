@@ -1,7 +1,7 @@
 hansel
 ======
 
-Parametric file paths to access and build structured folder trees and build folder trees.
+Parametric file paths to access and build structured folder trees.
 
 |PyPI| |Build Status| |Coverage Status| |PyPI Downloads| |Code Health| |Scrutinizer|
 
