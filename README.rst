@@ -39,8 +39,6 @@ Imagine this folder tree:
         │       └── rest_1
 
 
-
-
 .. code:: python
 
     >>> from hansel import Crumb
@@ -59,8 +57,8 @@ Imagine this folder tree:
     ['0040000', '0040001', '0040002', '0040003', '0040004', '0040005', ...
 
     # get the paths to the subject folders, the output can be strings or crumbs,
-    # you choose with the make_crumbs boolean argument
-    >>> subj_paths = crumb.ls('subject_id')
+    # you choose with the ``make_crumbs`` boolean argument. Default: True.
+    >>> subj_paths = crumb.ls('subject_id', make_crumbs=True)
     >>> print(subj_paths)
     [Crumb("/home/hansel/data/raw/0040000/{session_id}/{image_type}/{image}"),
      Crumb("/home/hansel/data/raw/0040001/{session_id}/{image_type}/{image}"),
@@ -99,8 +97,9 @@ Imagine this folder tree:
      "/home/hansel/data/raw/0040004/session_1/anat_1/mprage.nii.gz",
      ...
 
-    # you can also use a list of ``fnmatch`` expressions to ignore certain files
+    # you can also use a list of ``fnmatch`` expressions to ignore certain files patterns
     # using the ``ignore_list`` argument in the constructor.
+    # For example, the files that start with '.'.
     >>> crumb = Crumb("{base_dir}/data/raw/{subject_id}/{session_id}/{image_type}/{image}",
     >>>               ignore_list=['.*'])
 
@@ -138,8 +137,7 @@ With ``hansel`` I can represent this folder structure like this:
 
 Let's say we have the structure above hanging from a base directory like ``/home/hansel/``.
 
-I can use the ``replace`` function to make set the ``base_dir``
-parameter:
+I can use the ``replace`` function to make set the ``base_dir`` parameter:
 
 .. code:: python
 
@@ -147,7 +145,7 @@ parameter:
     >>> print(str(crumb))
     /home/hansel/data/raw/{subject_id}/{session_id}/{image_type}
 
-if you don't need a copy of ``crumb``, you can use the ``[]`` operator:
+if I don't need a copy of ``crumb``, I can use the ``[]`` operator:
 
 .. code:: python
 
@@ -160,8 +158,8 @@ crumb path.
 
 If I want to know the path to the existing ``subject_id`` folders:
 
-We can use the ``ls`` function. Its can be ``str`` or ``Crumb``.
-You can choose this using the ``make_crumbs`` argument (default: True):
+We can use the ``ls`` function. Its output can be ``str`` or ``Crumb``.
+I can choose this using the ``make_crumbs`` argument (default: True):
 
 .. code:: python
 
@@ -200,8 +198,8 @@ or
     >>> print(subj_ids)
     ['0040000', '0040001', '0040002', '0040003', '0040004', '0040005', ...
 
-Now, if I wanted to get the path to all the ``anat_1`` images, I could
-do this:
+Now, if I wanted to get the path to all the images inside the ``anat_1`` folders,
+I could do this:
 
 .. code:: python
 
@@ -209,7 +207,7 @@ do this:
     >>> print(anat_crumb)
     /home/hansel/data/raw/{subject_id}/{session_id}/anat_1/{image}
 
-or if you don't need to keep a copy of ``crumb``:
+or if I don't need to keep a copy of ``crumb``:
 
 .. code:: python
 
@@ -225,7 +223,7 @@ or if you don't need to keep a copy of ``crumb``:
      Crumb("/home/hansel/data/raw/0040004/session_1/anat_1/mprage.nii.gz"),
      ...
 
-Remember that you can still access the replaced crumb arguments in each of the previous
+Remember that I can still access the replaced crumb arguments in each of the previous
 crumbs in ``anat_paths``.
 
 .. code:: python
@@ -305,7 +303,7 @@ There are more possibilities such as:
         >>> print(crumbs[0]['subject_id'])
         0040000
 
-- Use ``re.match`` or ``fnmatch`` expressions to filter your paths:
+- Use ``re.match`` or ``fnmatch`` expressions to filter the paths:
 
     The syntax for crumb arguments with a regular expression is: ``"{<arg_name>:<reg_regex>}"``
 
