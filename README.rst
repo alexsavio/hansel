@@ -5,6 +5,8 @@ Parametric file paths to access and build structured folder trees and build fold
 
 |PyPI| |Build Status| |Coverage Status| |PyPI Downloads| |Code Health| |Scrutinizer|
 
+It almost doesn't have `Dependencies`_, check how to `Install`_ it.
+
 Usage
 =====
 
@@ -103,7 +105,7 @@ Imagine this folder tree:
     >>> crumb = Crumb("{base_dir}/data/raw/{subject_id}/{session_id}/{image_type}/{image}",
     >>>               ignore_list=['.*'])
 
-See more quick examples after the Long Intro.
+See more quick examples after the `Long Intro`_ check `More features and tricks`_.
 
 ---------------------
 
@@ -237,8 +239,8 @@ crumbs in ``anat_paths``.
     ['mprage.nii.gz', 'mprage.nii.gz', 'mprage.nii.gz', 'mprage.nii.gz', ...
 
 
-More features
--------------
+More features and tricks
+------------------------
 
 There are more possibilities such as:
 
