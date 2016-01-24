@@ -602,18 +602,6 @@ class Crumb(object):
         paths: list of pathlib.Path
         """
         return self.ls(self._lastarg()[0], fullpath=True, make_crumbs=True, check_exists=True)
-    #
-    # def add_regex(self, arg_name, pattern):
-    #     """ Add a `pattern` to the given `arg_name` crumb argument.
-    #     Parameters
-    #     ----------
-    #     arg_name: str
-    #     pattern: str
-    #     """
-    #     if arg_name not in self._argidx:
-    #         raise KeyError('Expected an existing crumb argument, got {}.'.format(arg_name))
-    #
-    #     self.patterns[arg_name] = pattern
 
     def __getitem__(self, arg_name):
         """ Return the existing values of the crumb argument `arg_name`
