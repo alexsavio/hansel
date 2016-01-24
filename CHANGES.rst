@@ -3,10 +3,16 @@
 Changelog
 =========
 
+Version 0.5.0
+-------------
+- Add Python 2.7 compatibility. Friends don't let friends use Python 2.7!
+
+
 Version 0.4.2
 -------------
 - Improve documentation in README.
 - Rename member `_argreg` to `patterns`, so the user can use it to manage the argument patterns.
+
 
 Version 0.4.1
 -------------

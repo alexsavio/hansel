@@ -3,5 +3,5 @@
 Unique version information place
 """
 
-__version__ = "0.4.2"
+__version__ = "0.5.0"
 VERSION = tuple(int(x) for x in __version__.split("."))
