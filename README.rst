@@ -355,8 +355,7 @@ install its dependencies with:
 Install
 =======
 
-I am only testing this tool on Python 3.4 and 3.5.
-Maybe it works on Python 2.7 too if you have `six` and `pathlib2` installed.
+It works on Python 3.4, 3.5 and 2.7. For Python 2.7 install `pathlib2` as well.
 
 This package uses setuptools. You can install it running:
 
