@@ -65,10 +65,10 @@ class Crumb(object):
     _split_exists = partial(_split_exists, start_end_syms=_start_end_syms)
 
     def __init__(self, crumb_path, ignore_list=None, regex='fnmatch'):
-        self._path   = _get_path(crumb_path)
-        self._argidx = OrderedDict()  # in which order the crumb argument appears
-        self._argval = {}  # what is the value of the argument in the current path, if any has been set.
-        self._argreg = {}  # what is the regex of the argument
+        self._path    = _get_path(crumb_path)
+        self._argidx  = OrderedDict()  # in which order the crumb argument appears
+        self._argval  = {}  # what is the value of the argument in the current path, if any has been set.
+        self.patterns = {}  # what is the pattern set for the argument, if any. This is left public for the user.
         self._re_method = regex
 
         if ignore_list is None:
@@ -107,10 +107,10 @@ class Crumb(object):
         self._set_replace_function()
 
     def _set_replace_function(self):
-        """ Set self._replace function as a partial function, adding regex=self._argreg."""
+        """ Set self._replace function as a partial function, adding regex=self.patterns."""
         self._replace = partial(_replace,
                                 start_end_syms=self._start_end_syms,
-                                regexes=self._argreg)
+                                regexes=self.patterns)
 
     def _set_match_function(self):
         """ Update self._match_filter with a regular expression
@@ -158,7 +158,7 @@ class Crumb(object):
                 self._argidx[arg_name] = idx
 
                 if arg_regex is not None:
-                    self._argreg[arg_name] = arg_regex
+                    self.patterns[arg_name] = arg_regex
 
     def _find_arg(self, arg_name):
         """ Return the index in the current path of the crumb
@@ -324,7 +324,7 @@ class Crumb(object):
             vals = list_subpaths(base,
                                  just_dirs=just_dirs,
                                  ignore=self._ignore,
-                                 pattern=self._argreg.get(arg_name, ''),
+                                 pattern=self.patterns.get(arg_name, ''),
                                  filter_func=self._match_filter)
 
             vals = [[(arg_name, val)] for val in vals]
@@ -337,7 +337,7 @@ class Crumb(object):
                 paths = list_subpaths(path,
                                       just_dirs=just_dirs,
                                       ignore=self._ignore,
-                                      pattern=self._argreg.get(arg_name, ''),
+                                      pattern=self.patterns.get(arg_name, ''),
                                       filter_func=self._match_filter)
 
                 #  extend `val` tuples with the new list of values for `aval`
@@ -375,7 +375,7 @@ class Crumb(object):
         self._check_argidx(kwargs.keys())
 
         self.path = self._replace(self._path, **kwargs)
-        _dict_popitems(self._argreg, **kwargs)
+        _dict_popitems(self.patterns, **kwargs)
 
         self._update()
         self._argval.update(**kwargs)
@@ -602,6 +602,18 @@ class Crumb(object):
         paths: list of pathlib.Path
         """
         return self.ls(self._lastarg()[0], fullpath=True, make_crumbs=True, check_exists=True)
+    #
+    # def add_regex(self, arg_name, pattern):
+    #     """ Add a `pattern` to the given `arg_name` crumb argument.
+    #     Parameters
+    #     ----------
+    #     arg_name: str
+    #     pattern: str
+    #     """
+    #     if arg_name not in self._argidx:
+    #         raise KeyError('Expected an existing crumb argument, got {}.'.format(arg_name))
+    #
+    #     self.patterns[arg_name] = pattern
 
     def __getitem__(self, arg_name):
         """ Return the existing values of the crumb argument `arg_name`

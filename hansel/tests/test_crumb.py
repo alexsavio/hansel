@@ -398,7 +398,7 @@ def test_touch(tmp_crumb):
     assert op.exists(path)
 
 
-def test__touch():
+def test_touch2():
     base_dir = TemporaryDirectory()
     path = op.join(base_dir.name, 'hansel')
 
@@ -617,6 +617,29 @@ def test_regex_replace(tmp_crumb):
 
     sessions = {cr['session_id'] for cr in anat_crumb.ls('session_id', check_exists=True)}
     assert sessions == set(values_dict['session_id'])
+
+
+def test_regex_replace(tmp_crumb):
+    assert not op.exists(tmp_crumb._path)
+
+    values_dict = {'session_id': ['session_{:02}'.format(i) for i in range(  2)],
+                   'subject_id': ['subj_{:03}'.format(i)    for i in range(100)],
+                   'modality':   ['anat'],
+                   'image':      ['mprage1.nii'],
+                   }
+
+    _ = mktree(tmp_crumb, list(ParameterGrid(values_dict)))
+
+    # a crumb with the pattern
+    crumb = Crumb(tmp_crumb._path.replace('{subject_id}', '{subject_id:subj_02*}'),
+                  regex='fnmatch')  # fnmatch
+
+    # a crumb without the pattern, the pattern is added later
+    crumb2 = Crumb(tmp_crumb._path.replace('{subject_id}', '{subject_id}'),
+                  regex='fnmatch')
+    crumb2.patterns['subject_id'] = 'subj_02*'
+
+    assert crumb['subject_id'] == crumb2['subject_id']
 
 
 def test_has_files(tmp_crumb):
