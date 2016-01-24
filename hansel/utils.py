@@ -9,7 +9,7 @@ import os
 import os.path as op
 import operator
 import fnmatch
-
+from   copy        import deepcopy
 from   collections import Mapping
 from   functools   import partial, reduce
 from   itertools   import product
@@ -33,7 +33,7 @@ def remove_duplicates(lst):
 def remove_ignored(ignore, strs):
     """ Remove from `strs` the matches to the `fnmatch` (glob) patterns and
     return the result in a list."""
-    nustrs = strs.copy()
+    nustrs = deepcopy(strs)
     for ign in ignore:
         nustrs = [item for item in nustrs if not fnmatch.fnmatch(item, ign)]
 

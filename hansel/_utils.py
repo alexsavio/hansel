@@ -282,7 +282,7 @@ def _touch(crumb_path, exist_ok=True, start_end_syms=('{', '}')):
         raise IOError("Folder {} already exists.".format(nupath))
 
     try:
-        os.makedirs(nupath, exist_ok=exist_ok)
+        os.makedirs(nupath)
     except:
         raise
     else:

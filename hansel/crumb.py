@@ -8,8 +8,12 @@ Crumb class: the smart path model class.
 import os.path     as op
 from   copy        import deepcopy
 from   collections import OrderedDict, Mapping, Sequence
-from   pathlib     import Path
 from   functools   import partial
+
+try:
+    from pathlib2 import Path
+except:
+    from pathlib  import Path
 
 from   six import string_types
 
@@ -644,7 +648,8 @@ class Crumb(object):
         return item in self._argidx or item in self._argval
 
     def __repr__(self):
-        return '{}("{}")'.format(__class__.__name__, self._path)
+        #return '{}("{}")'.format(__class__.__name__, self._path)
+        return '{}("{}")'.format(type(self).__name__, self._path)
 
     def __str__(self):
         return str(self._path)
@@ -672,4 +677,3 @@ class Crumb(object):
             return False
 
         return True
-

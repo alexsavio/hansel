@@ -61,5 +61,3 @@ def test_parameter_grid():
     assert len(has_empty) == 4
     assert list(has_empty) == [{'C': 1}, {'C': 10}, {}, {'C': .5}]
     assert_grid_iter_equals_getitem(has_empty)
-
-

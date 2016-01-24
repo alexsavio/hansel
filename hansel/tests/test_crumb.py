@@ -8,9 +8,13 @@ import pytest
 import os
 import os.path  as op
 import shutil
+import tempfile
 from   copy     import copy
-from   pathlib  import Path
-from   tempfile import TemporaryDirectory
+
+try:
+    from pathlib2 import Path
+except:
+    from pathlib  import Path
 
 from   six           import string_types
 from   hansel        import Crumb, mktree
@@ -36,8 +40,8 @@ def crumb(request):
 def tmp_crumb(request):
 
     crumb = Crumb("{base_dir}/raw/{subject_id}/{session_id}/{modality}/{image}")
-    base_dir = TemporaryDirectory(prefix='crumbtest_')
-    crumb2 = crumb.replace(base_dir=base_dir.name)
+    base_dir = tempfile.mkdtemp(prefix='crumbtest_')
+    crumb2 = crumb.replace(base_dir=base_dir)
 
     def fin():
         print("teardown tmp_crumb")
@@ -399,8 +403,8 @@ def test_touch(tmp_crumb):
 
 
 def test_touch2():
-    base_dir = TemporaryDirectory()
-    path = op.join(base_dir.name, 'hansel')
+    base_dir = tempfile.mkdtemp()
+    path = op.join(base_dir, 'hansel')
 
     assert not op.exists(path)
 
