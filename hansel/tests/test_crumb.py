@@ -78,13 +78,17 @@ def test_replace_and_setitem(crumb):
     base_dir = BASE_DIR
     crumb.path = op.join(crumb.path, '{hansel}', '{gretel}')
 
+    assert not crumb.has_set('base_dir')
+
     # use replace
     crumb2 = crumb.replace(base_dir=base_dir)
 
     assert crumb2._path == op.join(base_dir, crumb._path.replace('{base_dir}/', ''))
     assert 'base_dir' not in crumb2._argidx
     assert 'base_dir' in crumb2._argval
+
     assert crumb2['base_dir'] == base_dir
+    assert crumb2.has_set('base_dir')
 
     # use setitem
     crumb3 = crumb.copy(crumb)
@@ -98,6 +102,7 @@ def test_replace_and_setitem(crumb):
     assert crumb3 == crumb2
     assert crumb3._path == crumb2._path
     assert 'base_dir' not in crumb3._argidx
+    assert crumb3.has_set('base_dir')
 
     assert crumb3.replace(**{})._path == crumb3._path
 
@@ -463,6 +468,7 @@ def test_contains(tmp_crumb):
 
     assert 'image' not in tmp_crumb._argidx
     assert 'image' in tmp_crumb
+    assert tmp_crumb.has_set('image')
 
 
 def test_ls_with_check(tmp_crumb):
@@ -539,6 +545,7 @@ def test_ls_with_check(tmp_crumb):
     img_crumb['modality'] = 'anat'
     assert 'modality' in img_crumb._argval
     assert img_crumb['modality'] == 'anat'
+    assert img_crumb.has_set('modality')
 
     assert img_crumb['session_id'].count('session_01') == img_crumb['session_id'].count('session_00')
 

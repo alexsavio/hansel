@@ -644,8 +644,13 @@ class Crumb(object):
     def __hash__(self):
         return self._path.__hash__()
 
-    def __contains__(self, item):
-        return item in self._argidx or item in self._argval
+    def has_set(self, arg_name):
+        """ Return True if the argument `arg_name` has been set to a specific value,
+        False if it is still a crumb argument."""
+        return arg_name not in self._argidx and arg_name in self._argval
+
+    def __contains__(self, arg_name):
+        return arg_name in self._argidx or arg_name in self._argval
 
     def __repr__(self):
         #return '{}("{}")'.format(__class__.__name__, self._path)
