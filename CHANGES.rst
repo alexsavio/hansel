@@ -3,6 +3,11 @@
 Changelog
 =========
 
+Version 0.5.1
+-------------
+- Add 're.ignorecase' option for the `regex` argument in the constructor.
+
+
 Version 0.5.0
 -------------
 - Add Python 2.7 compatibility. Friends don't let friends use Python 2.7!
