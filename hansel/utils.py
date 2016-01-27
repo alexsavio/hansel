@@ -40,7 +40,7 @@ def remove_ignored(ignore, strs):
     return nustrs
 
 
-def fnmatch_filter(pattern, items):
+def fnmatch_filter(pattern, items, *args):
     """ Return the items from `items` that match the fnmatch expression in `pattern`.
     Parameters
     ----------
@@ -50,6 +50,8 @@ def fnmatch_filter(pattern, items):
     items: list of str
         The items to be checked
 
+    args: ignored
+
     Returns
     -------
     matches: list of str
@@ -58,7 +60,7 @@ def fnmatch_filter(pattern, items):
     return [item for item in items if fnmatch.fnmatch(item, pattern)]
 
 
-def regex_match_filter(pattern, items):
+def regex_match_filter(pattern, items, *args):
     """ Return the items from `items` that match the regular expression in `pattern`.
     Parameters
     ----------
@@ -68,12 +70,14 @@ def regex_match_filter(pattern, items):
     items: list of str
         The items to be checked
 
+    args: re.compile arguments
+
     Returns
     -------
     matches: list of str
         Matched items
     """
-    test = re.compile(pattern)
+    test = re.compile(pattern, *args)
     return [s for s in items if test.match(s)]
 
 
@@ -114,7 +118,8 @@ def list_children(path, just_dirs=False):
     return vals
 
 
-def list_subpaths(path, just_dirs=False, ignore=None, pattern=None, filter_func=fnmatch_filter):
+def list_subpaths(path, just_dirs=False, ignore=None, pattern=None,
+                  filter_func=fnmatch_filter, filter_args=None):
     """ Return the immediate elements (files and folders) in `path`.
     Parameters
     ----------
@@ -134,6 +139,9 @@ def list_subpaths(path, just_dirs=False, ignore=None, pattern=None, filter_func=
         Must have as arguments: (pattern, paths) and return
         a subset of paths.
 
+    filter_args: filter func arguments
+        Arguments for the filter function.
+
     Returns
     -------
     paths: list of str
@@ -144,7 +152,10 @@ def list_subpaths(path, just_dirs=False, ignore=None, pattern=None, filter_func=
         paths = remove_ignored(ignore, paths)
 
     if pattern and pattern is not None:
-        paths = filter_func(pattern, paths)
+        if filter_args is None:
+            filter_args = ()
+
+        paths = filter_func(pattern, paths, *filter_args)
 
     return paths
 

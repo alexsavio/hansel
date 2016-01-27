@@ -572,16 +572,7 @@ def test_regex(tmp_crumb):
 
     re_subj_ids = crumb['subject_id']
 
-    assert re_subj_ids == [ 'subj_020',
-                            'subj_021',
-                            'subj_022',
-                            'subj_023',
-                            'subj_024',
-                            'subj_025',
-                            'subj_026',
-                            'subj_027',
-                            'subj_028',
-                            'subj_029']
+    assert re_subj_ids == ['subj_{:03}'.format(i) for i in range(20, 30)]
 
     crumb = Crumb(tmp_crumb._path.replace('{subject_id}', '{subject_id:subj_02*}'),
                   regex='fnmatch')  # fnmatch
@@ -594,6 +585,35 @@ def test_regex(tmp_crumb):
                   Crumb,
                   tmp_crumb._path.replace('{subject_id}', '{subject_id:subj_02*}'),
                   regex='hansel')
+
+    crumb2 = Crumb.copy(crumb)
+    assert crumb2._re_method == crumb._re_method
+    assert crumb2._re_args == crumb._re_args
+    assert crumb2.patterns == crumb.patterns
+
+
+def test_regex_ignorecase(tmp_crumb):
+    assert not op.exists(tmp_crumb._path)
+
+    values_dict = {'session_id': ['session_{:02}'.format(i) for i in range(  2)],
+                   'subject_id': ['SUBJ_{:03}'.format(i)    for i in range(100)],
+                   'modality':   ['anat'],
+                   'image':      ['mprage1.nii'],
+                   }
+
+    _ = mktree(tmp_crumb, list(ParameterGrid(values_dict)))
+
+    crumb = Crumb(tmp_crumb._path.replace('{subject_id}', '{subject_id:^subj_02.*$}'),
+                  regex='re')  # re.match
+
+    assert len(crumb['subject_id']) == 0
+
+    crumb = Crumb(tmp_crumb._path.replace('{subject_id}', '{subject_id:^subj_02.*$}'),
+                  regex='re.ignorecase')  # re.match
+
+    re_subj_ids = crumb['subject_id']
+
+    assert re_subj_ids == ['SUBJ_{:03}'.format(i) for i in range(20, 30)]
 
 
 def test_regex_replace(tmp_crumb):
@@ -615,16 +635,7 @@ def test_regex_replace(tmp_crumb):
 
     fn_subj_ids = {cr['subject_id'] for cr in anat_crumb.ls('session_id', check_exists=True)}
 
-    assert fn_subj_ids == { 'subj_020',
-                            'subj_021',
-                            'subj_022',
-                            'subj_023',
-                            'subj_024',
-                            'subj_025',
-                            'subj_026',
-                            'subj_027',
-                            'subj_028',
-                            'subj_029'}
+    assert fn_subj_ids == set(['subj_{:03}'.format(i) for i in range(20, 30)])
 
     sessions = {cr['session_id'] for cr in anat_crumb.ls('session_id', check_exists=True)}
     assert sessions == set(values_dict['session_id'])

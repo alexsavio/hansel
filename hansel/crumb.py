@@ -4,7 +4,7 @@
 """
 Crumb class: the smart path model class.
 """
-
+import re
 import os.path     as op
 from   copy        import deepcopy
 from   collections import OrderedDict, Mapping, Sequence
@@ -43,10 +43,11 @@ class Crumb(object):
         A list of `fnmatch` patterns of filenames to be ignored.
 
     regex: str
-        Choices: 'fnmatch' or 're'
+        Choices: 'fnmatch', 're' or 're.ignorecase'
         If 'fnmatch' will use fnmatch regular expressions to
         match any expression you may have in a crumb argument.
         If 're' will use re.match.
+        If 're.ignorecase' will use re.match and pass re.IGNORE_CASE to re.compile.
 
     Examples
     --------
@@ -74,6 +75,7 @@ class Crumb(object):
         self._argval  = {}  # what is the value of the argument in the current path, if any has been set.
         self.patterns = {}  # what is the pattern set for the argument, if any. This is left public for the user.
         self._re_method = regex
+        self._re_args   = None
 
         if ignore_list is None:
             ignore_list = []
@@ -123,6 +125,9 @@ class Crumb(object):
             self._match_filter = fnmatch_filter
         elif self._re_method == 're':
             self._match_filter = regex_match_filter
+        elif self._re_method == 're.ignorecase':
+            self._match_filter = regex_match_filter
+            self._re_args      = (re.IGNORECASE, )
         else:
             raise ValueError('Expected regex method value to be `fnmatch`'
                              ' or `re`, got {}.'.format(self._re_method))
@@ -143,8 +148,8 @@ class Crumb(object):
         copy: Crumb
         """
         if isinstance(crumb, cls):
-            nucr = cls(crumb._path, ignore_list=crumb._ignore)
-            nucr._argval = deepcopy(crumb._argval)
+            nucr = cls(crumb._path, ignore_list=crumb._ignore, regex=crumb._re_method)
+            nucr._argval  = deepcopy(crumb._argval)
             return nucr
         elif isinstance(crumb, string_types):
             return cls.from_path(crumb)
@@ -329,7 +334,8 @@ class Crumb(object):
                                  just_dirs=just_dirs,
                                  ignore=self._ignore,
                                  pattern=self.patterns.get(arg_name, ''),
-                                 filter_func=self._match_filter)
+                                 filter_func=self._match_filter,
+                                 filter_args=self._re_args)
 
             vals = [[(arg_name, val)] for val in vals]
         else:
@@ -361,6 +367,9 @@ class Crumb(object):
         ------
         KeyError
         """
+        if not self._argidx.keys():
+            raise KeyError('This Crumb has no unset arguments: {}.'.format(self.path))
+
         if not set(arg_names).issubset(set(self._argidx.keys())):
             raise KeyError("Expected `arg_names` to be a subset of ({}),"
                            " got {}.".format(list(self._argidx.keys()), arg_names))
