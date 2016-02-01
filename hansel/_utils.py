@@ -230,9 +230,9 @@ def _replace(crumb_path, start_end_syms=('{', '}'), regexes=None, **kwargs):
 
 
 def _split(crumb_path, start_end_syms=('{', '}')):
-    """ Return a list of sub-strings of `crumb_path` where the
-        path parts are separated from the crumb arguments.
-        If 'crumb_path` has not crumb arguments, return `crumb_path`.
+    """ Split `crumb_path` in two parts, the first is the base folder without any crumb argument
+        and the second is the rest of `crumb_path` beginning with the first crumb argument.
+        If `crumb_path` has no crumb arguments or starts with a crumb argument, return `crumb_path`.
     """
     crumb_path = _get_path(crumb_path)
 
@@ -243,17 +243,17 @@ def _split(crumb_path, start_end_syms=('{', '}')):
         raise ValueError('Crumb path {} is not valid.'.format(crumb_path))
 
     start_sym, _ = start_end_syms
-    splt = []
-    tmp = '/' if crumb_path.startswith(op.sep) else ''
-    for i in crumb_path.split(op.sep):
-        if i.startswith(start_sym):
-            splt.append(tmp)
-            tmp = ''
-            splt.append(i)
-        else:
-            tmp = op.join(tmp, i)
+    if crumb_path.startswith(start_sym):
+        return crumb_path
 
-    return splt
+    idx = crumb_path.find(start_sym)
+    base = crumb_path[0:idx]
+    if base.endswith(op.sep):
+        base = base[:-1]
+
+    rest = crumb_path[idx:]
+
+    return base, rest
 
 
 def _touch(crumb_path, exist_ok=True, start_end_syms=('{', '}')):

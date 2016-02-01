@@ -250,6 +250,18 @@ def test_split(crumb):
             assert Crumb._is_crumb_arg(s) or isinstance(s, string_types)
 
 
+def test_split2():
+
+    cr = Crumb('/home/hansel/data/{subj}/{session}/anat.nii')
+    assert cr.split() == ('/home/hansel/data', '{subj}/{session}/anat.nii')
+
+    cr = Crumb('{base}/home/hansel/data/{subj}/{session}/anat.nii')
+    assert cr.split() == cr.path
+
+    cr = Crumb('/home/hansel/data/subj/session/anat.nii')
+    assert cr.split() == cr.path
+
+
 def test_from_path(crumb):
     cr = Crumb.copy(crumb)
     assert cr is not crumb
