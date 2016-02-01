@@ -99,6 +99,16 @@ class Crumb(object):
         self._path = value
         self._update()
 
+    @property
+    def args(self):
+        """ Return a set of the crumb arguments in `self` that has not been replaced yet.
+
+        Returns
+        -------
+        crumb_args: set of str
+        """
+        return set(self._argidx.keys()) - set(self._argval.keys())
+
     def _check(self):
         if not self.is_valid(self._path):
             raise ValueError("The current crumb path has errors, got {}.".format(self.path))
