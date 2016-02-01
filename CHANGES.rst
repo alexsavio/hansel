@@ -3,6 +3,12 @@
 Changelog
 =========
 
+Version 0.5.2
+-------------
+- Add `check_path` function
+- Fix `Crumb.split` function to return the not defined part of the crumb.
+
+
 Version 0.5.1
 -------------
 - Add 're.ignorecase' option for the `regex` argument in the constructor.
