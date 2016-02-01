@@ -15,7 +15,7 @@ from   functools   import partial, reduce
 from   itertools   import product
 
 
-def remove_duplicates(lst):
+def rm_dups(lst):
     """ Return a sorted lst of non-duplicated elements from `lst`.
 
     Parameters

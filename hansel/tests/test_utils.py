@@ -8,7 +8,7 @@ import pytest
 from collections import Iterable, Sized
 from itertools import chain, product
 
-from hansel.utils import remove_duplicates, ParameterGrid
+from hansel.utils import rm_dups, ParameterGrid
 
 
 @pytest.fixture(scope="module")
@@ -17,9 +17,9 @@ def values(request):
 
 
 def test_remove_duplicates(values):
-    assert remove_duplicates(values * 10) == sorted(values)
-    assert remove_duplicates(values) == sorted(values)
-    assert remove_duplicates(values) == sorted(remove_duplicates(values))
+    assert rm_dups(values * 10) == sorted(values)
+    assert rm_dups(values) == sorted(values)
+    assert rm_dups(values) == sorted(rm_dups(values))
 
 
 def test_parameter_grid():
