@@ -101,7 +101,7 @@ class Crumb(object):
 
     @property
     def args(self):
-        """ Return a set of the crumb arguments in `self` that has not been replaced yet.
+        """ Return a set of the crumb arguments in `self` that have not been replaced yet.
 
         Returns
         -------
