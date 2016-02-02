@@ -99,15 +99,22 @@ class Crumb(object):
         self._path = value
         self._update()
 
-    @property
-    def args(self):
-        """ Return a set of the crumb arguments in `self` that have not been replaced yet.
+    def keys(self):
+        """ Return an iterator to the crumb argument names in `self` that have not been replaced yet.
+        In the same order as they appear in the crumb path.
 
         Returns
         -------
         crumb_args: set of str
+
+        Note
+        ----
+        I know that there is shorter/faster ways to program this but I wanted to maintain the
+        order of the arguments in argidx in the result of this function.
         """
-        return set(self._argidx.keys()) - set(self._argval.keys())
+        for arg_name in self._argidx:
+            if arg_name not in self._argval:
+                yield arg_name
 
     def _check(self):
         if not self.is_valid(self._path):
