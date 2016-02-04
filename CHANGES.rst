@@ -3,6 +3,12 @@
 Changelog
 =========
 
+Version 0.5.3
+-------------
+- Add `Crumbs.keys()` function.
+- Rename `utils.remove_duplicates()` to `utils.rm_dups()`
+
+
 Version 0.5.2
 -------------
 - Add `check_path` function
