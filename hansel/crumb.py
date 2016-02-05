@@ -457,8 +457,9 @@ class Crumb(object):
         self._check_argidx(kwargs.keys())
 
         self._path = self._replace(self._path, **kwargs)
-        #_dict_popitems(self.patterns, **kwargs)
         self._update()
+
+        _dict_popitems(self.patterns, **kwargs)
 
         self._argval.update(**kwargs)
         return self
