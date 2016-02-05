@@ -3,6 +3,13 @@
 Changelog
 =========
 
+Version 0.5.4
+-------------
+- Deprecating `Crumbs.keys()` function.
+- Renamed `Crumbs.keys()` to `Crumbs.open_args()` and added `Crumbs.all_args()`.
+- Substitute the internal logic of Crumbs to work with `Crumbs.open_args()`, made it a bit faster.
+
+
 Version 0.5.3
 -------------
 - Add `Crumbs.keys()` function.
