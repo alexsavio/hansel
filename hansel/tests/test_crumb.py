@@ -77,7 +77,8 @@ def test_path_property(crumb):
 def test_replace_and_setitem(crumb):
     # crumb = Crumb("{base_dir}/raw/{subject_id}/{session_id}/{modality}/{image}")
     args = list(crumb._argidx.keys())
-    assert list(crumb.keys()) == args
+    assert list(crumb.open_args()) == args
+    assert list(crumb.all_args ()) == args
 
     base_dir = BASE_DIR
     crumb.path = op.join(crumb.path, '{hansel}', '{gretel}')
@@ -88,7 +89,8 @@ def test_replace_and_setitem(crumb):
     # use replace
     crumb2 = crumb.replace(base_dir=base_dir)
     args.pop(0)
-    assert list(crumb2.keys()) == args
+    assert list(crumb2.open_args()) == args
+    assert list(crumb2.all_args ()) != args
 
     assert crumb2._path == op.join(base_dir, crumb._path.replace('{base_dir}/', ''))
     assert 'base_dir' not in crumb2._argidx

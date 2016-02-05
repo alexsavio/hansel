@@ -9,15 +9,19 @@ import os.path     as op
 from   copy        import deepcopy
 from   collections import OrderedDict, Mapping, Sequence
 from   functools   import partial
-
+from   itertools   import chain
+from   six         import string_types
 try:
     from pathlib2 import Path
 except:
     from pathlib  import Path
 
-from   six import string_types
 
-from   .utils  import list_subpaths, fnmatch_filter, regex_match_filter
+from   .utils  import (list_subpaths,
+                       fnmatch_filter,
+                       regex_match_filter,
+                       deprecated,
+                       )
 from   ._utils import (_get_path,
                        _is_crumb_arg,
                        _replace,
@@ -99,7 +103,7 @@ class Crumb(object):
         self._path = value
         self._update()
 
-    def keys(self):
+    def open_args(self):
         """ Return an iterator to the crumb argument names in `self` that have not been replaced yet.
         In the same order as they appear in the crumb path.
 
@@ -115,6 +119,33 @@ class Crumb(object):
         for arg_name in self._argidx:
             if arg_name not in self._argval:
                 yield arg_name
+
+    def all_args(self):
+        """ Return an iterator to all the crumb argument names in `self`, first the open ones and then the
+        replaced ones.
+
+        Returns
+        -------
+        crumb_args: set of str
+        """
+        for arg_name in chain(self.open_args(), self._argval.keys()):
+            yield arg_name
+
+    @deprecated(replacement='all_args')
+    def keys(self):
+        """ Return an iterator to the crumb argument names in `self` that have not been replaced yet.
+        In the same order as they appear in the crumb path.
+
+        Returns
+        -------
+        crumb_args: set of str
+
+        Note
+        ----
+        I know that there is shorter/faster ways to program this but I wanted to maintain the
+        order of the arguments in argidx in the result of this function.
+        """
+        return self.open_args()
 
     def _check(self):
         if not self.is_valid(self._path):
