@@ -103,6 +103,28 @@ class Crumb(object):
         self._path = value
         self._update()
 
+    def _open_arg_items(self):
+        """ Return an iterator to the crumb _argidx items in `self` that have not been replaced yet.
+        In the same order as they appear in the crumb path.
+
+        Returns
+        -------
+        crumb_args: set of str
+
+        Note
+        ----
+        I know that there is shorter/faster ways to program this but I wanted to maintain the
+        order of the arguments in argidx in the result of this function.
+        """
+        for arg_name, idx in self._argidx.items():
+            if arg_name not in self._argval:
+                yield arg_name, idx
+
+    def has_set(self, arg_name):
+        """ Return True if the argument `arg_name` has been set to a specific value,
+        False if it is still a crumb argument."""
+        return arg_name not in self.open_args()
+
     def open_args(self):
         """ Return an iterator to the crumb argument names in `self` that have not been replaced yet.
         In the same order as they appear in the crumb path.
@@ -116,9 +138,8 @@ class Crumb(object):
         I know that there is shorter/faster ways to program this but I wanted to maintain the
         order of the arguments in argidx in the result of this function.
         """
-        for arg_name in self._argidx:
-            if arg_name not in self._argval:
-                yield arg_name
+        for arg_name, _ in self._open_arg_items():
+            yield arg_name
 
     def all_args(self):
         """ Return an iterator to all the crumb argument names in `self`, first the open ones and then the
@@ -322,12 +343,12 @@ class Crumb(object):
 
     def _lastarg(self):
         """ Return the name and idx of the last argument."""
-        for arg, idx in reversed(list(self._argidx.items())):
+        for arg, idx in reversed(list(self._open_arg_items())):
             return arg, idx
 
     def _firstarg(self):
         """ Return the name and idx of the first argument."""
-        for arg, idx in self._argidx.items():
+        for arg, idx in self._open_arg_items():
             return arg, idx
 
     def _is_firstarg(self, arg_name):
@@ -415,12 +436,12 @@ class Crumb(object):
         ------
         KeyError
         """
-        if not self._argidx.keys():
+        if not self.open_args():
             raise KeyError('This Crumb has no unset arguments: {}.'.format(self.path))
 
-        if not set(arg_names).issubset(set(self._argidx.keys())):
+        if not set(arg_names).issubset(set(self.open_args())):
             raise KeyError("Expected `arg_names` to be a subset of ({}),"
-                           " got {}.".format(list(self._argidx.keys()), arg_names))
+                           " got {}.".format(list(self.open_args()), arg_names))
 
     def setitems(self, **kwargs):
         """ Set the crumb arguments in path to the given values in kwargs and update
@@ -435,10 +456,10 @@ class Crumb(object):
         """
         self._check_argidx(kwargs.keys())
 
-        self.path = self._replace(self._path, **kwargs)
-        _dict_popitems(self.patterns, **kwargs)
-
+        self._path = self._replace(self._path, **kwargs)
+        #_dict_popitems(self.patterns, **kwargs)
         self._update()
+
         self._argval.update(**kwargs)
         return self
 
@@ -458,8 +479,8 @@ class Crumb(object):
         return cr.setitems(**kwargs)
 
     def _arg_deps(self, arg_name):
-        """ Return a subdict of `self._argidx` with the values from the
-        crumb arguments that come before `arg_name` in the crumb path.
+        """ Return a subdict with the open arguments name and index in `self._argidx`
+        that come before `arg_name` in the crumb path.
         Parameters
         ----------
         arg_name: str
@@ -469,7 +490,7 @@ class Crumb(object):
         arg_deps: Mapping[str, int]
         """
         argidx = self._find_arg(arg_name)
-        return OrderedDict([(arg, idx) for arg, idx in self._argidx.items() if idx <= argidx])
+        return OrderedDict([(arg, idx) for arg, idx in self._open_arg_items() if idx <= argidx])
 
     def values_map(self, arg_name, check_exists=False):
         """ Return a list of tuples of crumb arguments with their values.
@@ -581,7 +602,7 @@ class Crumb(object):
         """
         started = False
         rem_deps = []
-        for an in reversed(list(self._argidx.keys())):  # take into account that argidx is ordered
+        for an in reversed(list(self.open_args())):  # take into account that argidx is ordered
             if an in arg_names:
                 started = True
             else:
@@ -683,7 +704,7 @@ class Crumb(object):
     def __setitem__(self, key, value):
         if key not in self._argidx:
             raise KeyError("Expected `arg_name` to be one of ({}),"
-                           " got {}.".format(list(self._argidx), key))
+                           " got {}.".format(list(self.open_args()), key))
         _ = self.setitems(**{key: value})
 
     def __ge__(self, other):
@@ -701,13 +722,8 @@ class Crumb(object):
     def __hash__(self):
         return self._path.__hash__()
 
-    def has_set(self, arg_name):
-        """ Return True if the argument `arg_name` has been set to a specific value,
-        False if it is still a crumb argument."""
-        return arg_name not in self._argidx and arg_name in self._argval
-
     def __contains__(self, arg_name):
-        return arg_name in self._argidx or arg_name in self._argval
+        return arg_name in self.all_args()
 
     def __repr__(self):
         #return '{}("{}")'.format(__class__.__name__, self._path)

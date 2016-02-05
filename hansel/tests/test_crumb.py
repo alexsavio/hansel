@@ -65,13 +65,14 @@ def test_path_property(crumb):
     crumb2 = crumb.replace(base_dir=base_dir)
 
     assert crumb2.path == crumb2._path
-    assert crumb.path != crumb2._path
-    assert crumb._argidx != crumb2._argidx
+    assert crumb.path  != crumb2._path
+    assert list(crumb.open_args()) != list(crumb2.open_args())
+    assert  set(crumb.all_args())  ==  set(crumb2.all_args())
 
     crumb.path = crumb2.path
-
     assert crumb.path == crumb.path
-    assert crumb._argidx == crumb2._argidx
+    assert list(crumb.open_args()) == list(crumb2.open_args())
+    assert list(crumb.all_args())  != list(crumb2.all_args())
 
 
 def test_replace_and_setitem(crumb):
