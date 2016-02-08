@@ -307,7 +307,7 @@ There are more possibilities such as:
 
 - Use ``re.match`` or ``fnmatch`` expressions to filter the paths:
 
-    The syntax for crumb arguments with a regular expression is: ``"{<arg_name>:<reg_regex>}"``
+    The syntax for crumb arguments with a regular expression is: ``"{<arg_name>:<arg_regex>}"``
 
     .. code:: python
 
