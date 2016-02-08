@@ -163,6 +163,42 @@ def list_subpaths(path, just_dirs=False, ignore=None, pattern=None,
     return paths
 
 
+def _intersect_crumb_args(crumb1, crumb2):
+    """ Return a set of `arg_names` that are the intersection between the arguments
+    of `crumb1` and `crumb2`·
+    This will keep the same order as the arguments are in `all_args` function from `crumb1`.
+    """
+    crumb1_args = crumb1.all_args()
+    crumb2_args = crumb2.all_args()
+    return [arg_name for arg_name in crumb1_args if arg_name in crumb2_args]
+
+
+def join_crumbs(crumb1, crumb2):
+    """ Return an 'inner join' of both given Crumbs, i.e., will return a list of
+    Crumbs with common values for the common arguments of both crumbs.
+
+    Use with care, ideally the matches should be in the same order.
+
+    Parameters
+    ----------
+    crumb1: hansel.Crumb
+
+    crumb2: hansel.Crumb
+
+    Returns
+    -------
+    inner_join: list[hansel.Crumb]
+    """
+    common_args = _intersect_crumb_args(crumb1, crumb2)
+
+    for arg_name in common_args:
+        map1 = crumb1.values_map(arg_name, check_exists=True)
+        map2 = crumb2.values_map(arg_name, check_exists=True)
+
+        #TODO
+    pass
+
+
 def deprecated(replacement=None):
     """A decorator which can be used to mark functions as deprecated.
     replacement is a callable that will be called with the same args
