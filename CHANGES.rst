@@ -3,6 +3,11 @@
 Changelog
 =========
 
+Version 0.5.5
+-------------
+- Added CHANGES.rst to MANIFEST.in
+
+
 Version 0.5.4
 -------------
 - Deprecating `Crumbs.keys()` function.
