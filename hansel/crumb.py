@@ -504,6 +504,8 @@ class Crumb(object):
         Returns
         -------
         values_map: list of lists of 2-tuples
+            I call values_map what is called `record` in pandas. It is a list of lists of 2-tuples, where each 2-tuple
+            has the shape (arg_name, arg_value).
         """
         arg_deps = self._arg_deps(arg_name)
         values_map = None
