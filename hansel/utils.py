@@ -17,6 +17,8 @@ from   collections import Mapping
 from   functools   import partial, reduce
 from   itertools   import product
 
+from ._utils import _check_is_subset
+
 
 def rm_dups(lst):
     """ Return a sorted lst of non-duplicated elements from `lst`.
@@ -163,21 +165,66 @@ def list_subpaths(path, just_dirs=False, ignore=None, pattern=None,
     return paths
 
 
+def list_intersection(list1, list2):
+    """ Return a list of elements that are the intersection between the set of elements
+    of `list1` and `list2`·
+    This will keep the same order of the elements in `list1`.
+    """
+    return (arg_name for arg_name in list1 if arg_name in list2)
+
+
 def _intersect_crumb_args(crumb1, crumb2):
-    """ Return a set of `arg_names` that are the intersection between the arguments
+    """ Return a list of `arg_names` that are the intersection between the arguments
     of `crumb1` and `crumb2`·
     This will keep the same order as the arguments are in `all_args` function from `crumb1`.
     """
-    crumb1_args = crumb1.all_args()
-    crumb2_args = crumb2.all_args()
-    return [arg_name for arg_name in crumb1_args if arg_name in crumb2_args]
+    return list_intersection(crumb1.all_args(), crumb2.all_args())
 
 
-def join_crumbs(crumb1, crumb2):
+def _get_matching_items(list1, list2, items=None):
+    """ If `items` is None, Return a list of items that are in
+    `list1` and `list2`. Otherwise will return the elements of `items` if
+    they are in both lists.
+    Keep the order in `list1` or in `items`.
+
+    Returns
+    -------
+    arg_names: list
+        The matching items.
+
+    Raises
+    ------
+    ValueError:
+        If an element of items does not exists in either `list1` or `list2`.
+
+    KeyError:
+        If the result is empty.
+    """
+    if items is None:
+        arg_names = list_intersection(list1, list2)
+    else:
+        _check_is_subset(items, list1)
+        _check_is_subset(items, list2)
+        arg_names = items
+
+    if not arg_names:
+        raise KeyError("Could not find matching arguments in "
+                       "{} and {}.".format(list1, list2))
+
+    return arg_names
+
+
+def intersection(crumb1, crumb2, on=None):
     """ Return an 'inner join' of both given Crumbs, i.e., will return a list of
     Crumbs with common values for the common arguments of both crumbs.
 
-    Use with care, ideally the matches should be in the same order.
+    If `on` is None, will use all the common arguments names of both crumbs.
+    Otherwise will use only the elements of `on`. All its items must be in both crumbs.
+
+    Returns
+    -------
+    arg_names: list
+        The matching items.
 
     Parameters
     ----------
@@ -185,18 +232,114 @@ def join_crumbs(crumb1, crumb2):
 
     crumb2: hansel.Crumb
 
+    on: list of str
+        Crumb argument names common to both input crumbs.
+
+    Raises
+    ------
+    ValueError:
+        If an element of `on` does not exists in either `list1` or `list2`.
+
+    KeyError:
+        If the result is empty.
+
     Returns
     -------
     inner_join: list[hansel.Crumb]
+
+    Notes
+    -----
+    Use with care, ideally the argument matches should be in the same order in both crumbs.
+
+    Both crumbs must have at least one matching identifier argument and one
+    of those must be the one in `id_colname`.
     """
-    common_args = _intersect_crumb_args(crumb1, crumb2)
+    arg_names = _get_matching_items(crumb1.all_args(), crumb2.all_args(), items=on)
 
-    for arg_name in common_args:
-        map1 = crumb1.values_map(arg_name, check_exists=True)
-        map2 = crumb2.values_map(arg_name, check_exists=True)
 
-        #TODO
-    pass
+
+#
+# def copy_matching_df_subjects(df, src_crumb, dst_crumb, src_crumb_cols,
+#                               dst_crumb_cols, overwrite=False):
+#     """ Copy the tree of the matching src_crumb to dst_crumb.
+#     The crumb values are taked from `df`.
+#
+#     Parameters
+#     ----------
+#     df: pandas.DataFrame
+#
+#     src_crumb: hansel.Crumb
+#         Example: Crumb("/home/alexandre/data/ftlad/data/{year:2*}/{subj_id}")
+#
+#     dst_crumb: hansel.Crumb
+#         Example: Crumb('/home/alexandre/data/dti_ftlad.git/raw/{diagnosis}/{subj_id}')
+#
+#     src_crumb_cols: list of 2-tuples
+#         A `df` to `src_crumb` column/argument name mapping.
+#         Example: [('NUK Pseudonym', 'subj_id')]
+#
+#     dst_crumb_cols: list of 2-tuples
+#         A `df` to `dst_crumb` column/argument name mapping.
+#         Example: [('NUK Pseudonym', subj_id'),
+#                   ('Diagnosis', 'diagnosis'),
+#                  ]
+#
+#     overwrite: bool
+#
+#
+#     Returns
+#     -------
+#     missing_rows: pandas.DataFrame
+#
+#     Notes
+#     -----
+#     - both crumbs must have at least one matching identifier argument and one
+#     of those must be the one in `id_colname`.
+#     - the dst_crumb must be fully defined by the arguments in dst_crumb_cols.
+#     """
+#     # get the crumb arguments of the name column maps
+#     src_crumb_args = [item[1] for item in src_crumb_cols]
+#     dst_crumb_args = [item[1] for item in dst_crumb_cols]
+#
+#     # TODO: get the values maps for all the args
+#     def pandas_fill_crumbs(df, crumb, arg_names=None):
+#         """Use `df` row values to fill `crumb` and return a list of each
+#         filled `crumb`."""
+#         arg_names = _get_matching_items(df.columns, crumb.all_args(), arg_names)
+#         return (crumb.replace(**rec) for rec in df[arg_names].to_dict(orient='records'))
+#
+#
+#     # I copy=False to not copy the whole data because I am using the `df` read-only
+#     src_df = _pandas_rename_cols(df, src_crumb_cols)
+#     dst_df = _pandas_rename_cols(df, dst_crumb_cols)
+#
+#     # get the filled crumbs
+#     src_crumbs = pandas_fill_crumbs(src_df, src_crumb, arg_names=src_crumb_args)
+#     dst_crumbs = pandas_fill_crumbs(dst_df, dst_crumb, arg_names=dst_crumb_args)
+#
+#     # loop through the crumb lists
+#     for idx, (src, dst) in enumerate(zip(src_crumbs, dst_crumbs)):
+#         if dst.has_crumbs():
+#             raise AttributeError('The destination crumb still has open '
+#                                  'arguments: {}, expected a fully specified
+#                                  'Crumb.'.format(dst))
+#
+#         src_paths = src.unfold()
+#         if len(src_paths) != 1:
+#             raise KeyError('The source crumb {} unfolds in {} '
+#                            'paths.'.format(src, len(src_paths)))
+#
+#         src_path = src_paths[0].path
+#
+#         if not op.exists(src_path):
+#             missing = missing_rows.append(df.irow(idx))
+#             continue
+#
+#         if copy_tree(src_path, dst.path, overwrite=overwrite):
+#             copied = copied.append(df.irow(idx))
+#
+#     return missing, copied
+#
 
 
 def deprecated(replacement=None):
