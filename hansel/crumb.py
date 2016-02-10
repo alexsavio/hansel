@@ -342,17 +342,17 @@ class Crumb(object):
             raise TypeError("Expected a `val` to be a `str`, got {}.".format(type(crumb_path)))
 
     def _lastarg(self):
-        """ Return the name and idx of the last argument."""
+        """ Return the name and idx of the last open argument."""
         for arg, idx in reversed(list(self._open_arg_items())):
             return arg, idx
 
     def _firstarg(self):
-        """ Return the name and idx of the first argument."""
+        """ Return the name and idx of the first open argument."""
         for arg, idx in self._open_arg_items():
             return arg, idx
 
     def _is_firstarg(self, arg_name):
-        """ Return True if `arg_name` is the first argument."""
+        """ Return True if `arg_name` is the first open argument."""
         # Take into account that self._argidx is OrderedDict
         return arg_name == self._firstarg()[0]
 
