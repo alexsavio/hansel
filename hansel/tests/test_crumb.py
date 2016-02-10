@@ -75,6 +75,11 @@ def test_path_property(crumb):
     assert list(crumb.all_args())  != list(crumb2.all_args())
 
 
+def test_copy_string(crumb):
+    crumb2 = crumb.copy(crumb._path)
+    assert crumb2 == crumb
+
+
 def test_replace_and_setitem(crumb):
     # crumb = Crumb("{base_dir}/raw/{subject_id}/{session_id}/{modality}/{image}")
     args = list(crumb._argidx.keys())
@@ -94,7 +99,8 @@ def test_replace_and_setitem(crumb):
     assert list(crumb2.all_args ()) != args
 
     assert crumb2._path == op.join(base_dir, crumb._path.replace('{base_dir}/', ''))
-    assert 'base_dir' not in crumb2._argidx
+    assert 'base_dir' not in crumb2.open_args()
+    assert 'base_dir' in crumb2.all_args()
     assert 'base_dir' in crumb2._argval
 
     assert crumb2['base_dir'] == base_dir
@@ -111,7 +117,6 @@ def test_replace_and_setitem(crumb):
     assert crumb3 is not crumb2
     assert crumb3 == crumb2
     assert crumb3._path == crumb2._path
-    assert 'base_dir' not in crumb3._argidx
     assert crumb3.has_set('base_dir')
 
     assert crumb3.replace(**{})._path == crumb3._path
@@ -395,31 +400,17 @@ def test_rem_deps(crumb):
     assert crumb._remaining_deps(values) == ['base_dir']
 
     del values['subject_id']
-    assert crumb._remaining_deps(values) == ['subject_id', 'base_dir']
+    assert crumb._remaining_deps(values) == ['base_dir', 'subject_id']
 
     values = copy(crumb._argidx)
     del values['base_dir']
     del values['modality']
-    assert crumb._remaining_deps(values) == ['modality', 'base_dir']
+    assert crumb._remaining_deps(values) == ['base_dir', 'modality']
 
     values = copy(crumb._argidx)
     del values['image']
     del values['modality']
     assert not crumb._remaining_deps(values)
-
-
-# def test_remdeps2(tmp_crumb):
-#     values_dict = {'session_id': ['session_' + str(i) for i in range(2)],
-#                    'subject_id': ['subj_' + str(i) for i in range(3)],
-#                    'modality':   ['anat', 'rest', 'pet'],
-#                    'image':      ['mprage.nii', 'rest.nii', 'pet.nii'],
-#                    }
-#
-#     del values_dict['subject_id']
-#     del values_dict['image']
-#     values_map = list(ParameterGrid(values_dict))
-#
-#     assert tmp_crumb._remaining_deps(['image']) == ['modality', 'base_dir']
 
 
 def test_touch(tmp_crumb):
@@ -488,8 +479,9 @@ def test_contains(tmp_crumb):
 
     tmp_crumb['image'] = 'image'
 
-    assert 'image' not in tmp_crumb._argidx
-    assert 'image' in tmp_crumb
+    assert 'image' in tmp_crumb._argidx
+    assert 'image' in tmp_crumb.all_args()
+    assert 'image' not in tmp_crumb.open_args()
     assert tmp_crumb.has_set('image')
 
 
@@ -577,7 +569,7 @@ def test_ls_with_check(tmp_crumb):
 
     assert 'subj_000' not in img_crumb['subject_id']
 
-    assert list(tmp_crumb.unfold()[0].keys()) == []
+    assert list(tmp_crumb.unfold()[0].open_args()) == []
 
 
 def test_regex(tmp_crumb):

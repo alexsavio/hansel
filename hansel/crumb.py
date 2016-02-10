@@ -149,26 +149,11 @@ class Crumb(object):
         -------
         crumb_args: set of str
         """
-        for arg_name in chain(self.open_args(), self._argval.keys()):
+        for arg_name in self._argidx.keys():
             yield arg_name
 
-    @deprecated(replacement='all_args')
-    def keys(self):
-        """ Return an iterator to the crumb argument names in `self` that have not been replaced yet.
-        In the same order as they appear in the crumb path.
-
-        Returns
-        -------
-        crumb_args: set of str
-
-        Note
-        ----
-        I know that there is shorter/faster ways to program this but I wanted to maintain the
-        order of the arguments in argidx in the result of this function.
-        """
-        return self.open_args()
-
     def _check(self):
+        """ Raise ValueError if the path of the Crumb has errors using `self.is_valid`."""
         if not self.is_valid(self._path):
             raise ValueError("The current crumb path has errors, got {}.".format(self.path))
 
@@ -443,7 +428,22 @@ class Crumb(object):
             raise KeyError("Expected `arg_names` to be a subset of ({}),"
                            " got {}.".format(list(self.open_args()), arg_names))
 
-    def setitems(self, **kwargs):
+    def _update_argidx(self, **kwargs):
+        """ Update the argument index `self._argidx` dictionary taking into account the replacement number of splits."""
+        for arg_name, value in kwargs.items():
+            n_splits = len(value.split(op.sep))
+
+            if n_splits < 1:
+                raise ValueError('What just happened?')
+            elif n_splits == 1:
+                continue
+
+            # n_splits > 1, so I have to update the position of the argument children
+            childs = self._arg_children(arg_name)
+            for child_name in childs:
+                self._argidx[child_name] = self._argidx[child_name] + n_splits - 1
+
+    def set_args(self, **kwargs):
         """ Set the crumb arguments in path to the given values in kwargs and update
         self accordingly.
         Parameters
@@ -457,10 +457,10 @@ class Crumb(object):
         self._check_argidx(kwargs.keys())
 
         self._path = self._replace(self._path, **kwargs)
-        self._update()
+        self._check()
 
+        self._update_argidx(**kwargs)
         _dict_popitems(self.patterns, **kwargs)
-
         self._argval.update(**kwargs)
         return self
 
@@ -477,11 +477,11 @@ class Crumb(object):
         crumb:
         """
         cr = self.copy(self)
-        return cr.setitems(**kwargs)
+        return cr.set_args(**kwargs)
 
     def _arg_deps(self, arg_name):
         """ Return a subdict with the open arguments name and index in `self._argidx`
-        that come before `arg_name` in the crumb path.
+        that come before `arg_name` in the crumb path. Include `arg_name` himself.
         Parameters
         ----------
         arg_name: str
@@ -492,6 +492,41 @@ class Crumb(object):
         """
         argidx = self._find_arg(arg_name)
         return OrderedDict([(arg, idx) for arg, idx in self._open_arg_items() if idx <= argidx])
+
+    def _arg_children(self, arg_name):
+        """ Return a subdict with the open arguments name and index in `self._argidx`
+        that come AFTER `arg_name` in the crumb path.
+        Parameters
+        ----------
+        arg_name: str
+
+        Returns
+        -------
+        arg_deps: Mapping[str, int]
+        """
+        argidx = self._find_arg(arg_name)
+        return OrderedDict([(arg, idx) for arg, idx in self._open_arg_items() if idx > argidx])
+
+    def _remaining_deps(self, arg_names):
+        """ Return the name of the arguments that are dependencies of `arg_names`.
+        Parameters
+        ----------
+        arg_names: Sequence[str]
+
+        Returns
+        -------
+        rem_deps: Sequence[str]
+        """
+        started = False
+        rem_deps = []
+        for an in reversed(list(self.open_args())):  # take into account that argidx is ordered
+            if an in arg_names:
+                started = True
+            else:
+                if started:
+                    rem_deps.append(an)
+
+        return list(reversed(rem_deps))
 
     def values_map(self, arg_name, check_exists=False):
         """ Return a list of tuples of crumb arguments with their values.
@@ -593,27 +628,6 @@ class Crumb(object):
 
         return sorted(paths)
 
-    def _remaining_deps(self, arg_names):
-        """ Return the name of the arguments that are dependencies of `arg_names`.
-        Parameters
-        ----------
-        arg_names: Sequence[str]
-
-        Returns
-        -------
-        rem_deps: Sequence[str]
-        """
-        started = False
-        rem_deps = []
-        for an in reversed(list(self.open_args())):  # take into account that argidx is ordered
-            if an in arg_names:
-                started = True
-            else:
-                if started:
-                    rem_deps.append(an)
-
-        return rem_deps
-
     def touch(self):
         """ Create a leaf directory and all intermediate ones using the non
         crumbed part of `crumb_path`.
@@ -708,7 +722,7 @@ class Crumb(object):
         if key not in self._argidx:
             raise KeyError("Expected `arg_name` to be one of ({}),"
                            " got {}.".format(list(self.open_args()), key))
-        _ = self.setitems(**{key: value})
+        _ = self.set_args(**{key: value})
 
     def __ge__(self, other):
         return self._path >= str(other)

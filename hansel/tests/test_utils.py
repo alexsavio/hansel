@@ -8,7 +8,7 @@ import pytest
 from collections import Iterable, Sized
 from itertools import chain, product
 
-from hansel.utils import rm_dups, ParameterGrid
+from hansel.utils import rm_dups, ParameterGrid, list_intersection
 
 
 @pytest.fixture(scope="module")
@@ -61,3 +61,9 @@ def test_parameter_grid():
     assert len(has_empty) == 4
     assert list(has_empty) == [{'C': 1}, {'C': 10}, {}, {'C': .5}]
     assert_grid_iter_equals_getitem(has_empty)
+
+
+def test_list_intersection():
+    sessions1 = ['session_{}'.format(r) for r in range(10)]
+    sessions2 = ['session_{}'.format(r) for r in range( 5)]
+    assert list(list_intersection(sessions1, sessions2)) == sessions2
