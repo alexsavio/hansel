@@ -49,7 +49,7 @@ def mktree(crumb, values_map):
             raise ValueError("Expected keys in `values_map` item to be a subset of {}, "
                              "got {}.".format(crumb._argidx.keys(), aval.keys()))
 
-        rem_deps = crumb._remaining_deps(list(aval.keys()))
+        rem_deps = crumb._args_open_parents(list(aval.keys()))
         if rem_deps:
             raise KeyError("Expected `values_map` item to not leave crumbs alone,"
                            " you forgot to add: {} in item {}".format(rem_deps, idx))

@@ -75,6 +75,11 @@ def test_path_property(crumb):
     assert list(crumb.all_args())  != list(crumb2.all_args())
 
 
+def test_copy_string(crumb):
+    crumb2 = crumb.copy(crumb._path)
+    assert crumb2 == crumb
+
+
 def test_replace_and_setitem(crumb):
     # crumb = Crumb("{base_dir}/raw/{subject_id}/{session_id}/{modality}/{image}")
     args = list(crumb._argidx.keys())
@@ -94,10 +99,11 @@ def test_replace_and_setitem(crumb):
     assert list(crumb2.all_args ()) != args
 
     assert crumb2._path == op.join(base_dir, crumb._path.replace('{base_dir}/', ''))
-    assert 'base_dir' not in crumb2._argidx
+    assert 'base_dir' not in crumb2.open_args()
+    assert 'base_dir' in crumb2.all_args()
     assert 'base_dir' in crumb2._argval
 
-    assert crumb2['base_dir'] == base_dir
+    assert crumb2['base_dir'][0] == base_dir
     assert crumb2.has_set('base_dir')
 
     # use setitem
@@ -111,7 +117,6 @@ def test_replace_and_setitem(crumb):
     assert crumb3 is not crumb2
     assert crumb3 == crumb2
     assert crumb3._path == crumb2._path
-    assert 'base_dir' not in crumb3._argidx
     assert crumb3.has_set('base_dir')
 
     assert crumb3.replace(**{})._path == crumb3._path
@@ -124,27 +129,27 @@ def test_replace_and_setitem(crumb):
 
 
 def test_firstarg(crumb):
-    an, ai = crumb._firstarg()
+    an, ai = crumb._first_open_arg()
     assert an == 'base_dir'
     assert ai == 0
 
     base_dir = BASE_DIR
     crumb2 = crumb.replace(base_dir=base_dir)
 
-    an, ai = crumb2._firstarg()
+    an, ai = crumb2._first_open_arg()
     assert an == 'subject_id'
     assert ai == len(base_dir.split(op.sep)) + 1
 
 
 def test_lastarg(crumb):
-    an, ai = crumb._lastarg()
+    an, ai = crumb._last_open_arg()
     assert an == 'image'
     assert ai == len(crumb._path_split()) - 1
 
     base_dir = BASE_DIR
     crumb2 = crumb.replace(base_dir=base_dir)
 
-    an, ai = crumb2._lastarg()
+    an, ai = crumb2._last_open_arg()
     assert an == 'image'
     assert ai == len(crumb2._path_split()) - 1
 
@@ -389,37 +394,23 @@ def test_ignore_lst():
 def test_rem_deps(crumb):
 
     values = copy(crumb._argidx)
-    assert not crumb._remaining_deps(values)
+    assert not crumb._args_open_parents(values)
 
     del values['base_dir']
-    assert crumb._remaining_deps(values) == ['base_dir']
+    assert crumb._args_open_parents(values) == ['base_dir']
 
     del values['subject_id']
-    assert crumb._remaining_deps(values) == ['subject_id', 'base_dir']
+    assert crumb._args_open_parents(values) == ['base_dir', 'subject_id']
 
     values = copy(crumb._argidx)
     del values['base_dir']
     del values['modality']
-    assert crumb._remaining_deps(values) == ['modality', 'base_dir']
+    assert crumb._args_open_parents(values) == ['base_dir', 'modality']
 
     values = copy(crumb._argidx)
     del values['image']
     del values['modality']
-    assert not crumb._remaining_deps(values)
-
-
-# def test_remdeps2(tmp_crumb):
-#     values_dict = {'session_id': ['session_' + str(i) for i in range(2)],
-#                    'subject_id': ['subj_' + str(i) for i in range(3)],
-#                    'modality':   ['anat', 'rest', 'pet'],
-#                    'image':      ['mprage.nii', 'rest.nii', 'pet.nii'],
-#                    }
-#
-#     del values_dict['subject_id']
-#     del values_dict['image']
-#     values_map = list(ParameterGrid(values_dict))
-#
-#     assert tmp_crumb._remaining_deps(['image']) == ['modality', 'base_dir']
+    assert not crumb._args_open_parents(values)
 
 
 def test_touch(tmp_crumb):
@@ -488,8 +479,9 @@ def test_contains(tmp_crumb):
 
     tmp_crumb['image'] = 'image'
 
-    assert 'image' not in tmp_crumb._argidx
-    assert 'image' in tmp_crumb
+    assert 'image' in tmp_crumb._argidx
+    assert 'image' in tmp_crumb.all_args()
+    assert 'image' not in tmp_crumb.open_args()
     assert tmp_crumb.has_set('image')
 
 
@@ -562,22 +554,22 @@ def test_ls_with_check(tmp_crumb):
 
     img_crumb = tmp_crumb.replace(image='mprage1.nii')
     assert 'image' in img_crumb._argval
-    assert img_crumb['image'] == 'mprage1.nii'
+    assert img_crumb['image'] == ['mprage1.nii']
 
     img_crumb['modality'] = 'anat'
     assert 'modality' in img_crumb._argval
-    assert img_crumb['modality'] == 'anat'
+    assert img_crumb['modality'] == ['anat']
     assert img_crumb.has_set('modality')
 
     assert img_crumb['session_id'].count('session_01') == img_crumb['session_id'].count('session_00')
 
     img_crumb['session_id'] = 'session_00'
     assert 'session_id' in img_crumb._argval
-    assert img_crumb['session_id'] == 'session_00'
+    assert img_crumb['session_id'] == ['session_00']
 
     assert 'subj_000' not in img_crumb['subject_id']
 
-    assert list(tmp_crumb.unfold()[0].keys()) == []
+    assert list(tmp_crumb.unfold()[0].open_args()) == []
 
 
 def test_regex(tmp_crumb):
@@ -657,15 +649,15 @@ def test_regex_replace(tmp_crumb):
     anat_crumb = crumb.replace(modality='anat')
     assert anat_crumb.exists()
 
-    fn_subj_ids = {cr['subject_id'] for cr in anat_crumb.ls('session_id', check_exists=True)}
+    fn_subj_ids = {cr['subject_id'][0] for cr in anat_crumb.ls('session_id', check_exists=True)}
 
     assert fn_subj_ids == set(['subj_{:03}'.format(i) for i in range(20, 30)])
 
-    sessions = {cr['session_id'] for cr in anat_crumb.ls('session_id', check_exists=True)}
+    sessions = {cr['session_id'][0] for cr in anat_crumb.ls('session_id', check_exists=True)}
     assert sessions == set(values_dict['session_id'])
 
 
-def test_regex_replace(tmp_crumb):
+def test_regex_replace2(tmp_crumb):
     assert not op.exists(tmp_crumb._path)
 
     values_dict = {'session_id': ['session_{:02}'.format(i) for i in range(  2)],
@@ -681,8 +673,8 @@ def test_regex_replace(tmp_crumb):
                   regex='fnmatch')  # fnmatch
 
     # a crumb without the pattern, the pattern is added later
-    crumb2 = Crumb(tmp_crumb._path.replace('{subject_id}', '{subject_id}'),
-                  regex='fnmatch')
+    crumb2 = Crumb(tmp_crumb._path, regex='fnmatch')
+
     crumb2.patterns['subject_id'] = 'subj_02*'
 
     assert crumb['subject_id'] == crumb2['subject_id']

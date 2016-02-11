@@ -4,18 +4,17 @@
 """
 Utilities to make crumbs
 """
-import re
+import fnmatch
+import operator
 import os
 import os.path as op
-import operator
-import fnmatch
-import warnings
-import functools
-
-from   copy        import deepcopy
+import re
 from   collections import Mapping
+from   copy        import deepcopy
 from   functools   import partial, reduce
 from   itertools   import product
+
+from ._utils import _check_is_subset
 
 
 def rm_dups(lst):
@@ -123,7 +122,7 @@ def list_children(path, just_dirs=False):
 
 def list_subpaths(path, just_dirs=False, ignore=None, pattern=None,
                   filter_func=fnmatch_filter, filter_args=None):
-    """ Return the immediate elements (files and folders) in `path`.
+    """ Return the immediate elements (files and folders) within `path`.
     Parameters
     ----------
     path: str
@@ -163,48 +162,140 @@ def list_subpaths(path, just_dirs=False, ignore=None, pattern=None,
     return paths
 
 
-def deprecated(replacement=None):
-    """A decorator which can be used to mark functions as deprecated.
-    replacement is a callable that will be called with the same args
-    as the decorated function.
-
-    >>> @deprecated()
-    ... def foo(x):
-    ...     return x
-    ...
-    >>> ret = foo(1)
-    DeprecationWarning: foo is deprecated
-    >>> ret
-    1
-    >>>
-    >>>
-    >>> def newfun(x):
-    ...     return 0
-    ...
-    >>> @deprecated(newfun)
-    ... def foo(x):
-    ...     return x
-    ...
-    >>> ret = foo(1)
-    DeprecationWarning: foo is deprecated; use newfun instead
-    >>> ret
-    0
-    >>>
+def list_intersection(list1, list2):
+    """ Return a list of elements that are the intersection between the set of elements
+    of `list1` and `list2`·
+    This will keep the same order of the elements in `list1`.
     """
-    def outer(fun):
-        msg = "psutil.%s is deprecated" % fun.__name__
-        if replacement is not None:
-            msg += "; use %s instead" % replacement
-        if fun.__doc__ is None:
-            fun.__doc__ = msg
+    return (arg_name for arg_name in list1 if arg_name in list2)
 
-        @functools.wraps(fun)
-        def inner(*args, **kwargs):
-            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
-            return fun(*args, **kwargs)
 
-        return inner
-    return outer
+def _intersect_crumb_args(crumb1, crumb2):
+    """ Return a list of `arg_names` that are the intersection between the arguments
+    of `crumb1` and `crumb2`·
+    This will keep the same order as the arguments are in `all_args` function from `crumb1`.
+    """
+    return list_intersection(crumb1.all_args(), crumb2.all_args())
+
+
+def _get_matching_items(list1, list2, items=None):
+    """ If `items` is None, Return a list of items that are in
+    `list1` and `list2`. Otherwise will return the elements of `items` if
+    they are in both lists.
+    Keep the order in `list1` or in `items`.
+
+    Returns
+    -------
+    arg_names: list
+        The matching items.
+
+    Raises
+    ------
+    ValueError:
+        If an element of items does not exists in either `list1` or `list2`.
+    """
+    if items is None:
+        arg_names = list_intersection(list1, list2)
+    else:
+        try:
+            _check_is_subset(items, list1)
+            _check_is_subset(items, list2)
+        except KeyError:
+            arg_names = []
+        except:
+            raise
+        else:
+            arg_names = items
+
+    return arg_names
+
+
+def joint_value_map(crumb, arg_names, check_exists=True):
+    """ Return a list of tuples of crumb argument values of the given `arg_names`.
+    Parameters
+    ----------
+    arg_name: str
+
+    check_exists: bool
+        If True will return only a values_map with sets of crumb arguments that fill a crumb to an existing path.
+        Otherwise it won't check if they exist and return all possible combinations.
+
+    Returns
+    -------
+    values_map: list of lists of 2-tuples
+        I call values_map what is called `record` in pandas. It is a list of lists of 2-tuples, where each 2-tuple
+        has the shape (arg_name, arg_value).
+    """
+    values_map = []
+    for arg_name in arg_names:
+        values_map.append(list((arg_name, arg_value) for arg_value in crumb[arg_name]))
+
+    if len(arg_names) == 1:
+        return values_map[0]
+    else:
+        if not check_exists:
+            values_map_checked = values_map[:]
+        else:
+            args_crumbs = [(args, crumb.replace(**dict(args))) for args in set(product(*values_map))]
+            values_map_checked = [args for args, cr in args_crumbs if cr.exists()]
+
+    return values_map_checked
+
+
+def intersection(crumb1, crumb2, on=None):
+    """ Return an 'inner join' of both given Crumbs, i.e., will return a list of
+    Crumbs with common values for the common arguments of both crumbs.
+
+    If `on` is None, will use all the common arguments names of both crumbs.
+    Otherwise will use only the elements of `on`. All its items must be in both crumbs.
+
+    Returns
+    -------
+    arg_names: list
+        The matching items.
+
+    Parameters
+    ----------
+    crumb1: hansel.Crumb
+
+    crumb2: hansel.Crumb
+
+    on: list of str
+        Crumb argument names common to both input crumbs.
+
+    Raises
+    ------
+    ValueError:
+        If an element of `on` does not exists in either `list1` or `list2`.
+
+    KeyError:
+        If the result is empty.
+
+    Returns
+    -------
+    inner_join: list[hansel.Crumb]
+
+    Notes
+    -----
+    Use with care, ideally the argument matches should be in the same order in both crumbs.
+
+    Both crumbs must have at least one matching identifier argument and one
+    of those must be the one in `id_colname`.
+
+    # TODO: this function can still be more efficient.
+    """
+    arg_names = list(_get_matching_items(list(crumb1.all_args()), list(crumb2.all_args()), items=on))
+
+    if not arg_names:
+        raise KeyError("Could not find matching arguments between "
+                       "{} and  {} limited by {}.".format(list(crumb1.all_args()), list(crumb2.all_args()), on))
+
+    maps1 = set(joint_value_map(crumb1, arg_names, check_exists=True))
+    maps2 = set(joint_value_map(crumb2, arg_names, check_exists=True))
+
+    intersect = maps1.intersection(maps2)
+
+    return sorted(list(intersect))
 
 
 class ParameterGrid(object):
