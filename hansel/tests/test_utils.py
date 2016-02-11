@@ -124,7 +124,7 @@ def test_intersection():
     assert op.exists(tmp_crumb1.split()[0])
     assert op.exists(tmp_crumb2.split()[0])
 
-    assert intersection(tmp_crumb1, tmp_crumb2, on=['subject_id']) == [('subject_id', val) for val in tmp_crumb1['subject_id']]
+    assert intersection(tmp_crumb1, tmp_crumb2, on=['subject_id']) == [(('subject_id', val), ) for val in tmp_crumb1['subject_id']]
 
 
     assert intersection(tmp_crumb1, tmp_crumb2,
@@ -136,7 +136,7 @@ def test_intersection():
     assert intersection(tmp_crumb1, han_crumb, on=['subject_id']) == []
 
     s0_crumb = tmp_crumb2.replace(subject_id='subj_000')
-    assert intersection(tmp_crumb1, s0_crumb, on=['subject_id']) == [('subject_id', 'subj_000')]
+    assert intersection(tmp_crumb1, s0_crumb, on=['subject_id']) == [(('subject_id', 'subj_000'), )]
 
     assert intersection(tmp_crumb1, s0_crumb, on=['subject_id', 'modality']) == [(('subject_id', 'subj_000'), ('modality', 'anat'))]
 

@@ -290,10 +290,13 @@ def intersection(crumb1, crumb2, on=None):
         raise KeyError("Could not find matching arguments between "
                        "{} and  {} limited by {}.".format(list(crumb1.all_args()), list(crumb2.all_args()), on))
 
-    maps1 = set(joint_value_map(crumb1, arg_names, check_exists=True))
-    maps2 = set(joint_value_map(crumb2, arg_names, check_exists=True))
+    maps1 = joint_value_map(crumb1, arg_names, check_exists=True)
+    maps2 = joint_value_map(crumb2, arg_names, check_exists=True)
 
-    intersect = maps1.intersection(maps2)
+    intersect = set(maps1).intersection(set(maps2))
+
+    if len(arg_names) == 1:
+        intersect = [(i, ) for i in intersect]
 
     return sorted(list(intersect))
 
