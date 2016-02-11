@@ -390,6 +390,10 @@ def test_ignore_lst():
     assert set(ign_folders) == set([item for item in folders if not fnmatch.fnmatch(item, '.*')])
     assert set(folders) > set(ign_folders)
 
+    uign_crumb = ign_crumb.unfold()
+    assert ign_crumb._re_method == uign_crumb[0]._re_method
+    assert ign_crumb._ignore    == uign_crumb[0]._ignore
+
 
 def test_rem_deps(crumb):
 
@@ -623,9 +627,19 @@ def test_regex_ignorecase(tmp_crumb):
                   regex='re')  # re.match
 
     assert len(crumb['subject_id']) == 0
+    assert crumb._re_method == crumb.replace(subject_id='haensel')._re_method
+    assert crumb._ignore    == crumb.replace(subject_id='haensel')._ignore
+
+    assert not crumb.unfold()
 
     crumb = Crumb(tmp_crumb._path.replace('{subject_id}', '{subject_id:^subj_02.*$}'),
                   regex='re.ignorecase')  # re.match
+    assert crumb._re_method == crumb.replace(subject_id='haensel')._re_method
+    assert crumb._ignore    == crumb.replace(subject_id='haensel')._ignore
+
+    ucrumb = crumb.unfold()[0]
+    assert crumb._re_method == ucrumb._re_method
+    assert crumb._ignore    == ucrumb._ignore
 
     re_subj_ids = crumb['subject_id']
 
