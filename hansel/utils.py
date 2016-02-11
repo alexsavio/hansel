@@ -4,16 +4,13 @@
 """
 Utilities to make crumbs
 """
-import re
+import fnmatch
+import operator
 import os
 import os.path as op
-import operator
-import fnmatch
-import warnings
-import functools
-
-from   copy        import deepcopy
+import re
 from   collections import Mapping
+from   copy        import deepcopy
 from   functools   import partial, reduce
 from   itertools   import product
 
@@ -125,7 +122,7 @@ def list_children(path, just_dirs=False):
 
 def list_subpaths(path, just_dirs=False, ignore=None, pattern=None,
                   filter_func=fnmatch_filter, filter_args=None):
-    """ Return the immediate elements (files and folders) in `path`.
+    """ Return the immediate elements (files and folders) within `path`.
     Parameters
     ----------
     path: str
@@ -196,22 +193,53 @@ def _get_matching_items(list1, list2, items=None):
     ------
     ValueError:
         If an element of items does not exists in either `list1` or `list2`.
-
-    KeyError:
-        If the result is empty.
     """
     if items is None:
         arg_names = list_intersection(list1, list2)
     else:
-        _check_is_subset(items, list1)
-        _check_is_subset(items, list2)
-        arg_names = items
-
-    if not arg_names:
-        raise KeyError("Could not find matching arguments in "
-                       "{} and {}.".format(list1, list2))
+        try:
+            _check_is_subset(items, list1)
+            _check_is_subset(items, list2)
+        except KeyError:
+            arg_names = []
+        except:
+            raise
+        else:
+            arg_names = items
 
     return arg_names
+
+
+def joint_value_map(crumb, arg_names, check_exists=True):
+    """ Return a list of tuples of crumb argument values of the given `arg_names`.
+    Parameters
+    ----------
+    arg_name: str
+
+    check_exists: bool
+        If True will return only a values_map with sets of crumb arguments that fill a crumb to an existing path.
+        Otherwise it won't check if they exist and return all possible combinations.
+
+    Returns
+    -------
+    values_map: list of lists of 2-tuples
+        I call values_map what is called `record` in pandas. It is a list of lists of 2-tuples, where each 2-tuple
+        has the shape (arg_name, arg_value).
+    """
+    values_map = []
+    for arg_name in arg_names:
+        values_map.append(list((arg_name, arg_value) for arg_value in crumb[arg_name]))
+
+    if len(arg_names) == 1:
+        return values_map[0]
+    else:
+        if not check_exists:
+            values_map_checked = values_map[:]
+        else:
+            args_crumbs = [(args, crumb.replace(**dict(args))) for args in set(product(*values_map))]
+            values_map_checked = [args for args, cr in args_crumbs if cr.exists()]
+
+    return values_map_checked
 
 
 def intersection(crumb1, crumb2, on=None):
@@ -253,137 +281,21 @@ def intersection(crumb1, crumb2, on=None):
 
     Both crumbs must have at least one matching identifier argument and one
     of those must be the one in `id_colname`.
+
+    # TODO: this function can still be more efficient.
     """
-    arg_names = _get_matching_items(crumb1.all_args(), crumb2.all_args(), items=on)
+    arg_names = list(_get_matching_items(list(crumb1.all_args()), list(crumb2.all_args()), items=on))
 
+    if not arg_names:
+        raise KeyError("Could not find matching arguments between "
+                       "{} and  {} limited by {}.".format(list(crumb1.all_args()), list(crumb2.all_args()), on))
 
+    maps1 = set(joint_value_map(crumb1, arg_names, check_exists=True))
+    maps2 = set(joint_value_map(crumb2, arg_names, check_exists=True))
 
-#
-# def copy_matching_df_subjects(df, src_crumb, dst_crumb, src_crumb_cols,
-#                               dst_crumb_cols, overwrite=False):
-#     """ Copy the tree of the matching src_crumb to dst_crumb.
-#     The crumb values are taked from `df`.
-#
-#     Parameters
-#     ----------
-#     df: pandas.DataFrame
-#
-#     src_crumb: hansel.Crumb
-#         Example: Crumb("/home/alexandre/data/ftlad/data/{year:2*}/{subj_id}")
-#
-#     dst_crumb: hansel.Crumb
-#         Example: Crumb('/home/alexandre/data/dti_ftlad.git/raw/{diagnosis}/{subj_id}')
-#
-#     src_crumb_cols: list of 2-tuples
-#         A `df` to `src_crumb` column/argument name mapping.
-#         Example: [('NUK Pseudonym', 'subj_id')]
-#
-#     dst_crumb_cols: list of 2-tuples
-#         A `df` to `dst_crumb` column/argument name mapping.
-#         Example: [('NUK Pseudonym', subj_id'),
-#                   ('Diagnosis', 'diagnosis'),
-#                  ]
-#
-#     overwrite: bool
-#
-#
-#     Returns
-#     -------
-#     missing_rows: pandas.DataFrame
-#
-#     Notes
-#     -----
-#     - both crumbs must have at least one matching identifier argument and one
-#     of those must be the one in `id_colname`.
-#     - the dst_crumb must be fully defined by the arguments in dst_crumb_cols.
-#     """
-#     # get the crumb arguments of the name column maps
-#     src_crumb_args = [item[1] for item in src_crumb_cols]
-#     dst_crumb_args = [item[1] for item in dst_crumb_cols]
-#
-#     # TODO: get the values maps for all the args
-#     def pandas_fill_crumbs(df, crumb, arg_names=None):
-#         """Use `df` row values to fill `crumb` and return a list of each
-#         filled `crumb`."""
-#         arg_names = _get_matching_items(df.columns, crumb.all_args(), arg_names)
-#         return (crumb.replace(**rec) for rec in df[arg_names].to_dict(orient='records'))
-#
-#
-#     # I copy=False to not copy the whole data because I am using the `df` read-only
-#     src_df = _pandas_rename_cols(df, src_crumb_cols)
-#     dst_df = _pandas_rename_cols(df, dst_crumb_cols)
-#
-#     # get the filled crumbs
-#     src_crumbs = pandas_fill_crumbs(src_df, src_crumb, arg_names=src_crumb_args)
-#     dst_crumbs = pandas_fill_crumbs(dst_df, dst_crumb, arg_names=dst_crumb_args)
-#
-#     # loop through the crumb lists
-#     for idx, (src, dst) in enumerate(zip(src_crumbs, dst_crumbs)):
-#         if dst.has_crumbs():
-#             raise AttributeError('The destination crumb still has open '
-#                                  'arguments: {}, expected a fully specified
-#                                  'Crumb.'.format(dst))
-#
-#         src_paths = src.unfold()
-#         if len(src_paths) != 1:
-#             raise KeyError('The source crumb {} unfolds in {} '
-#                            'paths.'.format(src, len(src_paths)))
-#
-#         src_path = src_paths[0].path
-#
-#         if not op.exists(src_path):
-#             missing = missing_rows.append(df.irow(idx))
-#             continue
-#
-#         if copy_tree(src_path, dst.path, overwrite=overwrite):
-#             copied = copied.append(df.irow(idx))
-#
-#     return missing, copied
-#
+    intersect = maps1.intersection(maps2)
 
-
-def deprecated(replacement=None):
-    """A decorator which can be used to mark functions as deprecated.
-    replacement is a callable that will be called with the same args
-    as the decorated function.
-
-    >>> @deprecated()
-    ... def foo(x):
-    ...     return x
-    ...
-    >>> ret = foo(1)
-    DeprecationWarning: foo is deprecated
-    >>> ret
-    1
-    >>>
-    >>>
-    >>> def newfun(x):
-    ...     return 0
-    ...
-    >>> @deprecated(newfun)
-    ... def foo(x):
-    ...     return x
-    ...
-    >>> ret = foo(1)
-    DeprecationWarning: foo is deprecated; use newfun instead
-    >>> ret
-    0
-    >>>
-    """
-    def outer(fun):
-        msg = "psutil.%s is deprecated" % fun.__name__
-        if replacement is not None:
-            msg += "; use %s instead" % replacement
-        if fun.__doc__ is None:
-            fun.__doc__ = msg
-
-        @functools.wraps(fun)
-        def inner(*args, **kwargs):
-            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
-            return fun(*args, **kwargs)
-
-        return inner
-    return outer
+    return sorted(list(intersect))
 
 
 class ParameterGrid(object):

@@ -4,8 +4,10 @@
 """
 Crumb manipulation utilities
 """
+import functools
 import os
 import os.path as op
+import warnings
 
 from   six import string_types
 
@@ -222,7 +224,7 @@ def _replace(crumb_path, start_end_syms=('{', '}'), regexes=None, **kwargs):
         karg = _arg_format(k, start_end_syms=start_end_syms, regex=regexes.get(k, None))
         if k not in crumb_path:
             raise KeyError("Could not find argument {} in"
-                           " `path` {}.".format(k, crumb_path))
+                           " `crumb_path` {}.".format(k, crumb_path))
 
         crumb_path = crumb_path.replace(karg, kwargs[k])
 
@@ -307,6 +309,49 @@ def _split_exists(crumb_path, start_end_syms=('{', '}')):
 def _check_is_subset(list1, list2):
     """ Raise an error if `list1` is not a subset of `list2`."""
     if not set(list1).issubset(list2):
-        raise ValueError('The `list1` argument should be a subset of `list2`, '
-                         'got {} and {}.'.format(list1, list2))
+        raise KeyError('The `list1` argument should be a subset of `list2`, '
+                       'got {} and {}.'.format(list1, list2))
 
+
+def deprecated(replacement=None):
+    """A decorator which can be used to mark functions as deprecated.
+    replacement is a callable that will be called with the same args
+    as the decorated function.
+
+    >>> @deprecated()
+    ... def foo(x):
+    ...     return x
+    ...
+    >>> ret = foo(1)
+    DeprecationWarning: foo is deprecated
+    >>> ret
+    1
+    >>>
+    >>>
+    >>> def newfun(x):
+    ...     return 0
+    ...
+    >>> @deprecated(newfun)
+    ... def foo(x):
+    ...     return x
+    ...
+    >>> ret = foo(1)
+    DeprecationWarning: foo is deprecated; use newfun instead
+    >>> ret
+    0
+    >>>
+    """
+    def outer(fun):
+        msg = "psutil.%s is deprecated" % fun.__name__
+        if replacement is not None:
+            msg += "; use %s instead" % replacement
+        if fun.__doc__ is None:
+            fun.__doc__ = msg
+
+        @functools.wraps(fun)
+        def inner(*args, **kwargs):
+            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+            return fun(*args, **kwargs)
+
+        return inner
+    return outer
