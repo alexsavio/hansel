@@ -3,6 +3,15 @@
 Changelog
 =========
 
+Version 0.6.0
+-------------
+- Added `intersection` function in `utils.py`.
+- Change of behaviour in `__getitem__`, now it returns a list of values even if is only the one replace string from `_argval`.
+- General renaming of the private functions inside Crumbs, more in accordance to the `open_args`/`all_args` idea.
+- Fixed a few bugs and now the generated crumbs from `unfold` and `ls` will have the same parameters as the original Crumb.
+
+
+
 Version 0.5.5
 -------------
 - Added CHANGES.rst to MANIFEST.in
