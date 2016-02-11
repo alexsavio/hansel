@@ -581,7 +581,8 @@ class Crumb(object):
 
         make_crumbs: bool
             If `make_crumbs` is True will create a Crumb for
-            each element of the result.
+            each element of the result. Otherwise will return the plain paths.
+            Default: True.
 
         Returns
         -------
