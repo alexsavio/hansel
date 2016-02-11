@@ -85,7 +85,7 @@ Imagine this folder tree:
      ...
 
     # get the ``session_id`` of each of these ``anat_paths``
-    >>> sessions = [cr['session_id'] for cr in anat_paths]
+    >>> sessions = [cr['session_id'][0] for cr in anat_paths]
     >>> print(sessions)
     ['session_1', 'session_1', 'session_1', 'session_1', 'session_1', ...
 
