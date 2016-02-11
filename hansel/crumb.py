@@ -570,7 +570,7 @@ class Crumb(object):
 
         return values_map_checked
 
-    def build_paths(self, values_map, make_crumbs=False):
+    def build_paths(self, values_map, make_crumbs=True):
         """ Return a list of paths from each tuple of args from `values_map`
         Parameters
         ----------
