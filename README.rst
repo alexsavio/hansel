@@ -230,11 +230,11 @@ crumbs in ``anat_paths``.
 
 .. code:: python
 
-    >>> subj_ids = [cr['subject_id'] for cr in anat_paths]
+    >>> subj_ids = [cr['subject_id'][0] for cr in anat_paths]
     >>> print(subj_ids)
     ['0040000', '0040001', '0040002', '0040003', '0040004', '0040005', ...
 
-    >>> files = [cr['image'] for cr in anat_paths]
+    >>> files = [cr['image'][0] for cr in anat_paths]
     >>> print(files)
     ['mprage.nii.gz', 'mprage.nii.gz', 'mprage.nii.gz', 'mprage.nii.gz', ...
 
@@ -303,7 +303,7 @@ There are more possibilities such as:
 
         # and you can ask for the value of the crumb argument in each element
         >>> print(crumbs[0]['subject_id'])
-        0040000
+        ['0040000']
 
 - Use ``re.match`` or ``fnmatch`` expressions to filter the paths:
 
@@ -322,7 +322,7 @@ There are more possibilities such as:
          ...
 
     The default is for ``fnmatch`` expressions. If you prefer using ``re.match`` for filtering,
-    set the ``regex`` argument to ``'re'`` in the constructor.
+    set the ``regex`` argument to ``'re'`` or ``'re_ignorecase'`` in the constructor.
 
     .. code:: python
 
