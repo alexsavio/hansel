@@ -244,7 +244,10 @@ More features and tricks
 
 There are more possibilities such as:
 
-- creating folder trees with a value of maps for the crumbs:
+Creating folder trees
+~~~~~~~~~~~~~~~~~~~~~
+
+Use `mktree` and `ParameterGrid` to create a tree of folders.
 
     .. code:: python
 
@@ -258,7 +261,8 @@ There are more possibilities such as:
         >>> mktree(crumb, list(ParameterGrid(values_map)))
 
 
-- check the feasibility of a crumb path:
+Check the feasibility of a crumb path
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     .. code:: python
 
@@ -269,7 +273,8 @@ There are more possibilities such as:
         >>> assert crumb.exists()
 
 
-- check which subjects have 'jujube.png' and 'toffee.png' files:
+Check which subjects have 'jujube.png' and 'toffee.png' files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     .. code:: python
 
@@ -284,7 +289,94 @@ There are more possibilities such as:
         ['gretel', 'hansel']
 
 
-- unfold the whole crumb path to get the whole filetree in a list of paths:
+Use the `intersection` function
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use it for comparisons on more than one crumb argument.
+This can be used to compare datasets with the same structure in different folders.
+
+One argument
+````````````
+
+Imagine that we have two working folders of subjects for two different projects: `proj1` and `proj2`.
+If I want to check what subjects are common to both projects:
+
+    .. code:: python
+
+        >>> from hansel import intersection
+
+        # using one argument
+        >>> cr_proj1 = Crumb("/home/hansel/proj1/{subject_id}/{session_id}/{modality}/{image}")
+        >>> cr_proj2 = Crumb("/home/hansel/proj2/{subject_id}/{session_id}/{modality}/{image}")
+
+        # set the `on` argument in `intersection` to specify which crumb arguments to merge.
+        >>> merged = intersection(cr_proj1, cr_proj2, on=['subject_id'])
+        >>> print(merged)
+        [(('subject_id', '0040000'),), (('subject_id', '0040001'),), (('subject_id', '0040001'),)]
+
+        # I can pick these subject crumbs from this result using the `build_paths` function.
+        >>> cr1.build_paths(merged, make_crumbs=True)
+        [Crumb("/home/hansel/proj1/0040010/{session}/{mod}/{image}"),
+         Crumb("/home/hansel/proj1/0040110/{session}/{mod}/{image}")]
+
+        >>> cr2.build_paths(merged, make_crumbs=True)
+        [Crumb("/home/hansel/proj2/0040010/{session}/{mod}/{image}"),
+         Crumb("/home/hansel/proj2/0040110/{session}/{mod}/{image}")]
+
+
+Two arguments
+`````````````
+
+Now, imagine that I have different sets of `{image}` for these subjects.
+I want to check what of those subjects have exactly the same images.
+Let's say that the subject `0040001` has a `anatomical.nii.gz` instead of `mprage.nii.gz`.
+
+    .. code:: python
+
+        >>> from hansel import intersection
+
+        # using one argument
+        >>> cr_proj1 = Crumb("/home/hansel/proj1/{subject_id}/{session_id}/{modality}/{image}")
+        >>> cr_proj2 = Crumb("/home/hansel/proj2/{subject_id}/{session_id}/{modality}/{image}")
+
+        # set the `on` argument in `intersection` to specify which crumb arguments to merge.
+        >>> merged = intersection(cr_proj1, cr_proj2, on=['subject_id', 'image'])
+        >>> print(merged)
+        [(('subject_id', '0040000'), ('image', 'mprage.nii.gz')),
+         (('subject_id', '0040000'), ('image', 'rest.nii.gz')),
+         (('subject_id', '0040001'), ('image', 'rest.nii.gz')),
+         (('subject_id', '0040002'), ('image', 'mprage.nii.gz')),
+         (('subject_id', '0040002'), ('image', 'rest.nii.gz'))]
+
+
+        # I can pick these image crumbs from this result using the `build_paths` function.
+        >>> cr1.build_paths(merged, make_crumbs=True)
+        [Crumb("/home/hansel/proj1/0040000/{session}/{mod}/mprage.nii.gz"),
+         Crumb("/home/hansel/proj1/0040000/{session}/{mod}/rest.nii.gz"),
+         Crumb("/home/hansel/proj1/0040001/{session}/{mod}/rest.nii.gz"),
+         Crumb("/home/hansel/proj1/0040002/{session}/{mod}/mprage.nii.gz"),
+         Crumb("/home/hansel/proj1/0040002/{session}/{mod}/rest.nii.gz")]
+
+        >>> cr2.build_paths(merged, make_crumbs=True)
+        [Crumb("/home/alexandre/data/cobre/proj2/0040000/{session}/{mod}/mprage.nii.gz"),
+         Crumb("/home/alexandre/data/cobre/proj2/0040000/{session}/{mod}/rest.nii.gz"),
+         Crumb("/home/alexandre/data/cobre/proj2/0040001/{session}/{mod}/rest.nii.gz"),
+         Crumb("/home/alexandre/data/cobre/proj2/0040002/{session}/{mod}/mprage.nii.gz"),
+         Crumb("/home/alexandre/data/cobre/proj2/0040002/{session}/{mod}/rest.nii.gz")]
+
+        # adding 'mod' to the intersection would be:
+        >>> intersection(cr1, cr2, on=['subject_id', 'mod', 'image'])
+        [(('subject_id', '0040000'), ('mod', 'anat_1'), ('image', 'mprage.nii.gz')),
+         (('subject_id', '0040000'), ('mod', 'rest_1'), ('image', 'rest.nii.gz')),
+         (('subject_id', '0040001'), ('mod', 'rest_1'), ('image', 'rest.nii.gz')),
+         (('subject_id', '0040002'), ('mod', 'anat_1'), ('image', 'mprage.nii.gz')),
+         (('subject_id', '0040002'), ('mod', 'rest_1'), ('image', 'rest.nii.gz'))]
+
+
+The `unfold` function
+~~~~~~~~~~~~~~~~~~~~~
+
+Unfold the whole crumb path to get the whole file tree in a list of paths:
 
     .. code:: python
 
@@ -305,9 +397,13 @@ There are more possibilities such as:
         >>> print(crumbs[0]['subject_id'])
         ['0040000']
 
-- Use ``re.match`` or ``fnmatch`` expressions to filter the paths:
 
-    The syntax for crumb arguments with a regular expression is: ``"{<arg_name>:<arg_regex>}"``
+Use regular expressions
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Use ``re.match`` or ``fnmatch`` expressions to filter the paths:
+
+The syntax for crumb arguments with a regular expression is: ``"{<arg_name>:<arg_regex>}"``
 
     .. code:: python
 
@@ -321,8 +417,8 @@ There are more possibilities such as:
          Crumb("/home/hansel/data/raw/0040001/session_0/rest_1/rest.nii.gz"),
          ...
 
-    The default is for ``fnmatch`` expressions. If you prefer using ``re.match`` for filtering,
-    set the ``regex`` argument to ``'re'`` or ``'re_ignorecase'`` in the constructor.
+The default is for ``fnmatch`` expressions. If you prefer using ``re.match`` for filtering,
+set the ``regex`` argument to ``'re'`` or ``'re_ignorecase'`` in the constructor.
 
     .. code:: python
 
@@ -457,4 +553,3 @@ or
 .. |Scrutinizer| image:: https://img.shields.io/scrutinizer/g/alexsavio/hansel.svg
         :target: https://scrutinizer-ci.com/g/alexsavio/hansel/?branch=master
         :alt: Scrutinizer Code Quality
-
