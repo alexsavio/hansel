@@ -351,16 +351,16 @@ def append_dict_values(list_of_dicts, keys=None):
     if keys is None:
         try:
             keys = list(list_of_dicts[0].keys())
-        except IndexError as ie:
-            raise IndexError('Could not get the first element of the list.') from ie
+        except IndexError:
+            raise IndexError('Could not get the first element of the list.')
 
     dict_of_lists = defaultdict(list)
     for d in list_of_dicts:
         for k in keys:
             try:
                 dict_of_lists[k].append(d[k])
-            except KeyError as ke:
-                raise KeyError('Error looking for key {} in dict.'.format(k)) from ke
+            except KeyError:
+                raise KeyError('Error looking for key {} in dict.'.format(k))
     return dict_of_lists
 
 
