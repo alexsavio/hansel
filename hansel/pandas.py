@@ -72,18 +72,25 @@ def pandas_fill_crumbs(df, crumb, names_map=None):
         This is a "DataFrame column name" to "crumb argument name" relation
         dictionary.
         Example: {'Subject ID': 'subject_id'}
+        If None will make a dictionary from the open crumbs arguments, e.g.,
+        {'subject_id': 'subject_id'}.
 
     Returns
     -------
     crumbs: generator of crumbs
         Crumbs filled with the data in `df`.
     """
+    if names_map is None:
+        names_map = {arg_name: arg_name for arg_name in crumb.open_args()}
+
     nmap = names_map
     if not isinstance(nmap, dict):
         nmap = dict(nmap)
 
-    return (df
-              .pipe(_pandas_rename_cols, dict(nmap))
-              .pipe(df_to_valuesmap, list(crumb.all_args()),
-                    arg_names=list(nmap.values()))
-            )
+    values_map = (df
+                    .pipe(_pandas_rename_cols, nmap)
+                    .pipe(df_to_valuesmap, list(crumb.all_args()),
+                          arg_names=list(nmap.values()))
+                  )
+
+    return (crumb.replace(**dict(argvals)) for argvals in values_map)

@@ -20,7 +20,36 @@ from hansel.utils import (rm_dups,
 
 from hansel import Crumb, mktree
 
-from test_crumb import tmp_crumb
+
+@pytest.fixture
+def tmp_tree(request):
+
+    crumb = Crumb("{base_dir}/raw/{subject_id}/{session_id}/{modality}/{image}")
+    base_dir = tempfile.mkdtemp(prefix='crumbtest_')
+    crumb2 = crumb.replace(base_dir=base_dir)
+
+    def fin():
+        print("teardown tmp_crumb")
+
+    request.addfinalizer(fin)
+
+    assert not op.exists(crumb2._path)
+
+    assert not crumb2.has_files()
+
+    values_dict = {'session_id': ['session_{:02}'.format(i) for i in range( 2)],
+                   'subject_id': ['subj_{:03}'.format(i)    for i in range( 3)],
+                   'modality':   ['anat'],
+                   'image':      ['mprage1.nii', 'mprage2.nii', 'mprage3.nii'],
+                   }
+
+    paths = mktree(crumb2, list(ParameterGrid(values_dict)))
+
+    assert op.exists(crumb2.split()[0])
+
+    assert not crumb2.has_files()
+
+    return crumb2, values_dict  # provide the fixture value
 
 
 @pytest.fixture(scope="module")
@@ -92,25 +121,13 @@ def test_get_matching_items():
 
     assert list(_get_matching_items(sessions1, sessions2, items=['session_1'])) == ['session_1']
 
+    assert list(_get_matching_items(sessions1, sessions2, items=sessions2)) == sessions2
+
     assert list(_get_matching_items(sessions1, sessions2, items=['hansel'])) == []
 
 
-def test_valuesmap_to_dict_raises(tmp_crumb):
-    assert not op.exists(tmp_crumb._path)
-
-    assert not tmp_crumb.has_files()
-
-    values_dict = {'session_id': ['session_{:02}'.format(i) for i in range( 2)],
-                   'subject_id': ['subj_{:03}'.format(i)    for i in range( 3)],
-                   'modality':   ['anat'],
-                   'image':      ['mprage1.nii', 'mprage2.nii', 'mprage3.nii'],
-                   }
-
-    paths = mktree(tmp_crumb, list(ParameterGrid(values_dict)))
-
-    assert op.exists(tmp_crumb.split()[0])
-
-    assert not tmp_crumb.has_files()
+def test_valuesmap_to_dict_raises(tmp_tree):
+    tmp_crumb = tmp_tree[0]
 
     recs = tmp_crumb.values_map('image')
 
@@ -123,22 +140,9 @@ def test_valuesmap_to_dict_raises(tmp_crumb):
     pytest.raises(KeyError, append_dict_values, [dict(rec) for rec in recs], keys=['subject_id', 'session_id', 'hansel'])
 
 
-def test_valuesmap_to_dict(tmp_crumb):
-    assert not op.exists(tmp_crumb._path)
-
-    assert not tmp_crumb.has_files()
-
-    values_dict = {'session_id': ['session_{:02}'.format(i) for i in range( 2)],
-                   'subject_id': ['subj_{:03}'.format(i)    for i in range( 3)],
-                   'modality':   ['anat'],
-                   'image':      ['mprage1.nii', 'mprage2.nii', 'mprage3.nii'],
-                   }
-
-    paths = mktree(tmp_crumb, list(ParameterGrid(values_dict)))
-
-    assert op.exists(tmp_crumb.split()[0])
-
-    assert not tmp_crumb.has_files()
+def test_valuesmap_to_dict(tmp_tree):
+    tmp_crumb   = tmp_tree[0]
+    values_dict = tmp_tree[1]
 
     recs   = tmp_crumb.values_map('image')
     n_recs = len(recs)

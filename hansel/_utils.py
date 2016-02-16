@@ -308,7 +308,7 @@ def _split_exists(crumb_path, start_end_syms=('{', '}')):
 
 def _check_is_subset(list1, list2):
     """ Raise an error if `list1` is not a subset of `list2`."""
-    if not set(list1).issubset(list2):
+    if not set(list1).issubset(set(list2)):
         raise KeyError('The `list1` argument should be a subset of `list2`, '
                        'got {} and {}.'.format(list1, list2))
 
