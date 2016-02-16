@@ -76,7 +76,7 @@ setup_dict = dict(
     ],
 
     extras_require={
-        'testing': ['pytest', 'pytest-cov'],
+        'testing': ['pytest', 'pytest-cov', 'pandas'],
     }
 )
 

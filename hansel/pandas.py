@@ -28,7 +28,7 @@ def _pandas_rename_cols(df, col_map):
     return renamed
 
 
-def values_map_from_df(df, crumb_arg_names, arg_names=None):
+def df_to_valuesmap(df, crumb_arg_names, arg_names=None):
     """ Return a values_map from data in `df` and
     the matching column and arguments names from `df`, `crumb_arg_names`
     and `arg_names`.
@@ -51,9 +51,9 @@ def values_map_from_df(df, crumb_arg_names, arg_names=None):
     -------
     values_map: list of sequences of 2-tuple
     """
-    crumb_names  = _get_matching_items(df.columns,
-                                       crumb_arg_names,
-                                       arg_names)
+    crumb_names = _get_matching_items(df.columns,
+                                      crumb_arg_names,
+                                      arg_names)
 
     # get the columns of df that have been matched
     return (list(rec.items()) for rec in df[crumb_names].to_dict(orient='records'))
@@ -84,6 +84,6 @@ def pandas_fill_crumbs(df, crumb, names_map=None):
 
     return (df
               .pipe(_pandas_rename_cols, dict(nmap))
-              .pipe(values_map_from_df, list(crumb.all_args()),
+              .pipe(df_to_valuesmap, list(crumb.all_args()),
                     arg_names=list(nmap.values()))
             )

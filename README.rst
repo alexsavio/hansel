@@ -418,7 +418,7 @@ The syntax for crumb arguments with a regular expression is: ``"{<arg_name>:<arg
          ...
 
 The default is for ``fnmatch`` expressions. If you prefer using ``re.match`` for filtering,
-set the ``regex`` argument to ``'re'`` or ``'re_ignorecase'`` in the constructor.
+set the ``regex`` argument to ``'re'`` or ``'re.ignorecase'`` in the constructor.
 
     .. code:: python
 

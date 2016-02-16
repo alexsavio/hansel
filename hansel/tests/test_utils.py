@@ -14,9 +14,13 @@ from hansel.utils import (rm_dups,
                           list_intersection,
                           intersection,
                           _get_matching_items,
+                          append_dict_values,
+                          valuesmap_to_dict,
                           )
 
 from hansel import Crumb, mktree
+
+from test_crumb import tmp_crumb
 
 
 @pytest.fixture(scope="module")
@@ -89,6 +93,67 @@ def test_get_matching_items():
     assert list(_get_matching_items(sessions1, sessions2, items=['session_1'])) == ['session_1']
 
     assert list(_get_matching_items(sessions1, sessions2, items=['hansel'])) == []
+
+
+def test_valuesmap_to_dict_raises(tmp_crumb):
+    assert not op.exists(tmp_crumb._path)
+
+    assert not tmp_crumb.has_files()
+
+    values_dict = {'session_id': ['session_{:02}'.format(i) for i in range( 2)],
+                   'subject_id': ['subj_{:03}'.format(i)    for i in range( 3)],
+                   'modality':   ['anat'],
+                   'image':      ['mprage1.nii', 'mprage2.nii', 'mprage3.nii'],
+                   }
+
+    paths = mktree(tmp_crumb, list(ParameterGrid(values_dict)))
+
+    assert op.exists(tmp_crumb.split()[0])
+
+    assert not tmp_crumb.has_files()
+
+    recs = tmp_crumb.values_map('image')
+
+    recs[1] = recs[1][:-1]
+
+    pytest.raises(KeyError, valuesmap_to_dict, recs)
+
+    pytest.raises(IndexError, valuesmap_to_dict, {})
+
+    pytest.raises(KeyError, append_dict_values, [dict(rec) for rec in recs], keys=['subject_id', 'session_id', 'hansel'])
+
+
+def test_valuesmap_to_dict(tmp_crumb):
+    assert not op.exists(tmp_crumb._path)
+
+    assert not tmp_crumb.has_files()
+
+    values_dict = {'session_id': ['session_{:02}'.format(i) for i in range( 2)],
+                   'subject_id': ['subj_{:03}'.format(i)    for i in range( 3)],
+                   'modality':   ['anat'],
+                   'image':      ['mprage1.nii', 'mprage2.nii', 'mprage3.nii'],
+                   }
+
+    paths = mktree(tmp_crumb, list(ParameterGrid(values_dict)))
+
+    assert op.exists(tmp_crumb.split()[0])
+
+    assert not tmp_crumb.has_files()
+
+    recs   = tmp_crumb.values_map('image')
+    n_recs = len(recs)
+
+    dicts = valuesmap_to_dict(recs)
+    for arg_name in dicts:
+        assert len(dicts[arg_name]) == n_recs
+
+    assert values_dict == {arg_name:rm_dups(arg_values) for arg_name, arg_values in dicts.items()}
+
+    key_subset = ['subject_id', 'session_id']
+    dicts2 = append_dict_values([dict(rec) for rec in recs], keys=key_subset)
+
+    for key in key_subset:
+        assert dicts2[key] == dicts[key]
 
 
 def test_intersection():

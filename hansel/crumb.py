@@ -20,7 +20,8 @@ from   .utils  import (list_subpaths,
                        fnmatch_filter,
                        regex_match_filter,
                        )
-from hansel._utils import deprecated
+
+#from hansel._utils import deprecated
 from   ._utils import (_get_path,
                        _is_crumb_arg,
                        _replace,
@@ -31,7 +32,7 @@ from   ._utils import (_get_path,
                        _dict_popitems,
                        has_crumbs,
                        is_valid,
-                       #_arg_format,
+                       _arg_format,
                        )
 
 
@@ -66,6 +67,7 @@ class Crumb(object):
     # feel that this flexibility is nice to have.
     _is_crumb_arg = partial(_is_crumb_arg, start_end_syms=_start_end_syms)
     _arg_params   = partial(_arg_params,   start_end_syms=_start_end_syms, reg_sym=_regex_sym)
+    _arg_format   = partial(_arg_format,   start_end_syms=_start_end_syms, reg_sym=_regex_sym)
     is_valid      = partial(is_valid,      start_end_syms=_start_end_syms)
     has_crumbs    = partial(has_crumbs,    start_end_syms=_start_end_syms)
     _split        = partial(_split,        start_end_syms=_start_end_syms)
@@ -85,6 +87,11 @@ class Crumb(object):
 
         self._ignore = ignore_list
         self._update()
+
+    @property
+    def arg_values(self):
+        """ Return a dict with the arg_names and values of the already replaced crumb arguments."""
+        return self._argval
 
     @property
     def path(self):
@@ -182,8 +189,8 @@ class Crumb(object):
             self._match_filter = regex_match_filter
             self._re_args      = (re.IGNORECASE, )
         else:
-            raise ValueError('Expected regex method value to be `fnmatch`'
-                             ' or `re`, got {}.'.format(self._re_method))
+            raise ValueError('Expected regex method value to be "fnmatch", "re" or "re.ignorecase"'
+                             ', got {}.'.format(self._re_method))
 
     def _clean(self):
         """ Clean up the private utility members, i.e., _argidx. """
@@ -581,7 +588,7 @@ class Crumb(object):
 
         make_crumbs: bool
             If `make_crumbs` is True will create a Crumb for
-            each element of the result. Otherwise will return the plain paths.
+            each element of the result.
             Default: True.
 
         Returns
@@ -619,7 +626,7 @@ class Crumb(object):
 
         Returns
         -------
-        values: list of str or Crumb
+        values: list of Crumb or str
 
         Examples
         --------

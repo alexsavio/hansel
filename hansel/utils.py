@@ -9,7 +9,7 @@ import operator
 import os
 import os.path as op
 import re
-from   collections import Mapping
+from   collections import Mapping, defaultdict
 from   copy        import deepcopy
 from   functools   import partial, reduce
 from   itertools   import product
@@ -299,6 +299,69 @@ def intersection(crumb1, crumb2, on=None):
         intersect = [(i, ) for i in intersect]
 
     return sorted(list(intersect))
+
+
+def valuesmap_to_dict(values_map):
+    """ Converts a values_map or records type (a list of list of 2-tuple with shape '(arg_name, arg_value)')
+    to a dictionary of lists of values where the keys are the arg_names.
+    Parameters
+    ----------
+    values_map: list of list of 2-tuple of str
+
+    Returns
+    -------
+    adict: dict
+        The dictionary with the values in `values_map` in the form of a dictionary.
+
+    Raises
+    ------
+    IndexError
+        If the list_of_dicts is empty or can't be indexed.
+
+    KeyError
+        If any list inside the `values_map` doesn't have all the keys in the first dict.
+    """
+    return append_dict_values([dict(rec) for rec in values_map])
+
+
+def append_dict_values(list_of_dicts, keys=None):
+    """Return a dict of lists from a list of dicts with the same keys as the internal dicts.
+    For each dict in list_of_dicts with look for the values of the given keys and append it to the output dict.
+
+    Parameters
+    ----------
+    list_of_dicts: list of dicts
+        The first dict in this list will be used as reference for the key names of all the other dicts.
+
+    keys: list of str
+        List of keys to create in the output dict
+        If None will use all keys in the first element of list_of_dicts
+    Returns
+    -------
+    DefaultOrderedDict of lists
+
+    Raises
+    ------
+    IndexError
+        If the list_of_dicts is empty or can't be indexed.
+
+    KeyError
+        If any dict inside the `list_of_dicts` doesn't have all the keys in the first dict.
+    """
+    if keys is None:
+        try:
+            keys = list(list_of_dicts[0].keys())
+        except IndexError as ie:
+            raise IndexError('Could not get the first element of the list.') from ie
+
+    dict_of_lists = defaultdict(list)
+    for d in list_of_dicts:
+        for k in keys:
+            try:
+                dict_of_lists[k].append(d[k])
+            except KeyError as ke:
+                raise KeyError('Error looking for key {} in dict.'.format(k)) from ke
+    return dict_of_lists
 
 
 class ParameterGrid(object):
