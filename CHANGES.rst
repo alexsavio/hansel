@@ -3,6 +3,12 @@
 Changelog
 =========
 
+Version 0.6.2
+-------------
+- Add `pandas` helper functions.
+- Add `utils` to convert from values_maps to dicts.
+- Improve docstrings.
+
 
 Version 0.6.1
 -------------
