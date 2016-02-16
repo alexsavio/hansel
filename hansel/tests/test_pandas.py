@@ -37,4 +37,4 @@ def test_pandas_fill_crumbs(tmp_tree):
     df_crumbs = list(pandas_fill_crumbs(df, tmp_crumb))
     uf_crumbs = tmp_crumb.unfold()
 
-    assert set(df_crumbs) == set(uf_crumbs)
+    assert df_crumbs == uf_crumbs
