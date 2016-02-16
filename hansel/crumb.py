@@ -550,11 +550,13 @@ class Crumb(object):
 
         return list(reversed(arg_dads))
 
-    def values_map(self, arg_name, check_exists=False):
-        """ Return a list of tuples of crumb arguments with their values.
+    def values_map(self, arg_name='', check_exists=False):
+        """ Return a list of tuples of crumb arguments with their values from the first argument
+        until `arg_name`.
         Parameters
         ----------
         arg_name: str
+            If empty will pick the arg_name of the last open argument of the Crumb.
 
         check_exists: bool
 
@@ -564,6 +566,9 @@ class Crumb(object):
             I call values_map what is called `record` in pandas. It is a list of lists of 2-tuples, where each 2-tuple
             has the shape (arg_name, arg_value).
         """
+        if not arg_name:
+            arg_name, _ = self._last_open_arg()
+
         arg_deps = self._arg_parents(arg_name)
         values_map = None
         for arg in arg_deps:
@@ -575,7 +580,7 @@ class Crumb(object):
         else:
             values_map_checked = values_map
 
-        return values_map_checked
+        return sorted(values_map_checked)
 
     def build_paths(self, values_map, make_crumbs=True):
         """ Return a list of paths from each tuple of args from `values_map`
@@ -600,7 +605,7 @@ class Crumb(object):
         else:
             return [self._replace(self._path, **dict(val)) for val in values_map]
 
-    def ls(self, arg_name, fullpath=True, make_crumbs=True, check_exists=False):
+    def ls(self, arg_name='', fullpath=True, make_crumbs=True, check_exists=False):
         """ Return the list of values for the argument crumb `arg_name`.
         This will also unfold any other argument crumb that appears before in the
         path.
@@ -608,6 +613,7 @@ class Crumb(object):
         ----------
         arg_name: str
             Name of the argument crumb to be unfolded.
+            If empty will pick the arg_name of the last open argument of the Crumb.
 
         fullpath: bool
             If True will build the full path of the crumb path, will also append
@@ -633,6 +639,9 @@ class Crumb(object):
         >>> cr = Crumb(op.join(op.expanduser('~'), '{user_folder}'))
         >>> user_folders = cr.ls('user_folder',fullpath=True,make_crumbs=True)
         """
+        if not arg_name:
+            arg_name, _ = self._last_open_arg()
+
         self._check_open_args([arg_name])
 
         start_sym, _ = self._start_end_syms
