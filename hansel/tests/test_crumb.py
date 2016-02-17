@@ -573,7 +573,9 @@ def test_ls_with_check(tmp_crumb):
 
     assert 'subj_000' not in img_crumb['subject_id']
 
-    assert list(tmp_crumb.unfold()[0].open_args()) == []
+    unfolded_crumbs = tmp_crumb.unfold()
+    assert list(unfolded_crumbs[0].open_args()) == []
+    assert unfolded_crumbs[0].unfold() == [unfolded_crumbs[0]]
 
 
 def test_regex(tmp_crumb):

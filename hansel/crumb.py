@@ -732,11 +732,15 @@ class Crumb(object):
 
     def unfold(self):
         """ Return a list of all the existing paths until the last crumb argument.
+        If there are no remaining open arguments,
         Returns
         -------
         paths: list of pathlib.Path
         """
-        return self.ls(self._last_open_arg()[0], fullpath=True, make_crumbs=True, check_exists=True)
+        if list(self.open_args()):
+            return self.ls(self._last_open_arg()[0], fullpath=True, make_crumbs=True, check_exists=True)
+        else:
+            return [self]
 
     def __getitem__(self, arg_name):
         """ Return the existing values of the crumb argument `arg_name`
