@@ -231,7 +231,7 @@ def joint_value_map(crumb, arg_names, check_exists=True):
         values_map.append(list((arg_name, arg_value) for arg_value in crumb[arg_name]))
 
     if len(arg_names) == 1:
-        return values_map[0]
+        return [(i, ) for i in values_map[0]]
     else:
         if not check_exists:
             values_map_checked = values_map[:]
@@ -294,9 +294,6 @@ def intersection(crumb1, crumb2, on=None):
     maps2 = joint_value_map(crumb2, arg_names, check_exists=True)
 
     intersect = set(maps1).intersection(set(maps2))
-
-    if len(arg_names) == 1:
-        intersect = [(i, ) for i in intersect]
 
     return sorted(list(intersect))
 
