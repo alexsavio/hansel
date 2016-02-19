@@ -8,8 +8,15 @@ import functools
 import os
 import os.path as op
 import warnings
+from string import Formatter
 
 from   six import string_types
+
+
+def _replace_fmt(crumb_path):
+    fmt = Formatter()
+    for (literal_text, field_name, format_spec, conversion) in fmt.parse(crumb_path):
+        pass
 
 
 def _dict_popitems(adict, **kwargs):
