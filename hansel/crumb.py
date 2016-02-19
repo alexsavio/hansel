@@ -335,6 +335,11 @@ class Crumb(object):
         else:
             raise TypeError("Expected a `val` to be a `str`, got {}.".format(type(crumb_path)))
 
+    def last_open_argname(self):
+        """Return the right-most open crumb argument."""
+        arg_name, _ = self._last_open_arg()
+        return arg_name
+
     def _last_open_arg(self):
         """ Return the name and idx of the last open argument."""
         for arg, idx in reversed(list(self._open_arg_items())):
