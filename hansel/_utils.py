@@ -12,12 +12,121 @@ from string import Formatter
 
 from   six import string_types
 
+_txt_idx = 0
+_fld_idx = 1
+_rgx_idx = 2
+_cnv_idx = 3
 
-def _replace_fmt(crumb_path):
-    fmt = Formatter()
-    for (literal_text, field_name, format_spec, conversion) in fmt.parse(crumb_path):
-        pass
 
+def _yield_items(crumb_path, index=None):
+    """ An iterator over the items in `crumb_path` given by string.Formatter. """
+    if index is None:
+        return Formatter().parse(crumb_path)
+    else:
+        #for (literal_text, field_name, format_spec, conversion) in fmt.parse(crumb_path):
+        # (txt, fld, fmt, conv)
+        return (items[index] for items in Formatter().parse(crumb_path))
+
+
+def _enum_items(crumb_path, index=None):
+    """ An iterator over the enumerated items, i.e., (index, items) in `crumb_path`
+     given by string.Formatter. """
+    if index is None:
+        return ((idx, items) for idx, items in enumerate(Formatter().parse(crumb_path)))
+    else:
+        return ((idx, items[index]) for idx, items in enumerate(Formatter().parse(crumb_path)))
+
+
+def _depth_items(crumb_path, index=None):
+    """ Return a generator with  (depth, items) in `crumb_path`. Being `depth`
+     the place in the file path each argument is."""
+    if index is None:
+        index = slice(_txt_idx, _cnv_idx+1)
+
+    depth = 0
+    for idx, items in _enum_items(crumb_path):
+        if items[_fld_idx]:
+            depth += items[_txt_idx].count(op.sep)
+            yield depth, items[index]
+
+
+def _arg_names(crumb_path):
+    """ Return an iterator over arg_name in crumb_path."""
+    return _yield_items(crumb_path, _fld_idx)
+
+
+def _depth_names(crumb_path):
+    """ Return an iterator over (depth, arg_name)."""
+    return _depth_items(crumb_path, _fld_idx)
+
+
+def _depth_names_regexes(crumb_path):
+    """ Return an iterator over (depth, (arg_name, arg_regex))."""
+    return _depth_items(crumb_path, slice(_fld_idx, _cnv_idx))
+
+
+def _build_path(crumb_path, arg_values=None, with_regex=True):
+    """ Build the crumb_path with the values in arg_values.
+    Parameters
+    ----------
+    crumb_path: str
+
+    arg_values: dict
+
+    with_regex: bool
+
+    Returns
+    -------
+    built_path: str
+    """
+    if arg_values is None:
+        arg_values = {}
+
+    path = ''
+
+    for txt, fld, rgx, conv in _yield_items(crumb_path):
+        path += txt
+        if fld is None:
+            continue
+
+        if fld in arg_values:
+            path += arg_values[fld]
+        else:
+            regex = rgx if with_regex else ''
+            path += _format_arg(fld, regex=regex)
+    return path
+
+
+def _first_arg_name_rgx(crumb_path):
+    """ Return (depth, (arg_name, arg_regex)) of the left-most argument in `crumb_path`."""
+    for depth, items in _depth_items(crumb_path):
+        if items[_fld_idx]:
+            return depth, (items[_fld_idx], items[_rgx_idx])
+
+
+def _last_arg_name_rgx(crumb_path):
+    """ Return (depth, (arg_name, arg_regex)) of the right-most argument in `crumb_path`."""
+    for depth, items in reversed(list(_depth_items(crumb_path))):
+        if items[_fld_idx]:
+            return depth, (items[_fld_idx], items[_rgx_idx])
+
+
+def _is_valid(crumb_path):
+    """ Return True if `crumb_path` is a valid Crumb value, False otherwise. """
+    try:
+        _ = list(_depth_names_regexes(crumb_path))
+    except ValueError:
+        return False
+    else:
+        return True
+
+
+def _first_txt(crumb_path):
+    """ Return the first text part without arguments in `crumb_path`. """
+    for txt in _depth_items(crumb_path, index=_txt_idx):
+        return txt
+
+# --------------------------------------------------------------------------------------------------------
 
 def _dict_popitems(adict, **kwargs):
     if not adict:
@@ -156,7 +265,7 @@ def _arg_content(arg, start_end_syms=('{', '}')):
     return arg[len(start_sym):-len(end_sym)]
 
 
-def _arg_format(arg_name, start_end_syms=('{', '}'), reg_sym=':', regex=None):
+def _format_arg(arg_name, start_end_syms=('{', '}'), reg_sym=':', regex=None):
     """ Return the crumb argument for its string `format()` representation.
     Parameters
     ----------
@@ -166,10 +275,13 @@ def _arg_format(arg_name, start_end_syms=('{', '}'), reg_sym=':', regex=None):
     -------
     arg_format: str
     """
+    if regex is None:
+        regex = ''
+
     start_sym, end_sym = start_end_syms
 
     arg_fmt = start_sym + arg_name
-    if regex is not None:
+    if regex:
         arg_fmt += reg_sym + regex
     arg_fmt += end_sym
 

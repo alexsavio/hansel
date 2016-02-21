@@ -293,7 +293,7 @@ def intersection(crumb1, crumb2, on=None):
     maps1 = joint_value_map(crumb1, arg_names, check_exists=True)
     maps2 = joint_value_map(crumb2, arg_names, check_exists=True)
 
-    intersect = set(maps1).intersection(set(maps2))
+    intersect = set(maps1) & (set(maps2))
 
     return sorted(list(intersect))
 

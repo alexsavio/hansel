@@ -16,13 +16,21 @@ except:
     from pathlib  import Path
 
 
-from   .utils  import (list_subpaths,
+from   .utils  import (
+                       list_subpaths,
                        fnmatch_filter,
                        regex_match_filter,
                        )
 
 #from hansel._utils import deprecated
-from   ._utils import (_get_path,
+from   ._utils import (
+                       _is_valid,
+                       _first_txt,
+                       _build_path,
+                       _arg_names,
+                       _depth_items,
+                       _depth_names,
+                       _depth_names_regexes,
                        _is_crumb_arg,
                        _replace,
                        _split_exists,
@@ -32,7 +40,7 @@ from   ._utils import (_get_path,
                        _dict_popitems,
                        has_crumbs,
                        is_valid,
-                       _arg_format,
+                       _format_arg,
                        )
 
 
@@ -66,17 +74,17 @@ class Crumb(object):
     # everything would be much simpler if I hardcoded these symbols but I still
     # feel that this flexibility is nice to have.
     _is_crumb_arg = partial(_is_crumb_arg, start_end_syms=_start_end_syms)
-    _arg_params   = partial(_arg_params,   start_end_syms=_start_end_syms, reg_sym=_regex_sym)
-    _arg_format   = partial(_arg_format,   start_end_syms=_start_end_syms, reg_sym=_regex_sym)
-    is_valid      = partial(is_valid,      start_end_syms=_start_end_syms)
-    has_crumbs    = partial(has_crumbs,    start_end_syms=_start_end_syms)
+    #_arg_params   = partial(_arg_params,   start_end_syms=_start_end_syms, reg_sym=_regex_sym)
+    _format_arg   = partial(_format_arg,   start_end_syms=_start_end_syms, reg_sym=_regex_sym)
+    #is_valid      = partial(is_valid,      start_end_syms=_start_end_syms)
+    #has_crumbs    = partial(has_crumbs,    start_end_syms=_start_end_syms)
     _split        = partial(_split,        start_end_syms=_start_end_syms)
-    _touch        = partial(_touch,        start_end_syms=_start_end_syms)
-    _split_exists = partial(_split_exists, start_end_syms=_start_end_syms)
+    #_touch        = partial(_touch,        start_end_syms=_start_end_syms)
+    #_split_exists = partial(_split_exists, start_end_syms=_start_end_syms)
 
     def __init__(self, crumb_path, ignore_list=None, regex='fnmatch'):
-        self._path    = _get_path(crumb_path)
-        self._argidx  = OrderedDict()  # in which order the crumb argument appears
+        self._path    = self._check(crumb_path)
+        #self._argidx  = OrderedDict()  # in which order the crumb argument appears
         self._argval  = {}  # what is the value of the argument in the current path, if any has been set.
         self.patterns = {}  # what is the pattern set for the argument, if any. This is left public for the user.
         self._re_method = regex
@@ -88,6 +96,25 @@ class Crumb(object):
         self._ignore = ignore_list
         self._update()
 
+    def _update(self):
+        """ Clean up, parse the current crumb path and fill the internal
+        members for functioning."""
+        self._set_match_function()
+
+    def _set_match_function(self):
+        """ Update self._match_filter with a regular expression
+        matching function depending on the value of self._re_method."""
+        if self._re_method == 'fnmatch':
+            self._match_filter = fnmatch_filter
+        elif self._re_method == 're':
+            self._match_filter = regex_match_filter
+        elif self._re_method == 're.ignorecase':
+            self._match_filter = regex_match_filter
+            self._re_args      = (re.IGNORECASE, )
+        else:
+            raise ValueError('Expected regex method value to be "fnmatch", "re" or "re.ignorecase"'
+                             ', got {}.'.format(self._re_method))
+
     @property
     def arg_values(self):
         """ Return a dict with the arg_names and values of the already replaced crumb arguments."""
@@ -96,7 +123,7 @@ class Crumb(object):
     @property
     def path(self):
         """Return the current crumb path string."""
-        return self._path
+        return _build_path(self._path, arg_values=self._argval, with_regex=True)
 
     @path.setter
     def path(self, value):
@@ -122,9 +149,24 @@ class Crumb(object):
         I know that there is shorter/faster ways to program this but I wanted to maintain the
         order of the arguments in argidx in the result of this function.
         """
-        for arg_name, idx in self._argidx.items():
+        for depth, arg_name in _depth_names(self.path):
             if arg_name not in self._argval:
-                yield arg_name, idx
+                yield depth, arg_name
+
+    def _last_open_arg(self):
+        """ Return the name and idx of the last (right-most) open argument."""
+        for dpth, arg in reversed(list(self._open_arg_items())):
+            return dpth, arg
+
+    def _first_open_arg(self):
+        """ Return the name and idx of the first (left-most) open argument."""
+        for dpth, arg in self._open_arg_items():
+            return dpth, arg
+
+    def _is_first_open_arg(self, arg_name):
+        """ Return True if `arg_name` is the first open argument."""
+        # Take into account that self._argidx is OrderedDict
+        return arg_name == self._first_open_arg()[1]
 
     def has_set(self, arg_name):
         """ Return True if the argument `arg_name` has been set to a specific value,
@@ -133,18 +175,8 @@ class Crumb(object):
 
     def open_args(self):
         """ Return an iterator to the crumb argument names in `self` that have not been replaced yet.
-        In the same order as they appear in the crumb path.
-
-        Returns
-        -------
-        crumb_args: set of str
-
-        Note
-        ----
-        I know that there is shorter/faster ways to program this but I wanted to maintain the
-        order of the arguments in argidx in the result of this function.
-        """
-        for arg_name, _ in self._open_arg_items():
+        In the same order as they appear in the crumb path."""
+        for _, arg_name in self._open_arg_items():
             yield arg_name
 
     def all_args(self):
@@ -155,50 +187,39 @@ class Crumb(object):
         -------
         crumb_args: set of str
         """
-        for arg_name in self._argidx.keys():
-            yield arg_name
+        return _arg_names(self.path)
 
-    def _check(self):
-        """ Raise ValueError if the path of the Crumb has errors using `self.is_valid`."""
-        if not self.is_valid(self._path):
-            raise ValueError("The current crumb path has errors, got {}.".format(self.path))
+    @staticmethod
+    def _check(crumb_path):
+        """
+        Parameters
+        ----------
+        crumb_path: str or Crumb
 
-    def _update(self):
-        """ Clean up, parse the current crumb path and fill the internal
-        members for functioning."""
-        self._clean()
-        self._check()
-        self._set_argdicts()
-        self._set_match_function()
-        self._set_replace_function()
+        Raises
+        ------
+         - ValueError if the path of the Crumb has errors using `self.is_valid`.
+         - TypeError if the crumb_path is not a str or a Crumb.
 
-    def _set_replace_function(self):
-        """ Set self._replace function as a partial function, adding regex=self.patterns."""
-        self._replace = partial(_replace,
-                                start_end_syms=self._start_end_syms,
-                                regexes=self.patterns)
+        Returns
+        -------
+        crumb_path: str
+        """
+        if isinstance(crumb_path, Crumb):
+            crumb_path = crumb_path.path
 
-    def _set_match_function(self):
-        """ Update self._match_filter with a regular expression
-        matching function depending on the value of self._re_method."""
-        if self._re_method == 'fnmatch':
-            self._match_filter = fnmatch_filter
-        elif self._re_method == 're':
-            self._match_filter = regex_match_filter
-        elif self._re_method == 're.ignorecase':
-            self._match_filter = regex_match_filter
-            self._re_args      = (re.IGNORECASE, )
-        else:
-            raise ValueError('Expected regex method value to be "fnmatch", "re" or "re.ignorecase"'
-                             ', got {}.'.format(self._re_method))
+        if not isinstance(crumb_path, string_types):
+            raise TypeError("Expected `crumb_path` to be a {}, got {}.".format(string_types, type(crumb_path)))
 
-    def _clean(self):
-        """ Clean up the private utility members, i.e., _argidx. """
-        self._argidx = OrderedDict()
+        if not _is_valid(crumb_path):
+            raise ValueError("The current crumb path has errors, got {}.".format(crumb_path))
 
-    @classmethod
-    def copy(cls, crumb):
+        return crumb_path
+
+    def copy(self, crumb=None):
         """ Return a deep copy of the given `crumb`.
+        If `crumb` is None will return a copy of self.
+
         Parameters
         ----------
         crumb: str or Crumb
@@ -207,46 +228,28 @@ class Crumb(object):
         -------
         copy: Crumb
         """
-        if isinstance(crumb, cls):
-            #nucr = deepcopy(crumb)
-            nucr = cls(crumb._path, ignore_list=crumb._ignore, regex=crumb._re_method)
-            nucr._argidx = deepcopy(crumb._argidx)
+        if crumb is None:
+            crumb = self
+
+        if isinstance(crumb, Crumb):
+            nucr = Crumb(crumb._path, ignore_list=crumb._ignore, regex=crumb._re_method)
             nucr._argval = deepcopy(crumb._argval)
             return nucr
         elif isinstance(crumb, string_types):
-            return cls.from_path(crumb)
+            return Crumb.from_path(crumb)
         else:
             raise TypeError("Expected a Crumb or a str to copy, got {}.".format(type(crumb)))
-
-    def _set_argdicts(self):
-        """ Initialize the self._argidx dict. It holds arg_name -> index.
-        The index is the position in the whole `_path.split(op.sep)` where each argument is.
-        """
-        fs = self._path_split()
-        for idx, f in enumerate(fs):
-            if self._is_crumb_arg(f):
-                arg_name, arg_regex = self._arg_params(f)
-                self._argidx[arg_name] = idx
-
-                if arg_regex is not None:
-                    self.patterns[arg_name] = arg_regex
-
-    def _find_arg(self, arg_name):
-        """ Return the index in the current path of the crumb
-        argument with name `arg_name`.
-        """
-        return self._argidx.get(arg_name, -1)
 
     def isabs(self):
         """ Return True if the current crumb path has an absolute path, False otherwise.
         This means that its path is valid and starts with a `op.sep` character
         or hard disk letter.
         """
-        if not self.is_valid(self._path):
-            raise ValueError("The given crumb path has errors, got {}.".format(self.path))
+        path = self.path
+        if not _is_valid(path):
+            raise ValueError("The given crumb path has errors, got {}.".format(path))
 
-        start_sym, _ = self._start_end_syms
-        subp = self._path.split(start_sym)[0]
+        subp = _first_txt(self.path)
         return op.isabs(subp)
 
     def abspath(self, first_is_basedir=False):
@@ -264,18 +267,12 @@ class Crumb(object):
         -------
         abs_crumb: Crumb
         """
-        if not self.is_valid(self._path):
-            raise ValueError("The given crumb path has errors, got {}.".format(self.path))
+        nucr = self.copy()
 
-        if self.isabs():
-            return deepcopy(self)
+        if not nucr.isabs():
+            nucr._path = self._abspath(first_is_basedir=first_is_basedir)
 
-        nucr = self.copy(self)
-        nucr._path = self._abspath(first_is_basedir=first_is_basedir)
         return nucr
-
-    def _path_split(self):
-        return self._path.split(op.sep)
 
     def _abspath(self, first_is_basedir=False):
         """ Return the absolute path of the current crumb path.
@@ -290,21 +287,66 @@ class Crumb(object):
         -------
         abspath: str
         """
-        if not self.has_crumbs(self._path):
-            return op.abspath(self._path)
+        path = self.path
 
-        splt = self._path_split()
-        path = []
+        if op.isabs(path):
+            return path
+
+        splt = self._split(path)
+        plst = []
         if self._is_crumb_arg(splt[0]):
-            path.append(op.abspath(op.curdir))
+            plst.append(op.abspath(op.curdir))
 
         if not first_is_basedir:
-            path.append(splt[0])
+            plst.append(splt[0])
 
         if splt[1:]:
-            path.extend(splt[1:])
+            plst.extend(splt[1:])
 
         return op.sep.join(path)
+
+
+    # def _abspath(self, first_is_basedir=False):
+    #     """ Return the absolute path of the current crumb path.
+    #     Parameters
+    #     ----------
+    #     first_is_basedir: bool
+    #         If True and the current crumb path starts with a crumb argument and first_is_basedir,
+    #         the first argument will be replaced by the absolute path to the current dir,
+    #         otherwise the absolute path to the current dir will be added as a prefix.
+    #
+    #     Returns
+    #     -------
+    #     abspath: str
+    #     """
+    #     path = self.path
+    #     if op.isabs(path):
+    #         return self.path
+    #
+    #     plst = []
+    #     iter = _depth_items(path)
+    #     depth, (txt, fld, rgx, conv) = next(iter)
+    #
+    #     # there is an argument at the beginning
+    #     if depth == 0:
+    #         plst.append(op.abspath(op.curdir))
+    #         if not first_is_basedir:
+    #             plst.append(self._format_arg(fld, rgx))
+    #     # or it does not start with an absolute path.
+    #     elif not op.isabs(txt):
+    #         plst.append(op.abspath(op.curdir))
+    #
+    #     path = op.sep.join(path)
+    #     for depth, (txt, fld, rgx, conv) in iter:
+    #         path += txt
+    #         if fld is None:
+    #             continue
+    #
+    #         if fld in self._argval:
+    #             path += self._argval[fld]
+    #         else:
+    #             path += _format_arg(fld, regex=rgx)
+    #     return path
 
     def split(self):
         """ Return a list of sub-strings of the current crumb path where the
@@ -314,7 +356,7 @@ class Crumb(object):
         -------
         crumbs: list of str
         """
-        return self._split(self._path)
+        return self._split(self.path)
 
     @classmethod
     def from_path(cls, crumb_path):
@@ -334,26 +376,6 @@ class Crumb(object):
             return cls(crumb_path)
         else:
             raise TypeError("Expected a `val` to be a `str`, got {}.".format(type(crumb_path)))
-
-    def last_open_argname(self):
-        """Return the right-most open crumb argument."""
-        arg_name, _ = self._last_open_arg()
-        return arg_name
-
-    def _last_open_arg(self):
-        """ Return the name and idx of the last open argument."""
-        for arg, idx in reversed(list(self._open_arg_items())):
-            return arg, idx
-
-    def _first_open_arg(self):
-        """ Return the name and idx of the first open argument."""
-        for arg, idx in self._open_arg_items():
-            return arg, idx
-
-    def _is_first_open_arg(self, arg_name):
-        """ Return True if `arg_name` is the first open argument."""
-        # Take into account that self._argidx is OrderedDict
-        return arg_name == self._first_open_arg()[0]
 
     def _arg_values(self, arg_name, arg_values=None):
         """ Return the existing values in the file system for the crumb argument
