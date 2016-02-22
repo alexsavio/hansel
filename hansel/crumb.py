@@ -434,6 +434,9 @@ class Crumb(object):
                 path = self._split(self._replace(self._path,
                                                  **dict(aval)))[0]
 
+                if not op.exists(path):
+                    continue
+
                 paths = list_subpaths(path,
                                       just_dirs=just_dirs,
                                       ignore=self._ignore,
@@ -691,7 +694,7 @@ class Crumb(object):
 
         return sorted(paths)
 
-    def touch(self):
+    def touch(self, exist_ok=True):
         """ Create a leaf directory and all intermediate ones using the non
         crumbed part of `crumb_path`.
         If the target directory already exists, raise an IOError if exist_ok
@@ -708,7 +711,7 @@ class Crumb(object):
         nupath: str
             The new path created.
         """
-        return self._touch(self._path)
+        return self._touch(self.path, exist_ok=True)
 
     def joinpath(self, suffix):
         """ Return a copy of the current crumb with the `suffix` path appended.
