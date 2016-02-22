@@ -148,6 +148,9 @@ def list_subpaths(path, just_dirs=False, ignore=None, pattern=None,
     -------
     paths: list of str
     """
+    if not op.exists(path):
+        return []
+
     paths = list_children(path, just_dirs=just_dirs)
 
     if ignore and ignore is not None:
