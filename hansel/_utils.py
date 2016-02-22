@@ -94,21 +94,31 @@ def _build_path(crumb_path, arg_values=None, with_regex=True):
         else:
             regex = rgx if with_regex else ''
             path += _format_arg(fld, regex=regex)
+
     return path
 
 
 def _first_arg_name_rgx(crumb_path):
     """ Return (depth, (arg_name, arg_regex)) of the left-most argument in `crumb_path`."""
-    for depth, items in _depth_items(crumb_path):
-        if items[_fld_idx]:
-            return depth, (items[_fld_idx], items[_rgx_idx])
+    for depth, (txt, fld, rgx, conv) in _depth_items(crumb_path):
+        if fld:
+            return depth, fld, rgx
 
 
 def _last_arg_name_rgx(crumb_path):
     """ Return (depth, (arg_name, arg_regex)) of the right-most argument in `crumb_path`."""
-    for depth, items in reversed(list(_depth_items(crumb_path))):
-        if items[_fld_idx]:
-            return depth, (items[_fld_idx], items[_rgx_idx])
+    for depth, (txt, fld, rgx, conv) in reversed(list(_depth_items(crumb_path))):
+        if fld:
+            return depth, fld, rgx
+
+
+def _has_crumbs(crumb_path):
+    """ Return True if any crumb argument is found in `crumb_path`, False otherwise. """
+    for txt, fld, rgx, conv in _yield_items(crumb_path):
+        if fld:
+            return True
+
+    return False
 
 
 def _is_valid(crumb_path):
@@ -123,8 +133,45 @@ def _is_valid(crumb_path):
 
 def _first_txt(crumb_path):
     """ Return the first text part without arguments in `crumb_path`. """
-    for txt in _depth_items(crumb_path, index=_txt_idx):
+    for txt in _yield_items(crumb_path, index=_txt_idx):
         return txt
+
+
+def _find_arg_depth(crumb_path, arg_name):
+    """ Return the depth, name and regex of the argument with name `arg_name`. """
+    for depth, (txt, fld, rgx, conv) in _depth_items(crumb_path):
+        if fld == arg_name:
+            return depth, fld, rgx
+
+
+def _has_arg(crumb_path, arg_name):
+    """ Return the True if the `arg_name` is found in `crumb_path`. """
+    for txt, fld, rgx, conv in _yield_items(crumb_path):
+        if fld == arg_name:
+            return True
+    return False
+
+
+def _check(crumb_path):
+    """ Raises some Errors if there is something wrong with `crumb_path`, if not the type
+    needed or is not valid.
+    Parameters
+    ----------
+    crumb_path: str or Crumb
+
+    Raises
+    ------
+     - ValueError if the path of the Crumb has errors using `self.is_valid`.
+     - TypeError if the crumb_path is not a str or a Crumb.
+    """
+    if hasattr(crumb_path, 'path'): # isinstance(crumb_path, Crumb)
+        crumb_path = crumb_path.path
+
+    if not isinstance(crumb_path, string_types):
+        raise TypeError("Expected `crumb_path` to be a {}, got {}.".format(string_types, type(crumb_path)))
+
+    if not _is_valid(crumb_path):
+        raise ValueError("The current crumb path has errors, got {}.".format(crumb_path))
 
 # --------------------------------------------------------------------------------------------------------
 
