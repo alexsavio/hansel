@@ -453,7 +453,6 @@ def test_exists(tmp_crumb):
                    'image':      ['mprage1.nii', 'mprage2.nii', 'mprage3.nii'],
                   }
 
-    pytest.raises(IOError, tmp_crumb._arg_values, 'subject_id')
     assert not tmp_crumb.exists()
 
     _ = mktree(tmp_crumb, list(ParameterGrid(values_dict)))

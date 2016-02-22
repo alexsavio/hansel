@@ -407,6 +407,9 @@ class Crumb(object):
                 path = self._split(self._replace(self._path,
                                                  **dict(aval)))[0]
 
+                if not op.exists(path):
+                    continue
+
                 paths = list_subpaths(path,
                                       just_dirs=just_dirs,
                                       ignore=self._ignore,
