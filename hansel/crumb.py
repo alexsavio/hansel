@@ -300,8 +300,8 @@ class Crumb(object):
         """
         if isinstance(crumb_path, Crumb):
             return crumb_path.copy()
-        elif isinstance(crumb_path, (Crumb, Path)):
-            return cls.copy(str(crumb_path))
+        elif isinstance(crumb_path, Path):
+            return cls(str(crumb_path))
         elif isinstance(crumb_path, string_types):
             return cls(crumb_path)
         else:
