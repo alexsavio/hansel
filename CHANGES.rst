@@ -3,6 +3,11 @@
 Changelog
 =========
 
+Version 0.7.1
+-------------
+- Update README.rst
+
+
 Version 0.7.0
 -------------
 - Refactoring of how Crumb works, now using string.Formatter. This will help with new features due to simpler logic.
