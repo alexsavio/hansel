@@ -105,29 +105,6 @@ def _build_path(crumb_path, arg_values=None, with_regex=True, regexes=None):
     return path
 
 
-def _first_arg_name_rgx(crumb_path):
-    """ Return (depth, (arg_name, arg_regex)) of the left-most argument in `crumb_path`."""
-    for depth, (txt, fld, rgx, conv) in _depth_items(crumb_path):
-        if fld:
-            return depth, fld, rgx
-
-
-def _last_arg_name_rgx(crumb_path):
-    """ Return (depth, (arg_name, arg_regex)) of the right-most argument in `crumb_path`."""
-    for depth, (txt, fld, rgx, conv) in reversed(list(_depth_items(crumb_path))):
-        if fld:
-            return depth, fld, rgx
-
-
-def _has_crumbs(crumb_path):
-    """ Return True if any crumb argument is found in `crumb_path`, False otherwise. """
-    for txt, fld, rgx, conv in _yield_items(crumb_path):
-        if fld:
-            return True
-
-    return False
-
-
 def _is_valid(crumb_path):
     """ Return True if `crumb_path` is a valid Crumb value, False otherwise. """
     try:
@@ -182,17 +159,6 @@ def _check(crumb_path):
 
     return crumb_path
 
-# --------------------------------------------------------------------------------------------------------
-
-def _dict_popitems(adict, **kwargs):
-    if not adict:
-        return
-
-    if not kwargs:
-        return
-
-    _ = [adict.pop(k) for k in kwargs if k in adict]
-
 
 def _get_path(crumb_path):
     """ Return the path string from `crumb_path`.
@@ -223,33 +189,6 @@ def _is_crumb_arg(crumb_arg, start_end_syms=('{', '}')):
     return crumb_arg.startswith(start_sym) and crumb_arg.endswith(end_sym)
 
 
-def _arg_params(arg, start_end_syms=('{', '}'), reg_sym=':'):
-    """ Return the name and the regex of the argument given its crumb representation.
-    Parameters
-    ----------
-    arg_crumb: str
-
-    start_end_syms: 2-tuple of str
-        The strings that indicate the start and end of a crumb argument
-
-    reg_sym: str
-        The string that separate the crumb argument name from the
-        crumb argument regular expression.
-
-    Returns
-    -------
-    arg_name: str
-
-    arg_regex: str
-    """
-    arg_content = _arg_content(arg, start_end_syms=start_end_syms)
-
-    if reg_sym in arg_content:
-        return tuple(arg_content.split(reg_sym))
-    else:
-        return arg_content, None
-
-
 def _arg_name(arg, start_end_syms=('{', '}'), reg_sym=':'):
     """ Return the name of the argument given its crumb representation.
     Parameters
@@ -273,31 +212,6 @@ def _arg_name(arg, start_end_syms=('{', '}'), reg_sym=':'):
         return arg_content.split(reg_sym)[0]
     else:
         return arg_content
-
-
-def _arg_regex(arg, start_end_syms=('{', '}'), reg_sym=':'):
-    """ Return the name of the argument given its crumb representation.
-    Parameters
-    ----------
-    arg_crumb: str
-
-    start_end_syms: 2-tuple of str
-        The strings that indicate the start and end of a crumb argument
-
-    reg_sym: str
-        The string that separate the crumb argument name from the
-        crumb argument regular expression.
-
-    Returns
-    -------
-    arg_name: str
-    """
-    arg_content = _arg_content(arg, start_end_syms=start_end_syms)
-
-    if reg_sym in arg_content:
-        return arg_content.split(reg_sym)[1]
-    else:
-        return None
 
 
 def _arg_content(arg, start_end_syms=('{', '}')):
@@ -384,26 +298,6 @@ def has_crumbs(crumb_path, start_end_syms=('{', '}')):
             return True
 
     return False
-
-
-def _replace(crumb_path, start_end_syms=('{', '}'), regexes=None, **kwargs):
-    """ Return `crumb_path` where every crumb argument found in `kwargs` has been
-    replaced by the given value in `kwargs."""
-    if not kwargs:
-        return crumb_path
-
-    if regexes is None:
-        regexes = {}
-
-    for k in kwargs:
-        karg = _arg_format(k, start_end_syms=start_end_syms, regex=regexes.get(k, None))
-        if k not in crumb_path:
-            raise KeyError("Could not find argument {} in"
-                           " `crumb_path` {}.".format(k, crumb_path))
-
-        crumb_path = crumb_path.replace(karg, kwargs[k])
-
-    return crumb_path
 
 
 def _split(crumb_path, start_end_syms=('{', '}')):

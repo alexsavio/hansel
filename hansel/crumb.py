@@ -31,17 +31,12 @@ from   ._utils import (
                        _find_arg_depth,
                        _check,
                        _has_arg,
-                       _has_crumbs,
-                       _depth_items,
                        _depth_names,
                        _depth_names_regexes,
                        _is_crumb_arg,
-                       _replace,
                        _split_exists,
                        _split,
                        _touch,
-                       _arg_params,
-                       _dict_popitems,
                        has_crumbs,
                        is_valid,
                        _format_arg,
@@ -78,7 +73,6 @@ class Crumb(object):
     # everything would be much simpler if I hardcoded these symbols but I still
     # feel that this flexibility is nice to have.
     _is_crumb_arg = partial(_is_crumb_arg, start_end_syms=_start_end_syms)
-    #_arg_params   = partial(_arg_params,   start_end_syms=_start_end_syms, reg_sym=_regex_sym)
     _format_arg   = partial(_format_arg,   start_end_syms=_start_end_syms, reg_sym=_regex_sym)
     is_valid      = partial(is_valid,      start_end_syms=_start_end_syms)
     has_crumbs    = partial(has_crumbs,    start_end_syms=_start_end_syms)
@@ -124,7 +118,7 @@ class Crumb(object):
 
     def set_pattern(self, arg_name, arg_regex):
         """ Set the pattern `arg_regex` to the given argument `arg_name`."""
-        self._path = _build_path(self._path, arg_values=self._argval, with_regex=True, regexes={arg_name: arg_regex})
+        self._path = _build_path(self._path, arg_values=self.arg_values, with_regex=True, regexes={arg_name: arg_regex})
 
     def clear_pattern(self, arg_name):
         """ Clear the pattern of the given argument `arg_name`."""
@@ -138,7 +132,7 @@ class Crumb(object):
     @property
     def path(self):
         """Return the current crumb path string."""
-        return _build_path(self._path, arg_values=self._argval, with_regex=True)
+        return _build_path(self._path, arg_values=self.arg_values, with_regex=True)
 
     @path.setter
     def path(self, value):
@@ -287,49 +281,6 @@ class Crumb(object):
         basedir.extend(splits)
         return op.sep.join(basedir)
 
-
-    # def _abspath(self, first_is_basedir=False):
-    #     """ Return the absolute path of the current crumb path.
-    #     Parameters
-    #     ----------
-    #     first_is_basedir: bool
-    #         If True and the current crumb path starts with a crumb argument and first_is_basedir,
-    #         the first argument will be replaced by the absolute path to the current dir,
-    #         otherwise the absolute path to the current dir will be added as a prefix.
-    #
-    #     Returns
-    #     -------
-    #     abspath: str
-    #     """
-    #     path = self.path
-    #     if op.isabs(path):
-    #         return self.path
-    #
-    #     plst = []
-    #     iter = _depth_items(path)
-    #     depth, (txt, fld, rgx, conv) = next(iter)
-    #
-    #     # there is an argument at the beginning
-    #     if depth == 0:
-    #         plst.append(op.abspath(op.curdir))
-    #         if not first_is_basedir:
-    #             plst.append(self._format_arg(fld, rgx))
-    #     # or it does not start with an absolute path.
-    #     elif not op.isabs(txt):
-    #         plst.append(op.abspath(op.curdir))
-    #
-    #     path = op.sep.join(path)
-    #     for depth, (txt, fld, rgx, conv) in iter:
-    #         path += txt
-    #         if fld is None:
-    #             continue
-    #
-    #         if fld in self._argval:
-    #             path += self._argval[fld]
-    #         else:
-    #             path += _format_arg(fld, regex=rgx)
-    #     return path
-
     def split(self):
         """ Return a list of sub-strings of the current crumb path where the
             first path part is separated from the crumb arguments.
@@ -461,23 +412,6 @@ class Crumb(object):
         """
         return self._check_args(arg_names, self_args=self.open_args())
 
-    # def _update_argidx(self, **kwargs):
-    #     """ Update the argument index `self._argidx` dictionary taking into
-    #     account the replacement number of splits."""
-    #     for arg_name, value in kwargs.items():
-    #         n_splits = len(value.split(op.sep))
-    #
-    #         if n_splits < 1:
-    #             raise ValueError('Error reading your replacement value "{}" for '
-    #                              'crumb argument "{}".'.format(value, arg_name))
-    #         elif n_splits == 1:
-    #             continue
-    #
-    #         # n_splits > 1, so I have to update the position of the argument children
-    #         childs = self._arg_children(arg_name)
-    #         for child_name in childs:
-    #             self._argidx[child_name] = self._argidx[child_name] + n_splits - 1
-
     def update(self, **kwargs):
         """ Set the crumb arguments in path to the given values in kwargs and update
         self accordingly.
@@ -530,20 +464,6 @@ class Crumb(object):
         """
         dpth, _, _ = _find_arg_depth(self.path, arg_name)
         return OrderedDict([(arg, idx) for idx, arg in self._open_arg_items() if idx <= dpth])
-
-    def _arg_children(self, arg_name):
-        """ Return a subdict with the open arguments name and index in `self._argidx`
-        that come AFTER `arg_name` in the crumb path.
-        Parameters
-        ----------
-        arg_name: str
-
-        Returns
-        -------
-        arg_deps: Mapping[str, int]
-        """
-        dpth, _, _ = _find_arg_depth(self.path, arg_name)
-        return OrderedDict([(arg, idx) for idx, arg in self._open_arg_items() if idx > dpth])
 
     def _args_open_parents(self, arg_names):
         """ Return the name of the arguments that are dependencies of `arg_names`.
