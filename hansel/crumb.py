@@ -24,7 +24,6 @@ from   .utils  import (
 
 #from hansel._utils import deprecated
 from   ._utils import (
-                       _is_valid,
                        _first_txt,
                        _build_path,
                        _arg_names,
@@ -39,7 +38,6 @@ from   ._utils import (
                        _touch,
                        has_crumbs,
                        is_valid,
-                       _format_arg,
                        )
 
 
@@ -65,20 +63,6 @@ class Crumb(object):
     >>> crumb = Crumb("{base_dir}/raw/{subject_id}/{session_id}/{modality}/{image}")
     >>> cr = Crumb(op.join(op.expanduser('~'), '{user_folder}'))
     """
-    # symbols indicating start and end of a crumb argument
-    _start_end_syms = ('{', '}')
-    _regex_sym = ':'
-
-    # specify partial functions from _utils with _arg_start_sym and _arg_end_sym
-    # everything would be much simpler if I hardcoded these symbols but I still
-    # feel that this flexibility is nice to have.
-    _is_crumb_arg = partial(_is_crumb_arg, start_end_syms=_start_end_syms)
-    _format_arg   = partial(_format_arg,   start_end_syms=_start_end_syms, reg_sym=_regex_sym)
-    is_valid      = partial(is_valid,      start_end_syms=_start_end_syms)
-    has_crumbs    = partial(has_crumbs,    start_end_syms=_start_end_syms)
-    _split        = partial(_split,        start_end_syms=_start_end_syms)
-    _touch        = partial(_touch,        start_end_syms=_start_end_syms)
-    _split_exists = partial(_split_exists, start_end_syms=_start_end_syms)
 
     def __init__(self, crumb_path, ignore_list=None, regex='fnmatch'):
         self._path      = _check(crumb_path)
@@ -227,7 +211,7 @@ class Crumb(object):
         or hard disk letter.
         """
         path = self.path
-        if not _is_valid(path):
+        if not is_valid(path):
             raise ValueError("The given crumb path has errors, got {}.".format(path))
 
         subp = _first_txt(self.path)
@@ -274,7 +258,7 @@ class Crumb(object):
         splits = self._path.split(op.sep)
         basedir = [op.abspath(op.curdir)]
 
-        if self._is_crumb_arg(splits[0]):
+        if _is_crumb_arg(splits[0]):
             if first_is_basedir:
                 splits.pop(0)
 
@@ -289,7 +273,7 @@ class Crumb(object):
         -------
         crumbs: list of str
         """
-        return self._split(self.path)
+        return _split(self.path)
 
     @classmethod
     def from_path(cls, crumb_path):
@@ -371,7 +355,7 @@ class Crumb(object):
         else:
             for aval in arg_values:
                 #  create the part of the crumb path that is already specified
-                nupath = self._split(_build_path(path, arg_values=dict(aval)))[0]
+                nupath = _split(_build_path(path, arg_values=dict(aval)))[0]
 
                 if not op.exists(nupath):
                     continue
@@ -580,8 +564,6 @@ class Crumb(object):
 
         self._check_open_args([arg_name])
 
-        start_sym, _ = self._start_end_syms
-
         # if the first chunk of the path is a parameter, I am not interested in this (for now)
         # check if the path is absolute, if not raise an NotImplementedError
         if not self.isabs():
@@ -618,7 +600,7 @@ class Crumb(object):
         nupath: str
             The new path created.
         """
-        return self._touch(self.path, exist_ok=exist_ok)
+        return _touch(self.path, exist_ok=exist_ok)
 
     def joinpath(self, suffix):
         """ Return a copy of the current crumb with the `suffix` path appended.
@@ -640,7 +622,7 @@ class Crumb(object):
         -------
         exists: bool
         """
-        if not self.has_crumbs(self.path):
+        if not has_crumbs(self.path):
             return op.exists(str(self)) or op.islink(str(self))
 
         if not op.exists(self.split()[0]):
@@ -650,7 +632,7 @@ class Crumb(object):
 
         paths = self.ls(last, fullpath=True, make_crumbs=False, check_exists=False)
 
-        return any([self._split_exists(lp) for lp in paths])
+        return any([_split_exists(lp) for lp in paths])
 
     def has_files(self):
         """ Return True if the current crumb path has any file in its
