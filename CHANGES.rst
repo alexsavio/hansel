@@ -3,6 +3,16 @@
 Changelog
 =========
 
+Version 0.7.3
+-------------
+- Fix bug for Python 2.7
+
+
+Version 0.7.2
+-------------
+- Fix README.rst because of bad syntax for PyPI.
+
+
 Version 0.7.1
 -------------
 - Update README.rst
