@@ -9,7 +9,6 @@ import os
 import os.path  as op
 import shutil
 import tempfile
-from   copy     import copy
 
 try:
     from pathlib2 import Path
@@ -19,7 +18,11 @@ except:
 from   six           import string_types
 from   hansel        import Crumb, mktree
 from   hansel.utils  import ParameterGrid
-from   hansel._utils import _get_path
+from   hansel._utils import (_get_path,
+                             _arg_names,
+                             _depth_names,
+                             _check,
+                             )
 
 BASE_DIR = op.expanduser('~/data/cobre')
 
@@ -55,6 +58,7 @@ def test__get_path(tmp_crumb):
     pytest.raises(TypeError, _get_path, [])
 
     assert _get_path(tmp_crumb) == tmp_crumb._path
+    assert tmp_crumb._path != tmp_crumb.path
 
 
 def test_path_property(crumb):
@@ -64,8 +68,9 @@ def test_path_property(crumb):
     base_dir = BASE_DIR
     crumb2 = crumb.replace(base_dir=base_dir)
 
-    assert crumb2.path == crumb2._path
-    assert crumb.path  != crumb2._path
+    assert crumb._path == crumb2._path
+    assert crumb.path  == crumb2._path
+    assert crumb.path  != crumb2.path
     assert list(crumb.open_args()) != list(crumb2.open_args())
     assert  set(crumb.all_args())  ==  set(crumb2.all_args())
 
@@ -82,7 +87,7 @@ def test_copy_string(crumb):
 
 def test_replace_and_setitem(crumb):
     # crumb = Crumb("{base_dir}/raw/{subject_id}/{session_id}/{modality}/{image}")
-    args = list(crumb._argidx.keys())
+    args = list(_arg_names(crumb.path))
     assert list(crumb.open_args()) == args
     assert list(crumb.all_args ()) == args
 
@@ -94,11 +99,12 @@ def test_replace_and_setitem(crumb):
 
     # use replace
     crumb2 = crumb.replace(base_dir=base_dir)
+    assert list(crumb2.open_args()) == args[1:]
     args.pop(0)
     assert list(crumb2.open_args()) == args
     assert list(crumb2.all_args ()) != args
 
-    assert crumb2._path == op.join(base_dir, crumb._path.replace('{base_dir}/', ''))
+    assert crumb2.path == op.join(base_dir, crumb._path.replace('{base_dir}/', ''))
     assert 'base_dir' not in crumb2.open_args()
     assert 'base_dir' in crumb2.all_args()
     assert 'base_dir' in crumb2._argval
@@ -110,48 +116,45 @@ def test_replace_and_setitem(crumb):
     crumb3 = crumb.copy(crumb)
     crumb3['base_dir'] = base_dir
 
-    assert crumb3._replace(crumb_path=crumb3._path, **dict()) == crumb3._path
+    assert crumb3.replace(**dict()).path == crumb3.path
     #assert crumb3._replace1(**dict()) == crumb3._path
     #assert crumb3._replace2(**dict()) == crumb3._path
 
     assert crumb3 is not crumb2
     assert crumb3 == crumb2
-    assert crumb3._path == crumb2._path
+    assert crumb3.path == crumb2.path
     assert crumb3.has_set('base_dir')
 
-    assert crumb3.replace(**{})._path == crumb3._path
+    assert crumb3.replace(**{}).path == crumb3.path
 
     pytest.raises(KeyError, crumb2.replace,     grimm='brothers')
-    pytest.raises(KeyError, crumb2._replace,    crumb_path=crumb2._path, grimm='brothers')
-    #pytest.raises(KeyError, crumb2._replace1,  crumb_path=crumb2._path, grimm='brothers')
-    #pytest.raises(KeyError, crumb2._replace2,   grimm='brothers')
     pytest.raises(KeyError, crumb2.__setitem__, 'grimm', 'brothers')
 
 
 def test_firstarg(crumb):
-    an, ai = crumb._first_open_arg()
+    ai, an = crumb._first_open_arg()
     assert an == 'base_dir'
     assert ai == 0
 
     base_dir = BASE_DIR
     crumb2 = crumb.replace(base_dir=base_dir)
 
-    an, ai = crumb2._first_open_arg()
+    ai, an = crumb2._first_open_arg()
     assert an == 'subject_id'
     assert ai == len(base_dir.split(op.sep)) + 1
 
 
 def test_lastarg(crumb):
-    an, ai = crumb._last_open_arg()
+    ai, an = crumb._last_open_arg()
     assert an == 'image'
-    assert ai == len(crumb._path_split()) - 1
+    assert ai == len(crumb.path.split('/')) - 1
 
     base_dir = BASE_DIR
     crumb2 = crumb.replace(base_dir=base_dir)
 
-    an, ai = crumb2._last_open_arg()
+    ai, an = crumb2._last_open_arg()
     assert an == 'image'
-    assert ai == len(crumb2._path_split()) - 1
+    assert ai == len(crumb2.path.split('/')) - 1
 
 
 def test_isabs(crumb):
@@ -162,12 +165,14 @@ def test_isabs(crumb):
     assert crumb2.isabs()
 
 
-def test_argidx_order(crumb):
+def test_argnames_order(crumb):
     base_dir = BASE_DIR
     crumb2 = crumb.replace(base_dir=base_dir)
 
-    assert sorted(list(crumb._argidx.values()))  == list(crumb._argidx.values())
-    assert sorted(list(crumb2._argidx.values())) == list(crumb2._argidx.values())
+    assert sorted(list(_depth_names(crumb .path))) == list(_depth_names(crumb .path))
+    assert sorted(list(_depth_names(crumb2.path))) == list(_depth_names(crumb2.path))
+
+    assert [arg_name for depth, arg_name in sorted(list(_depth_names(crumb2.path)))] == list(_arg_names(crumb2.path))
 
 
 def test_abspath(crumb):
@@ -176,7 +181,7 @@ def test_abspath(crumb):
     assert crumb is not crumb2
     assert crumb2.isabs()
     assert crumb != crumb2
-    assert 'base_dir' in crumb2._argidx
+    assert 'base_dir' in set(_arg_names(crumb2.path))
 
     crumb3 = crumb.abspath(first_is_basedir=True)
     assert crumb3._path == op.join(op.abspath(op.curdir), crumb._path.replace('{base_dir}/', ''))
@@ -225,6 +230,12 @@ def test_copy(crumb):
     assert crumb is not copy
     assert crumb == copy
 
+    copy2 = crumb.copy()
+    assert crumb is not copy2
+    assert crumb == copy2
+
+    assert copy is not copy2
+
     pytest.raises(TypeError, crumb.copy, {})
 
 
@@ -238,7 +249,7 @@ def test_equal_no_copy(crumb):
     crumb2.path == op.join(crumb._path, '{test}')
     assert crumb2 == crumb
 
-    crumb2._argidx['hansel'] = []
+    crumb2._argval['hansel'] = 'hello'
     assert crumb2 == crumb
 
 
@@ -252,7 +263,7 @@ def test_equal_copy(crumb):
     crumb2._path == op.join(crumb._path, '{test}')
     assert crumb2 != crumb
 
-    crumb2._argidx['hansel'] = []
+    crumb2._argval['hansel'] = 'hello'
     assert crumb2 != crumb
 
 
@@ -271,10 +282,10 @@ def test_split2():
     assert cr.split() == ('/home/hansel/data', '{subj}/{session}/anat.nii')
 
     cr = Crumb('{base}/home/hansel/data/{subj}/{session}/anat.nii')
-    assert cr.split() == cr.path
+    assert cr.split() == ('', cr.path)
 
     cr = Crumb('/home/hansel/data/subj/session/anat.nii')
-    assert cr.split() == cr.path
+    assert cr.split() == (cr.path, '')
 
 
 def test_from_path(crumb):
@@ -304,13 +315,12 @@ def test_is_valid_a_bit(crumb):
     assert Crumb.is_valid(op.expanduser('~'))
 
     crumb._path = crumb_path
-    pytest.raises(ValueError, crumb._check)
+    pytest.raises(ValueError, _check, crumb_path)
     pytest.raises(ValueError, crumb.isabs)
     pytest.raises(ValueError, crumb.abspath)
 
 
 def test_arg_name(crumb):
-    pytest.raises(ValueError, crumb._arg_params, 'hansel')
     assert not crumb._is_crumb_arg(Path(op.expanduser('~')))
 
 
@@ -397,7 +407,7 @@ def test_ignore_lst():
 
 def test_rem_deps(crumb):
 
-    values = copy(crumb._argidx)
+    values = {arg: dpth for dpth, arg in _depth_names(crumb.path)}
     assert not crumb._args_open_parents(values)
 
     del values['base_dir']
@@ -406,12 +416,12 @@ def test_rem_deps(crumb):
     del values['subject_id']
     assert crumb._args_open_parents(values) == ['base_dir', 'subject_id']
 
-    values = copy(crumb._argidx)
+    values = {arg: dpth for dpth, arg in _depth_names(crumb.path)}
     del values['base_dir']
     del values['modality']
     assert crumb._args_open_parents(values) == ['base_dir', 'modality']
 
-    values = copy(crumb._argidx)
+    values = {arg: dpth for dpth, arg in _depth_names(crumb.path)}
     del values['image']
     del values['modality']
     assert not crumb._args_open_parents(values)
@@ -482,8 +492,8 @@ def test_contains(tmp_crumb):
 
     tmp_crumb['image'] = 'image'
 
-    assert 'image' in tmp_crumb._argidx
     assert 'image' in tmp_crumb.all_args()
+    assert 'image' not in dict(_depth_names(tmp_crumb.path))
     assert 'image' not in tmp_crumb.open_args()
     assert tmp_crumb.has_set('image')
 
@@ -501,7 +511,7 @@ def test_ls_with_check(tmp_crumb):
 
     assert op.exists(tmp_crumb.split()[0])
 
-    assert all([op.exists(p._path) for p in paths])
+    assert all([op.exists(p.path) for p in paths])
     assert all([p.exists() for p in paths])
 
     images = tmp_crumb.ls('image', fullpath=True, make_crumbs=True, check_exists=True)
@@ -541,7 +551,7 @@ def test_ls_with_check(tmp_crumb):
 
     assert all([isinstance(smod, str)   for smod in str_modalities2])
     assert all([isinstance(mod,  Crumb) for  mod in modalities2])
-    assert all([mod._path == smod for mod, smod in zip(sorted(modalities2), sorted(str_modalities2))])
+    assert all([mod.path == smod for mod, smod in zip(sorted(modalities2), sorted(str_modalities2))])
 
     shutil.rmtree(modalities2[0].split()[0], ignore_errors=True)
 
@@ -578,7 +588,7 @@ def test_ls_with_check(tmp_crumb):
 
 
 def test_regex(tmp_crumb):
-    assert not op.exists(tmp_crumb._path)
+    assert not op.exists(tmp_crumb.path)
 
     values_dict = {'session_id': ['session_{:02}'.format(i) for i in range(  2)],
                    'subject_id': ['subj_{:03}'.format(i)    for i in range(100)],
@@ -588,14 +598,14 @@ def test_regex(tmp_crumb):
 
     _ = mktree(tmp_crumb, list(ParameterGrid(values_dict)))
 
-    crumb = Crumb(tmp_crumb._path.replace('{subject_id}', '{subject_id:^subj_02.*$}'),
+    crumb = Crumb(tmp_crumb.path.replace('{subject_id}', '{subject_id:^subj_02.*$}'),
                   regex='re')  # re.match
 
     re_subj_ids = crumb['subject_id']
 
     assert re_subj_ids == ['subj_{:03}'.format(i) for i in range(20, 30)]
 
-    crumb = Crumb(tmp_crumb._path.replace('{subject_id}', '{subject_id:subj_02*}'),
+    crumb = Crumb(tmp_crumb.path.replace('{subject_id}', '{subject_id:subj_02*}'),
                   regex='fnmatch')  # fnmatch
 
     fn_subj_ids = crumb['subject_id']
@@ -604,7 +614,7 @@ def test_regex(tmp_crumb):
 
     pytest.raises(ValueError,
                   Crumb,
-                  tmp_crumb._path.replace('{subject_id}', '{subject_id:subj_02*}'),
+                  tmp_crumb.path.replace('{subject_id}', '{subject_id:subj_02*}'),
                   regex='hansel')
 
     crumb2 = Crumb.copy(crumb)
@@ -624,7 +634,7 @@ def test_regex_ignorecase(tmp_crumb):
 
     _ = mktree(tmp_crumb, list(ParameterGrid(values_dict)))
 
-    crumb = Crumb(tmp_crumb._path.replace('{subject_id}', '{subject_id:^subj_02.*$}'),
+    crumb = Crumb(tmp_crumb.path.replace('{subject_id}', '{subject_id:^subj_02.*$}'),
                   regex='re')  # re.match
 
     assert len(crumb['subject_id']) == 0
@@ -633,7 +643,7 @@ def test_regex_ignorecase(tmp_crumb):
 
     assert not crumb.unfold()
 
-    crumb = Crumb(tmp_crumb._path.replace('{subject_id}', '{subject_id:^subj_02.*$}'),
+    crumb = Crumb(tmp_crumb.path.replace('{subject_id}', '{subject_id:^subj_02.*$}'),
                   regex='re.ignorecase')  # re.match
     assert crumb._re_method == crumb.replace(subject_id='haensel')._re_method
     assert crumb._ignore    == crumb.replace(subject_id='haensel')._ignore
@@ -658,7 +668,7 @@ def test_regex_replace(tmp_crumb):
 
     _ = mktree(tmp_crumb, list(ParameterGrid(values_dict)))
 
-    crumb = Crumb(tmp_crumb._path.replace('{subject_id}', '{subject_id:subj_02*}'),
+    crumb = Crumb(tmp_crumb.path.replace('{subject_id}', '{subject_id:subj_02*}'),
                   regex='fnmatch')  # fnmatch
 
     anat_crumb = crumb.replace(modality='anat')
@@ -673,7 +683,7 @@ def test_regex_replace(tmp_crumb):
 
 
 def test_regex_replace2(tmp_crumb):
-    assert not op.exists(tmp_crumb._path)
+    assert not op.exists(tmp_crumb.path)
 
     values_dict = {'session_id': ['session_{:02}'.format(i) for i in range(  2)],
                    'subject_id': ['subj_{:03}'.format(i)    for i in range(100)],
@@ -684,19 +694,21 @@ def test_regex_replace2(tmp_crumb):
     _ = mktree(tmp_crumb, list(ParameterGrid(values_dict)))
 
     # a crumb with the pattern
-    crumb = Crumb(tmp_crumb._path.replace('{subject_id}', '{subject_id:subj_02*}'),
+    crumb = Crumb(tmp_crumb.path.replace('{subject_id}', '{subject_id:subj_02*}'),
                   regex='fnmatch')  # fnmatch
 
     # a crumb without the pattern, the pattern is added later
-    crumb2 = Crumb(tmp_crumb._path, regex='fnmatch')
+    crumb2 = Crumb(tmp_crumb.path, regex='fnmatch')
 
-    crumb2.patterns['subject_id'] = 'subj_02*'
-
+    crumb2.set_pattern('subject_id', 'subj_02*')
     assert crumb['subject_id'] == crumb2['subject_id']
+
+    crumb2.clear_pattern('subject_id')
+    assert tmp_crumb['subject_id'] == crumb2['subject_id']
 
 
 def test_has_files(tmp_crumb):
-    assert not op.exists(tmp_crumb._path)
+    assert not op.exists(tmp_crumb.path)
 
     assert not tmp_crumb.has_files()
 
@@ -728,30 +740,30 @@ def test_repr(crumb):
 def test_joinpath(tmp_crumb):
     nupath = op.join('hansel', 'gretel')
     nucrumb = tmp_crumb.joinpath(nupath)
-    assert op.join(tmp_crumb._path, nupath) == nucrumb._path
+    assert op.join(tmp_crumb.path, nupath) == nucrumb.path
     assert 'hansel' not in nucrumb
 
     nupath = op.join('{hansel}', '{gretel}')
     nucrumb = tmp_crumb.joinpath(nupath)
-    assert op.join(tmp_crumb._path, nupath) == nucrumb._path
+    assert op.join(tmp_crumb.path, nupath) == nucrumb.path
     assert 'hansel' in nucrumb
 
 
 def test_lt(tmp_crumb):
     tst1 = tmp_crumb < tmp_crumb
-    tst2 = tmp_crumb._path < tmp_crumb._path
+    tst2 = tmp_crumb.path < tmp_crumb.path
     assert(not tst1)
     assert tst1 == tst2
 
     tmp_crumb2 = Crumb.copy(tmp_crumb)
     tst1 = tmp_crumb2 < tmp_crumb2
-    tst2 = tmp_crumb2._path < tmp_crumb2._path
+    tst2 = tmp_crumb2.path < tmp_crumb2.path
     assert(not tst1)
     assert tst1 == tst2
 
     tmp_crumb2 = tmp_crumb2.joinpath('hansel')
     tst1 = tmp_crumb2 < tmp_crumb2
-    tst2 = tmp_crumb2._path < tmp_crumb2._path
+    tst2 = tmp_crumb2.path < tmp_crumb2.path
     assert(not tst1)
     assert tst1 == tst2
 

@@ -45,9 +45,9 @@ def mktree(crumb, values_map):
         if not isinstance(aval, Mapping):
             aval = dict(aval)
 
-        if not set(aval.keys()).issubset(set(crumb._argidx.keys())):
+        if not set(aval.keys()).issubset(set(crumb.all_args())):
             raise ValueError("Expected keys in `values_map` item to be a subset of {}, "
-                             "got {}.".format(crumb._argidx.keys(), aval.keys()))
+                             "got {}.".format(crumb.all_args(), aval.keys()))
 
         rem_deps = crumb._args_open_parents(list(aval.keys()))
         if rem_deps:

@@ -87,10 +87,8 @@ class Crumb(object):
     _split_exists = partial(_split_exists, start_end_syms=_start_end_syms)
 
     def __init__(self, crumb_path, ignore_list=None, regex='fnmatch'):
-        self._path    = _check(crumb_path)
-        #self._argidx  = OrderedDict()  # in which order the crumb argument appears
-        self._argval  = {}  # what is the value of the argument in the current path, if any has been set.
-        self.patterns = {}  # what is the pattern set for the argument, if any. This is left public for the user.
+        self._path      = _check(crumb_path)
+        self._argval    = {}  # what is the value of the argument in the current path, if any has been set.
         self._re_method = regex
         self._re_args   = None
 
@@ -118,6 +116,19 @@ class Crumb(object):
         else:
             raise ValueError('Expected regex method value to be "fnmatch", "re" or "re.ignorecase"'
                              ', got {}.'.format(self._re_method))
+
+    @property
+    def patterns(self):
+        """ Returns a dict with the arg_names as keys and regular expressions as values."""
+        return {arg: rgx for _, (arg, rgx) in _depth_names_regexes(self.path)}
+
+    def set_pattern(self, arg_name, arg_regex):
+        """ Set the pattern `arg_regex` to the given argument `arg_name`."""
+        self._path = _build_path(self._path, arg_values=self._argval, with_regex=True, regexes={arg_name: arg_regex})
+
+    def clear_pattern(self, arg_name):
+        """ Clear the pattern of the given argument `arg_name`."""
+        self.set_pattern(arg_name, '')
 
     @property
     def arg_values(self):
@@ -154,8 +165,7 @@ class Crumb(object):
         order of the arguments in argidx in the result of this function.
         """
         for depth, arg_name in _depth_names(self.path):
-            if arg_name not in self._argval:
-                yield depth, arg_name
+            yield depth, arg_name
 
     def _last_open_arg(self):
         """ Return the name and idx of the last (right-most) open argument."""
@@ -175,7 +185,7 @@ class Crumb(object):
     def has_set(self, arg_name):
         """ Return True if the argument `arg_name` has been set to a specific value,
         False if it is still a crumb argument."""
-        return arg_name not in self.open_args()
+        return arg_name not in set(self.open_args())
 
     def open_args(self):
         """ Return an iterator to the crumb argument names in `self` that have not been replaced yet.
@@ -191,7 +201,7 @@ class Crumb(object):
         -------
         crumb_args: set of str
         """
-        return _arg_names(self.path)
+        return _arg_names(self._path)
 
     def copy(self, crumb=None):
         """ Return a deep copy of the given `crumb`.
@@ -223,7 +233,7 @@ class Crumb(object):
         or hard disk letter.
         """
         path = self.path
-        if not self._is_valid(path):
+        if not _is_valid(path):
             raise ValueError("The given crumb path has errors, got {}.".format(path))
 
         subp = _first_txt(self.path)
@@ -264,23 +274,18 @@ class Crumb(object):
         -------
         abspath: str
         """
-        path = self.path
+        if op.isabs(self._path):
+            return self._path
 
-        if op.isabs(path):
-            return path
+        splits = self._path.split(op.sep)
+        basedir = [op.abspath(op.curdir)]
 
-        splt = self._split(path)
-        plst = []
-        if self._is_crumb_arg(splt[0]):
-            plst.append(op.abspath(op.curdir))
+        if self._is_crumb_arg(splits[0]):
+            if first_is_basedir:
+                splits.pop(0)
 
-        if not first_is_basedir:
-            plst.append(splt[0])
-
-        if splt[1:]:
-            plst.extend(splt[1:])
-
-        return op.sep.join(path)
+        basedir.extend(splits)
+        return op.sep.join(basedir)
 
 
     # def _abspath(self, first_is_basedir=False):
@@ -327,7 +332,7 @@ class Crumb(object):
 
     def split(self):
         """ Return a list of sub-strings of the current crumb path where the
-            path parts are separated from the crumb arguments.
+            first path part is separated from the crumb arguments.
 
         Returns
         -------
@@ -393,7 +398,7 @@ class Crumb(object):
             raise AttributeError("Expected an absolute crumb path but got {}.".format(self.path))
 
         path = self.path
-        dpth, arg_name, _ = _find_arg_depth(path, arg_name)
+        dpth, arg_name, arg_regex = _find_arg_depth(path, arg_name)
         splt = path.split(op.sep)
 
         if dpth == len(splt) - 1:  # this means we have to list files too
@@ -407,7 +412,7 @@ class Crumb(object):
             vals = list_subpaths(base,
                                  just_dirs=just_dirs,
                                  ignore=self._ignore,
-                                 pattern=self.patterns.get(arg_name, ''),
+                                 pattern=arg_regex,
                                  filter_func=self._match_filter,
                                  filter_args=self._re_args)
 
@@ -415,8 +420,7 @@ class Crumb(object):
         else:
             for aval in arg_values:
                 #  create the part of the crumb path that is already specified
-                nupath = self._split(_build_path(path,
-                                                 **dict(aval)))[0]
+                nupath = self._split(_build_path(path, arg_values=dict(aval)))[0]
 
                 if not op.exists(nupath):
                     continue
@@ -424,7 +428,7 @@ class Crumb(object):
                 paths = list_subpaths(nupath,
                                       just_dirs=just_dirs,
                                       ignore=self._ignore,
-                                      pattern=self.patterns.get(arg_name, ''),
+                                      pattern=arg_regex,
                                       filter_func=self._match_filter)
 
                 #  extend `val` tuples with the new list of values for `aval`
@@ -492,7 +496,7 @@ class Crumb(object):
                 raise ValueError("Expected a string for the value of argument {}, "
                                  "got {}.".format(k, v))
 
-        path = _build_path(self.path, arg_values=dict(**kwargs), with_regex=True)
+        path = _build_path(self.path, arg_values=kwargs, with_regex=True)
         _check(path)
 
         self._argval.update(**kwargs)
@@ -525,7 +529,7 @@ class Crumb(object):
         arg_deps: Mapping[str, int]
         """
         dpth, _, _ = _find_arg_depth(self.path, arg_name)
-        return OrderedDict([(arg, idx) for arg, idx in self._open_arg_items() if idx <= dpth])
+        return OrderedDict([(arg, idx) for idx, arg in self._open_arg_items() if idx <= dpth])
 
     def _arg_children(self, arg_name):
         """ Return a subdict with the open arguments name and index in `self._argidx`
@@ -539,7 +543,7 @@ class Crumb(object):
         arg_deps: Mapping[str, int]
         """
         dpth, _, _ = _find_arg_depth(self.path, arg_name)
-        return OrderedDict([(arg, idx) for arg, idx in self._open_arg_items() if idx > dpth])
+        return OrderedDict([(arg, idx) for idx, arg in self._open_arg_items() if idx > dpth])
 
     def _args_open_parents(self, arg_names):
         """ Return the name of the arguments that are dependencies of `arg_names`.
@@ -579,7 +583,7 @@ class Crumb(object):
             has the shape (arg_name, arg_value).
         """
         if not arg_name:
-            arg_name, _ = self._last_open_arg()
+            _, arg_name = self._last_open_arg()
 
         arg_deps = self._arg_parents(arg_name)
         values_map = None
@@ -615,8 +619,7 @@ class Crumb(object):
         if make_crumbs:
             return [self.replace(**dict(val)) for val in values_map]
         else:
-            path = self.path
-            return [_build_path(path, **dict(val)) for val in values_map]
+            return [_build_path(self.path, arg_values=dict(val)) for val in values_map]
 
     def ls(self, arg_name='', fullpath=True, make_crumbs=True, check_exists=False):
         """ Return the list of values for the argument crumb `arg_name`.
@@ -653,7 +656,7 @@ class Crumb(object):
         >>> user_folders = cr.ls('user_folder',fullpath=True,make_crumbs=True)
         """
         if not arg_name:
-            arg_name, _ = self._last_open_arg()
+            _, arg_name = self._last_open_arg()
 
         self._check_open_args([arg_name])
 
@@ -723,7 +726,7 @@ class Crumb(object):
         if not op.exists(self.split()[0]):
             return False
 
-        last, _ = self._last_open_arg()
+        _, last = self._last_open_arg()
 
         paths = self.ls(last, fullpath=True, make_crumbs=False, check_exists=False)
 
@@ -739,7 +742,7 @@ class Crumb(object):
         if not op.exists(list(self.split())[0]):
             return False
 
-        last, _ = self._last_open_arg()
+        _, last = self._last_open_arg()
         paths = self.ls(last, fullpath=True, make_crumbs=True, check_exists=True)
 
         return any([op.isfile(str(lp)) for lp in paths])
@@ -752,7 +755,7 @@ class Crumb(object):
         paths: list of pathlib.Path
         """
         if list(self.open_args()):
-            return self.ls(self._last_open_arg()[0], fullpath=True, make_crumbs=True, check_exists=True)
+            return self.ls(self._last_open_arg()[1], fullpath=True, make_crumbs=True, check_exists=True)
         else:
             return [self]
 

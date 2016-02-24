@@ -65,7 +65,7 @@ def _depth_names_regexes(crumb_path):
     return _depth_items(crumb_path, slice(_fld_idx, _cnv_idx))
 
 
-def _build_path(crumb_path, arg_values=None, with_regex=True):
+def _build_path(crumb_path, arg_values=None, with_regex=True, regexes=None):
     """ Build the crumb_path with the values in arg_values.
     Parameters
     ----------
@@ -75,6 +75,11 @@ def _build_path(crumb_path, arg_values=None, with_regex=True):
 
     with_regex: bool
 
+    regexes: dict[str] -> str
+        dict[arg_name] -> regex
+        The regexes contained here will replace or be added as a regex for
+        the corresponding arg_name.
+
     Returns
     -------
     built_path: str
@@ -82,8 +87,10 @@ def _build_path(crumb_path, arg_values=None, with_regex=True):
     if arg_values is None:
         arg_values = {}
 
-    path = ''
+    if regexes is None:
+        regexes = {}
 
+    path = ''
     for txt, fld, rgx, conv in _yield_items(crumb_path):
         path += txt
         if fld is None:
@@ -92,7 +99,7 @@ def _build_path(crumb_path, arg_values=None, with_regex=True):
         if fld in arg_values:
             path += arg_values[fld]
         else:
-            regex = rgx if with_regex else ''
+            regex = regexes.get(fld, rgx) if with_regex else ''
             path += _format_arg(fld, regex=regex)
 
     return path
@@ -172,6 +179,8 @@ def _check(crumb_path):
 
     if not _is_valid(crumb_path):
         raise ValueError("The current crumb path has errors, got {}.".format(crumb_path))
+
+    return crumb_path
 
 # --------------------------------------------------------------------------------------------------------
 
@@ -400,26 +409,27 @@ def _replace(crumb_path, start_end_syms=('{', '}'), regexes=None, **kwargs):
 def _split(crumb_path, start_end_syms=('{', '}')):
     """ Split `crumb_path` in two parts, the first is the base folder without any crumb argument
         and the second is the rest of `crumb_path` beginning with the first crumb argument.
-        If `crumb_path` has no crumb arguments or starts with a crumb argument, return `crumb_path`.
+        If `crumb_path` starts with an argument, will return ('', crumb_path).
     """
     crumb_path = _get_path(crumb_path)
 
     if not has_crumbs(crumb_path, start_end_syms=start_end_syms):
-        return crumb_path
+        return crumb_path, ''
 
     if not is_valid(crumb_path, start_end_syms=start_end_syms):
         raise ValueError('Crumb path {} is not valid.'.format(crumb_path))
 
     start_sym, _ = start_end_syms
     if crumb_path.startswith(start_sym):
-        return crumb_path
+        base = ''
+        rest = crumb_path
+    else:
+        idx = crumb_path.find(start_sym)
+        base = crumb_path[0:idx]
+        if base.endswith(op.sep):
+            base = base[:-1]
 
-    idx = crumb_path.find(start_sym)
-    base = crumb_path[0:idx]
-    if base.endswith(op.sep):
-        base = base[:-1]
-
-    rest = crumb_path[idx:]
+        rest = crumb_path[idx:]
 
     return base, rest
 
