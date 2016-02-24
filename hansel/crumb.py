@@ -226,10 +226,6 @@ class Crumb(object):
         This means that its path is valid and starts with a `op.sep` character
         or hard disk letter.
         """
-        path = self.path
-        if not is_valid(path):
-            raise ValueError("The given crumb path has errors, got {}.".format(path))
-
         subp = _first_txt(self.path)
         return op.isabs(subp)
 
@@ -304,8 +300,8 @@ class Crumb(object):
         """
         if isinstance(crumb_path, Crumb):
             return crumb_path.copy()
-        elif isinstance(crumb_path, (cls, Path)):
-            return cls.copy(crumb_path)
+        elif isinstance(crumb_path, (Crumb, Path)):
+            return cls.copy(str(crumb_path))
         elif isinstance(crumb_path, string_types):
             return cls(crumb_path)
         else:
@@ -373,6 +369,7 @@ class Crumb(object):
                 #  create the part of the crumb path that is already specified
                 nupath = _split(_build_path(path, arg_values=dict(aval)))[0]
 
+                # THIS HAPPENS, LEAVE IT. TODO: make a test for this line
                 if not op.exists(nupath):
                     continue
 
@@ -391,12 +388,17 @@ class Crumb(object):
         """ Raise a ValueError if `self_args` is empty.
             Raise a KeyError if `arg_names` is not a subset of `self_args`.
         """
-        if not self_args:
-            raise ValueError('This Crumb has no remaining arguments: {}.'.format(self.path))
+        anames = set(arg_names)
+        aself  = set(self_args)
+        if not anames and not aself:
+            return
 
-        if not set(arg_names).issubset(set(self_args)):
+        if not aself:
+            raise AttributeError('This Crumb has no remaining arguments: {}.'.format(self.path))
+
+        if not anames.issubset(aself):
             raise KeyError("Expected `arg_names` to be a subset of ({}),"
-                           " got {}.".format(list(self_args), arg_names))
+                           " got {}.".format(list(aself), anames))
 
     def _check_open_args(self, arg_names):
         """ Raise a KeyError if any of the arguments in `arg_names` is not a crumb

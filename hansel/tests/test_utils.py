@@ -159,6 +159,8 @@ def test_valuesmap_to_dict(tmp_tree):
     for key in key_subset:
         assert dicts2[key] == dicts[key]
 
+    assert tmp_crumb.values_map('image') == tmp_crumb.values_map()
+
 
 def test_intersection():
 

@@ -170,14 +170,6 @@ def list_intersection(list1, list2):
     return (arg_name for arg_name in list1 if arg_name in list2)
 
 
-def _intersect_crumb_args(crumb1, crumb2):
-    """ Return a list of `arg_names` that are the intersection between the arguments
-    of `crumb1` and `crumb2`·
-    This will keep the same order as the arguments are in `all_args` function from `crumb1`.
-    """
-    return list_intersection(crumb1.all_args(), crumb2.all_args())
-
-
 def _get_matching_items(list1, list2, items=None):
     """ If `items` is None, Return a list of items that are in
     `list1` and `list2`. Otherwise will return the elements of `items` if

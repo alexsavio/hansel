@@ -23,6 +23,7 @@ from   hansel._utils import (_get_path,
                              _depth_names,
                              _check,
                              _touch,
+                             _split,
                              _is_crumb_arg,
                              _split_exists,
                              )
@@ -130,8 +131,9 @@ def test_replace_and_setitem(crumb):
 
     assert crumb3.replace(**{}).path == crumb3.path
 
-    pytest.raises(KeyError, crumb2.replace,     grimm='brothers')
-    pytest.raises(KeyError, crumb2.__setitem__, 'grimm', 'brothers')
+    pytest.raises(KeyError,   crumb2.replace,     grimm='brothers')
+    pytest.raises(KeyError,   crumb2.__setitem__, 'grimm', 'brothers')
+    pytest.raises(ValueError, crumb2.replace,     subject_id=[])
 
 
 def test_firstarg(crumb):
@@ -260,6 +262,9 @@ def test_equal_copy(crumb):
     crumb2 = Crumb.copy(crumb)
     assert crumb2 == crumb
 
+    crumb2._argval['hansel'] = 'hello'
+    assert crumb2 != crumb
+
     crumb2._path += '/'
     assert crumb2 != crumb
 
@@ -268,6 +273,9 @@ def test_equal_copy(crumb):
 
     crumb2._argval['hansel'] = 'hello'
     assert crumb2 != crumb
+
+    crumb3 = Crumb(crumb.path, ignore_list=['.*'])
+    assert crumb3 != crumb
 
 
 def test_split(crumb):
@@ -290,6 +298,9 @@ def test_split2():
     cr = Crumb('/home/hansel/data/subj/session/anat.nii')
     assert cr.split() == (cr.path, '')
 
+    notvalid_crumb = '/home/hansel/data/{subj_notvalidcrumb/{session}/anat.nii'
+    pytest.raises(ValueError, _split, notvalid_crumb)
+
 
 def test_from_path(crumb):
     cr = Crumb.copy(crumb)
@@ -297,6 +308,13 @@ def test_from_path(crumb):
     assert cr == crumb
 
     cr2 = crumb.from_path(crumb)
+    assert cr2 is not crumb
+    assert cr2 == crumb
+
+    assert cr2 is not cr
+    assert cr2 == cr
+
+    cr2 = Crumb.from_path(Path(crumb.path))
     assert cr2 is not crumb
     assert cr2 == crumb
 
@@ -320,6 +338,10 @@ def test_is_valid_a_bit(crumb):
     pytest.raises(ValueError, _check, crumb_path)
     pytest.raises(ValueError, crumb.isabs)
     pytest.raises(ValueError, crumb.abspath)
+
+    pytest.raises(TypeError,  _check, tmp_crumb)
+    pytest.raises(TypeError,  _check, {})
+    pytest.raises(TypeError,  _check, None)
 
 
 def test_arg_name():
@@ -446,9 +468,11 @@ def test_touch2():
     assert nupath == path
     assert op.exists(nupath)
 
+    assert _touch(nupath, exist_ok=True) == nupath
+
     pytest.raises(IOError, _touch, nupath, exist_ok=False)
 
-    #pytest.raises(IOError, Crumb._touch, path + '\\', exist_ok=False)
+    pytest.raises(Exception, _touch, '/usr/lib/hansel_will_be_here_sometime', exist_ok=True)
 
 
 def test_arg_values(tmp_crumb):
@@ -537,6 +561,9 @@ def test_ls_with_check(tmp_crumb):
 
     images2 = tmp_crumb.ls('image', fullpath=True, make_crumbs=True, check_exists=True)
 
+    assert tmp_crumb.ls('image') == tmp_crumb.ls()
+    assert tmp_crumb.ls() == tmp_crumb.unfold()
+
     assert not all([img.exists() for img in images])
     assert     all([img.exists() for img in images2])
 
@@ -587,6 +614,8 @@ def test_ls_with_check(tmp_crumb):
     unfolded_crumbs = tmp_crumb.unfold()
     assert list(unfolded_crumbs[0].open_args()) == []
     assert unfolded_crumbs[0].unfold() == [unfolded_crumbs[0]]
+
+    pytest.raises(AttributeError, unfolded_crumbs[0]._check_open_args, ['subject_id'])
 
 
 def test_regex(tmp_crumb):
@@ -786,3 +815,4 @@ def test_lt(tmp_crumb):
 
     assert     tmp_crumb > tmp_crumb2
     assert not tmp_crumb < tmp_crumb2
+

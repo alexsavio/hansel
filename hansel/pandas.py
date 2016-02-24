@@ -75,6 +75,11 @@ def pandas_fill_crumbs(df, crumb, names_map=None):
         If None will make a dictionary from the open crumbs arguments, e.g.,
         {'subject_id': 'subject_id'}.
 
+        The values of this dict will be used to filter the columns
+        in `df` and the crumb arguments in `crumb`.
+
+        You may need to rename the columns of `df` before using this.
+
     Returns
     -------
     crumbs: generator of crumbs

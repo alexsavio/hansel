@@ -34,7 +34,7 @@ def test_pandas_fill_crumbs(tmp_tree):
     recs = tmp_crumb.values_map('image')
     df = pd.DataFrame.from_dict(valuesmap_to_dict(recs))
 
-    df_crumbs = list(pandas_fill_crumbs(df, tmp_crumb))
+    df_crumbs = list(pandas_fill_crumbs(df, tmp_crumb, names_map={'image': 'image'}))
     uf_crumbs = tmp_crumb.unfold()
 
     assert df_crumbs == uf_crumbs

@@ -28,13 +28,10 @@ def _yield_items(crumb_path, index=None):
         return (items[index] for items in Formatter().parse(crumb_path))
 
 
-def _enum_items(crumb_path, index=None):
+def _enum_items(crumb_path):
     """ An iterator over the enumerated items, i.e., (index, items) in `crumb_path`
      given by string.Formatter. """
-    if index is None:
-        return ((idx, items) for idx, items in enumerate(Formatter().parse(crumb_path)))
-    else:
-        return ((idx, items[index]) for idx, items in enumerate(Formatter().parse(crumb_path)))
+    return ((idx, items) for idx, items in enumerate(Formatter().parse(crumb_path)))
 
 
 def _depth_items(crumb_path, index=None):
@@ -65,13 +62,14 @@ def _depth_names_regexes(crumb_path):
     return _depth_items(crumb_path, slice(_fld_idx, _cnv_idx))
 
 
-def _build_path(crumb_path, arg_values=None, with_regex=True, regexes=None):
+def _build_path(crumb_path, arg_values, with_regex=True, regexes=None):
     """ Build the crumb_path with the values in arg_values.
     Parameters
     ----------
     crumb_path: str
 
-    arg_values: dict
+    arg_values: dict[str]->str
+        arg_name -> arg_value
 
     with_regex: bool
 
@@ -84,9 +82,6 @@ def _build_path(crumb_path, arg_values=None, with_regex=True, regexes=None):
     -------
     built_path: str
     """
-    if arg_values is None:
-        arg_values = {}
-
     if regexes is None:
         regexes = {}
 
@@ -141,16 +136,13 @@ def _check(crumb_path):
     needed or is not valid.
     Parameters
     ----------
-    crumb_path: str or Crumb
+    crumb_path: str
 
     Raises
     ------
      - ValueError if the path of the Crumb has errors using `self.is_valid`.
      - TypeError if the crumb_path is not a str or a Crumb.
     """
-    if hasattr(crumb_path, 'path'): # isinstance(crumb_path, Crumb)
-        crumb_path = crumb_path.path
-
     if not isinstance(crumb_path, string_types):
         raise TypeError("Expected `crumb_path` to be a {}, got {}.".format(string_types, type(crumb_path)))
 
@@ -188,7 +180,7 @@ def _is_crumb_arg(crumb_arg):
     return crumb_arg.startswith(start_sym) and crumb_arg.endswith(end_sym)
 
 
-def _format_arg(arg_name, regex=None):
+def _format_arg(arg_name, regex=''):
     """ Return the crumb argument for its string `format()` representation.
     Parameters
     ----------
@@ -198,9 +190,6 @@ def _format_arg(arg_name, regex=None):
     -------
     arg_format: str
     """
-    if regex is None:
-        regex = ''
-
     start_sym, end_sym = ('{', '}')
     reg_sym = ':'
 
