@@ -436,12 +436,15 @@ set the ``regex`` argument to ``'re'`` or ``'re.ignorecase'`` in the constructor
          ...
 
 The regular expressions can be checked with the `patterns` property.
+
     .. code:: python
 
         >>> print(s0_imgs.patterns)
         {'session_id': '^.*_0$', 'modality': '', 'image': '', 'subject_id': ''}
 
 And can be also modified with the `set_pattern` function.
+
+    .. code:: python
 
         >>> s0_imgs.set_pattern('modality', 'a.*')
         >>> print(s0_imgs.patterns)
