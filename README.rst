@@ -397,6 +397,8 @@ Unfold the whole crumb path to get the whole file tree in a list of paths:
         >>> print(crumbs[0]['subject_id'])
         ['0040000']
 
+Note that `unfold` is the same as calling `ls` function without arguments.
+
 
 Use regular expressions
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -432,6 +434,21 @@ set the ``regex`` argument to ``'re'`` or ``'re.ignorecase'`` in the constructor
          Crumb("/home/hansel/data/raw/0040001/session_0/anat_1/mprage.nii.gz"),
          Crumb("/home/hansel/data/raw/0040001/session_0/rest_1/rest.nii.gz"),
          ...
+
+The regular expressions can be checked with the `patterns` property.
+    .. code:: python
+
+        >>> print(s0_imgs.patterns)
+        {'session_id': '^.*_0$', 'modality': '', 'image': '', 'subject_id': ''}
+
+And can be also modified with the `set_pattern` function.
+
+        >>> s0_imgs.set_pattern('modality', 'a.*')
+        >>> print(s0_imgs.patterns)
+        {'session_id': '^.*_0$', 'modality': 'a.*', 'image': '', 'subject_id': ''}
+        >>> print(s0_imgs.path)
+        /home/hansel/raw/{subject_id}/{session_id:^.*_0$}/{modality:a.*}/{image}
+
 
 
 More functionalities, ideas and comments are welcome.
