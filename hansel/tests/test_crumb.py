@@ -22,6 +22,9 @@ from   hansel._utils import (_get_path,
                              _arg_names,
                              _depth_names,
                              _check,
+                             _touch,
+                             _is_crumb_arg,
+                             _split_exists,
                              )
 
 BASE_DIR = op.expanduser('~/data/cobre')
@@ -273,7 +276,7 @@ def test_split(crumb):
         if op.isdir(s):
             assert op.exists(s)
         else:
-            assert Crumb._is_crumb_arg(s) or isinstance(s, string_types)
+            assert _is_crumb_arg(s) or isinstance(s, string_types)
 
 
 def test_split2():
@@ -302,17 +305,16 @@ def test_from_path(crumb):
 
 
 def test_is_valid_a_bit(crumb):
-    assert Crumb.is_valid(crumb)
+    assert crumb.is_valid()
 
-    start_sym, end_sym = Crumb._start_end_syms
     crumb_path = crumb._path
-    crumb_path = crumb_path[:3] + start_sym + crumb_path[3:-1]
+    crumb_path = crumb_path[:3] + '{' + crumb_path[3:-1]
 
     pytest.raises(ValueError, Crumb.from_path, crumb_path)
     pytest.raises(TypeError, crumb.from_path, {})
 
-    assert not Crumb.is_valid(crumb_path)
-    assert Crumb.is_valid(op.expanduser('~'))
+    assert not crumb.is_valid(crumb_path)
+    assert crumb.is_valid(op.expanduser('~'))
 
     crumb._path = crumb_path
     pytest.raises(ValueError, _check, crumb_path)
@@ -320,15 +322,15 @@ def test_is_valid_a_bit(crumb):
     pytest.raises(ValueError, crumb.abspath)
 
 
-def test_arg_name(crumb):
-    assert not crumb._is_crumb_arg(Path(op.expanduser('~')))
+def test_arg_name():
+    assert not _is_crumb_arg(Path(op.expanduser('~')))
 
 
 def test_has_crumbs(crumb):
-    assert Crumb.has_crumbs(crumb)
+    assert crumb.has_crumbs()
 
-    assert not Crumb.has_crumbs('')
-    assert not Crumb.has_crumbs('/home/hansel/.config')
+    assert not crumb.has_crumbs('')
+    assert not crumb.has_crumbs('/home/hansel/.config')
 
 
 def test_str(crumb):
@@ -440,11 +442,11 @@ def test_touch2():
 
     assert not op.exists(path)
 
-    nupath = Crumb._touch(path)
+    nupath = _touch(path)
     assert nupath == path
     assert op.exists(nupath)
 
-    pytest.raises(IOError, Crumb._touch, nupath, exist_ok=False)
+    pytest.raises(IOError, _touch, nupath, exist_ok=False)
 
     #pytest.raises(IOError, Crumb._touch, path + '\\', exist_ok=False)
 
@@ -469,7 +471,7 @@ def test_exists(tmp_crumb):
 
     assert tmp_crumb.exists()
 
-    assert not Crumb._split_exists('/_/asdfasdfasdf?/{hansel}')
+    assert not _split_exists('/_/asdfasdfasdf?/{hansel}')
 
 
 def test_exists2(tmp_crumb):

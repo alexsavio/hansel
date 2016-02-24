@@ -63,7 +63,6 @@ class Crumb(object):
     >>> crumb = Crumb("{base_dir}/raw/{subject_id}/{session_id}/{modality}/{image}")
     >>> cr = Crumb(op.join(op.expanduser('~'), '{user_folder}'))
     """
-
     def __init__(self, crumb_path, ignore_list=None, regex='fnmatch'):
         self._path      = _check(crumb_path)
         self._argval    = {}  # what is the value of the argument in the current path, if any has been set.
@@ -94,6 +93,15 @@ class Crumb(object):
         else:
             raise ValueError('Expected regex method value to be "fnmatch", "re" or "re.ignorecase"'
                              ', got {}.'.format(self._re_method))
+
+    def is_valid(self, crumb_path=None):
+        """ Return True if the `crumb_path` is a valid crumb path, False otherwise.
+        If `crumb_path` is None, will use `self.path` instead.
+        """
+        if crumb_path is None:
+            crumb_path = self.path
+
+        return is_valid(crumb_path)
 
     @property
     def patterns(self):
@@ -129,9 +137,13 @@ class Crumb(object):
         self._path = value
         self._update()
 
-    def has_crumbs(self):
-        """ Return True if the current path has open crumb arguments, False otherwise. """
-        return has_crumbs(self.path)
+    def has_crumbs(self, crumb_path=None):
+        """ Return True if the current path has open crumb arguments, False otherwise.
+        If `crumb_path` is None will test on `self.path` instead.
+        """
+        if crumb_path is None:
+            crumb_path = self.path
+        return has_crumbs(crumb_path)
 
     def _open_arg_items(self):
         """ Return an iterator to the crumb _argidx items in `self` that have not been replaced yet.
@@ -645,7 +657,7 @@ class Crumb(object):
         -------
         has_files: bool
         """
-        if not op.exists(list(self.split())[0]):
+        if not op.exists(self.split()[0]):
             return False
 
         _, last = self._last_open_arg()
@@ -706,7 +718,7 @@ class Crumb(object):
         return arg_name in self.all_args()
 
     def __repr__(self):
-        return '{}("{}")'.format(type(self).__name__, self._path)
+        return '{}("{}")'.format(type(self).__name__, self.path)
 
     def __str__(self):
         return self.path

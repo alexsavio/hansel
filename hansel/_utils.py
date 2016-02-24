@@ -179,7 +179,7 @@ def _get_path(crumb_path):
     return crumb_path
 
 
-def _is_crumb_arg(crumb_arg):
+def _is_crumb_arg(crumb_arg, start_end_syms=('{', '}')):
     """ Returns True if `crumb_arg` is a well formed crumb argument, i.e.,
     is a string that starts with `start_sym` and ends with `end_sym`. False otherwise."""
     if not isinstance(crumb_arg, string_types):
@@ -188,7 +188,7 @@ def _is_crumb_arg(crumb_arg):
     return crumb_arg.startswith(start_sym) and crumb_arg.endswith(end_sym)
 
 
-def _format_arg(arg_name, regex=None):
+def _format_arg(arg_name, start_end_syms=('{', '}'), reg_sym=':', regex=None):
     """ Return the crumb argument for its string `format()` representation.
     Parameters
     ----------
@@ -212,7 +212,7 @@ def _format_arg(arg_name, regex=None):
     return arg_fmt
 
 
-def has_crumbs(crumb_path):
+def has_crumbs(crumb_path, start_end_syms=('{', '}')):
     """ Return True if the `crumb_path.split(op.sep)` has item which is a crumb argument
     that starts with '{' and ends with '}'."""
     crumb_path = _get_path(crumb_path)
@@ -225,7 +225,7 @@ def has_crumbs(crumb_path):
     return False
 
 
-def _split(crumb_path):
+def _split(crumb_path, start_end_syms=('{', '}')):
     """ Split `crumb_path` in two parts, the first is the base folder without any crumb argument
         and the second is the rest of `crumb_path` beginning with the first crumb argument.
         If `crumb_path` starts with an argument, will return ('', crumb_path).
@@ -238,7 +238,7 @@ def _split(crumb_path):
     if not is_valid(crumb_path):
         raise ValueError('Crumb path {} is not valid.'.format(crumb_path))
 
-    start_sym, end_sym = ('{', '}')
+    start_sym, end_sym = '{', '}'
     if crumb_path.startswith(start_sym):
         base = ''
         rest = crumb_path
@@ -253,7 +253,7 @@ def _split(crumb_path):
     return base, rest
 
 
-def _touch(crumb_path, exist_ok=True):
+def _touch(crumb_path, exist_ok=True, start_end_syms=('{', '}')):
     """ Create a leaf directory and all intermediate ones
     using the non crumbed part of `crumb_path`.
     If the target directory already exists, raise an IOError
@@ -288,7 +288,7 @@ def _touch(crumb_path, exist_ok=True):
         return nupath
 
 
-def _split_exists(crumb_path):
+def _split_exists(crumb_path, start_end_syms=('{', '}')):
     """ Return True if the part without crumb arguments of `crumb_path`
     is an existing path or a symlink, False otherwise.
     Returns

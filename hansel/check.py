@@ -6,6 +6,7 @@ Helper functions to check crumbs or paths.
 """
 
 from .crumb import Crumb
+from ._utils import has_crumbs
 
 
 def check_path(path):
@@ -19,7 +20,7 @@ def check_path(path):
     -------
     path: str or Crumb
     """
-    if Crumb.has_crumbs(path):
+    if has_crumbs(path):
         return Crumb(path)
     else:
         return path
