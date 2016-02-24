@@ -129,6 +129,10 @@ class Crumb(object):
         self._path = value
         self._update()
 
+    def has_crumbs(self):
+        """ Return True if the current path has open crumb arguments, False otherwise. """
+        return has_crumbs(self.path)
+
     def _open_arg_items(self):
         """ Return an iterator to the crumb _argidx items in `self` that have not been replaced yet.
         In the same order as they appear in the crumb path.

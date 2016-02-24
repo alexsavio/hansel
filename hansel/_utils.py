@@ -188,52 +188,6 @@ def _is_crumb_arg(crumb_arg):
     return crumb_arg.startswith(start_sym) and crumb_arg.endswith(end_sym)
 
 
-def _arg_name(arg):
-    """ Return the name of the argument given its crumb representation.
-    Parameters
-    ----------
-    arg_crumb: str
-
-    start_end_syms: 2-tuple of str
-        The strings that indicate the start and end of a crumb argument
-
-    reg_sym: str
-        The string that separate the crumb argument name from the
-        crumb argument regular expression.
-
-    Returns
-    -------
-    arg_name: str
-    """
-    arg_content = _arg_content(arg)
-
-    if ':' in arg_content:
-        return arg_content.split(':')[0]
-    else:
-        return arg_content
-
-
-def _arg_content(arg):
-    """ Return the name of the argument given its crumb representation.
-    Parameters
-    ----------
-    arg_crumb: str
-
-    start_end_syms: 2-tuple of str
-        The strings that indicate the start and end of a crumb argument
-
-    Returns
-    -------
-    arg_name: str
-    """
-    if not _is_crumb_arg(arg):
-        raise ValueError("Expected an well formed crumb argument, "
-                         "got {}.".format(arg))
-
-    start_sym, end_sym = ('{', '}')
-    return arg[len(start_sym):-len(end_sym)]
-
-
 def _format_arg(arg_name, regex=None):
     """ Return the crumb argument for its string `format()` representation.
     Parameters
