@@ -20,13 +20,13 @@ Version 0.7.1
 
 Version 0.7.0
 -------------
-- Refactoring of how Crumb works, now using string.Formatter. This will help with new features due to simpler logic.
-Now it is not possible to change the syntax of the Crumbs, although I guess nobody is interested in that.
+- Refactoring of how Crumb works, now using string.Formatter.
+  This will help with new features due to simpler logic.Now it is not possible to change the syntax of the Crumbs,
+  although I guess nobody is interested in that.
 - Fixed a few bugs from previous versions.
 - Now `copy` function is not a classmethod anymore, so you can do `crumb.copy()` as well as `Crumb.copy(crumb)`.
-- `patterns` is not a dictionary anymore, the regexes are embedded in the `_path` string. The property `patterns`
-returns the dictionary as before.  The function `set_pattern` must be used instead to set a different pattern
-to a given argument.
+- `patterns` is not a dictionary anymore, the regexes are embedded in the `_path` string.
+  The property `patterns` returns the dictionary as before.  The function `set_pattern` must be used instead to set a different pattern to a given argument.
 
 
 Version 0.6.2
