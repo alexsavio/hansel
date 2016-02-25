@@ -231,7 +231,7 @@ def joint_value_map(crumb, arg_names, check_exists=True):
             args_crumbs = [(args, crumb.replace(**dict(args))) for args in set(product(*values_map))]
             values_map_checked = [args for args, cr in args_crumbs if cr.exists()]
 
-    return values_map_checked
+    return sorted(values_map_checked)
 
 
 def intersection(crumb1, crumb2, on=None):
