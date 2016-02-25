@@ -3,6 +3,11 @@
 Changelog
 =========
 
+Version 0.7.4
+-------------
+- Fix the bug in .rst for PyPI.
+
+
 Version 0.7.3
 -------------
 - Fix bug for Python 2.7

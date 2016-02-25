@@ -295,8 +295,7 @@ Use the `intersection` function
 Use it for comparisons on more than one crumb argument.
 This can be used to compare datasets with the same structure in different folders.
 
-One argument
-````````````
+*One argument*
 
 Imagine that we have two working folders of subjects for two different projects: `proj1` and `proj2`.
 If I want to check what subjects are common to both projects:
@@ -324,8 +323,7 @@ If I want to check what subjects are common to both projects:
          Crumb("/home/hansel/proj2/0040110/{session}/{mod}/{image}")]
 
 
-Two arguments
-`````````````
+*Two arguments*
 
 Now, imagine that I have different sets of `{image}` for these subjects.
 I want to check what of those subjects have exactly the same images.
