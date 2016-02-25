@@ -8,7 +8,6 @@ import re
 import os.path     as op
 from   copy        import deepcopy
 from   collections import OrderedDict, Mapping, Sequence
-from   functools   import partial
 from   six         import string_types
 try:
     from pathlib2 import Path
