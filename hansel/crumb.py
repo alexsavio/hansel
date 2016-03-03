@@ -352,36 +352,52 @@ class Crumb(object):
         else:  # this means we have to list folders
             just_dirs = True
 
-        vals = []
         if arg_values is None:
-            base = op.sep.join(splt[:dpth])
-            vals = list_subpaths(base,
-                                 just_dirs=just_dirs,
-                                 ignore=self._ignore,
-                                 pattern=arg_regex,
-                                 filter_func=self._match_filter,
-                                 filter_args=self._re_args)
-
-            vals = [[(arg_name, val)] for val in vals]
+            vals = self._arg_values_from_base(basedir=op.sep.join(splt[:dpth]),
+                                              arg_name=arg_name,
+                                              arg_regex=arg_regex,
+                                              just_dirs=just_dirs)
         else:
-            for aval in arg_values:
-                #  create the part of the crumb path that is already specified
-                nupath = _split(_build_path(path, arg_values=dict(aval)))[0]
-
-                # THIS HAPPENS, LEAVE IT. TODO: make a test for this line
-                if not op.exists(nupath):
-                    continue
-
-                paths = list_subpaths(nupath,
-                                      just_dirs=just_dirs,
-                                      ignore=self._ignore,
-                                      pattern=arg_regex,
-                                      filter_func=self._match_filter)
-
-                #  extend `val` tuples with the new list of values for `aval`
-                vals.extend([aval + [(arg_name, sp)] for sp in paths])
+            vals = self._extend_arg_values(arg_values=arg_values,
+                                           arg_name=arg_name,
+                                           arg_regex=arg_regex,
+                                           just_dirs=just_dirs)
 
         return vals
+
+    def _extend_arg_values(self, arg_values, arg_name, arg_regex, just_dirs):
+        """ Return an extended copy of `arg_values` with valid values for `arg_name`."""
+        path = self.path
+        vals = []
+        for aval in arg_values:
+            #  create the part of the crumb path that is already specified
+            nupath = _split(_build_path(path, arg_values=dict(aval)))[0]
+
+            # THIS HAPPENS, LEAVE IT. TODO: make a test for this line
+            if not op.exists(nupath):
+                continue
+
+            paths = list_subpaths(nupath,
+                                  just_dirs=just_dirs,
+                                  ignore=self._ignore,
+                                  pattern=arg_regex,
+                                  filter_func=self._match_filter)
+
+            #  extend `val` tuples with the new list of values for `aval`
+            vals.extend([aval + [(arg_name, sp)] for sp in paths])
+
+        return vals
+
+    def _arg_values_from_base(self, basedir, arg_name, arg_regex, just_dirs):
+        """ Return a map of arg values for `arg_name` from the `basedir`."""
+        vals = list_subpaths(basedir,
+                             just_dirs=just_dirs,
+                             ignore=self._ignore,
+                             pattern=arg_regex,
+                             filter_func=self._match_filter,
+                             filter_args=self._re_args)
+
+        return [[(arg_name, val)] for val in vals]
 
     def _check_args(self, arg_names, self_args):
         """ Raise a ValueError if `self_args` is empty.
@@ -506,18 +522,17 @@ class Crumb(object):
         if not arg_name:
             _, arg_name = self._last_open_arg()
 
-        arg_deps = self._arg_parents(arg_name)
+        arg_deps   = self._arg_parents(arg_name)
         values_map = None
         for arg in arg_deps:
             values_map = self._arg_values(arg, values_map)
 
-        if check_exists:
-            paths = [cr for cr in self.build_paths(values_map, make_crumbs=True)]
-            values_map_checked = [args for args, path in zip(values_map, paths) if path.exists()]
-        else:
-            values_map_checked = values_map
+        return sorted(self._build_and_check(values_map) if check_exists else values_map)
 
-        return sorted(values_map_checked)
+    def _build_and_check(self, values_map):
+        """ Return a values_map of arg_values that lead to existing crumb paths."""
+        paths = [cr for cr in self.build_paths(values_map, make_crumbs=True)]
+        return [args for args, path in zip(values_map, paths) if path.exists()]
 
     def build_paths(self, values_map, make_crumbs=True):
         """ Return a list of paths from each tuple of args from `values_map`
@@ -576,19 +591,12 @@ class Crumb(object):
         >>> cr = Crumb(op.join(op.expanduser('~'), '{user_folder}'))
         >>> user_folders = cr.ls('user_folder',fullpath=True,make_crumbs=True)
         """
+        self._check_for_ls(make_crumbs, fullpath)
+
         if not arg_name:
             _, arg_name = self._last_open_arg()
 
         self._check_open_args([arg_name])
-
-        # if the first chunk of the path is a parameter, I am not interested in this (for now)
-        # check if the path is absolute, if not raise an NotImplementedError
-        if not self.isabs():
-            raise NotImplementedError("Cannot list paths that start with an argument. "
-                                      "If this is a relative path, use the `abspath()` member function.")
-
-        if make_crumbs and not fullpath:
-            raise ValueError("`make_crumbs` can only work if `fullpath` is also True.")
 
         values_map = self.values_map(arg_name, check_exists=check_exists)
 
@@ -599,6 +607,17 @@ class Crumb(object):
             paths = [dict(val)[arg_name] for val in values_map]
 
         return sorted(paths)
+
+    def _check_for_ls(self, make_crumbs, fullpath):
+        """ Raise errors if the arguments are not good for ls function."""
+        # if the first chunk of the path is a parameter, I am not interested in this (for now)
+        # check if the path is absolute, if not raise an NotImplementedError
+        if not self.isabs():
+            raise NotImplementedError("Cannot list paths that start with an argument. "
+                                      "If this is a relative path, use the `abspath()` member function.")
+
+        if make_crumbs and not fullpath:
+            raise ValueError("`make_crumbs` can only work if `fullpath` is also True.")
 
     def touch(self, exist_ok=True):
         """ Create a leaf directory and all intermediate ones using the non
