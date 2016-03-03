@@ -591,12 +591,12 @@ class Crumb(object):
         >>> cr = Crumb(op.join(op.expanduser('~'), '{user_folder}'))
         >>> user_folders = cr.ls('user_folder',fullpath=True,make_crumbs=True)
         """
-        self._check_for_ls(make_crumbs, fullpath)
-
         if not arg_name:
             _, arg_name = self._last_open_arg()
 
         self._check_open_args([arg_name])
+
+        self._check_for_ls(make_crumbs, fullpath)
 
         values_map = self.values_map(arg_name, check_exists=check_exists)
 
