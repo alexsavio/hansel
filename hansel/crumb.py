@@ -557,7 +557,7 @@ class Crumb(object):
         else:
             return [_build_path(self.path, arg_values=dict(val)) for val in values_map]
 
-    def ls(self, arg_name='', fullpath=True, make_crumbs=True, check_exists=False):
+    def ls(self, arg_name='', fullpath=True, make_crumbs=True, check_exists=True):
         """ Return the list of values for the argument crumb `arg_name`.
         This will also unfold any other argument crumb that appears before in the
         path.
