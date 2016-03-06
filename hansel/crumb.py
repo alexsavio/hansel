@@ -595,14 +595,10 @@ class Crumb(object):
             _, arg_name = self._last_open_arg()
 
         self._check_open_args([arg_name])
-
         self._check_for_ls(make_crumbs, fullpath)
-
         values_map = self.values_map(arg_name, check_exists=check_exists)
-
         if fullpath:
             paths = self.build_paths(values_map, make_crumbs=make_crumbs)
-
         else:
             paths = [dict(val)[arg_name] for val in values_map]
 
@@ -665,7 +661,6 @@ class Crumb(object):
             return False
 
         _, last = self._last_open_arg()
-
         paths = self.ls(last, fullpath=True, make_crumbs=False, check_exists=False)
 
         return any([_split_exists(lp) for lp in paths])
