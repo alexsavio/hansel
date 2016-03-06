@@ -553,9 +553,9 @@ class Crumb(object):
         paths: list of str or list of Crumb
         """
         if make_crumbs:
-            return [self.replace(**dict(val)) for val in values_map]
+            return (self.replace(**dict(val)) for val in values_map)
         else:
-            return [_build_path(self.path, arg_values=dict(val)) for val in values_map]
+            return (_build_path(self.path, arg_values=dict(val)) for val in values_map)
 
     def ls(self, arg_name='', fullpath=True, make_crumbs=True, check_exists=True):
         """ Return the list of values for the argument crumb `arg_name`.
@@ -600,7 +600,7 @@ class Crumb(object):
         if fullpath:
             paths = self.build_paths(values_map, make_crumbs=make_crumbs)
         else:
-            paths = [dict(val)[arg_name] for val in values_map]
+            paths = (dict(val)[arg_name] for val in values_map)
 
         return sorted(paths)
 
@@ -663,7 +663,7 @@ class Crumb(object):
         _, last = self._last_open_arg()
         paths = self.ls(last, fullpath=True, make_crumbs=False, check_exists=False)
 
-        return any([_split_exists(lp) for lp in paths])
+        return any((_split_exists(lp) for lp in paths))
 
     def has_files(self):
         """ Return True if the current crumb path has any file in its
@@ -678,7 +678,7 @@ class Crumb(object):
         _, last = self._last_open_arg()
         paths = self.ls(last, fullpath=True, make_crumbs=True, check_exists=True)
 
-        return any([op.isfile(str(lp)) for lp in paths])
+        return any((op.isfile(str(lp)) for lp in paths))
 
     def unfold(self):
         """ Return a list of all the existing paths until the last crumb argument.
