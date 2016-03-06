@@ -3,7 +3,7 @@
 Changelog
 =========
 
-Version 0.7.0 - 0.7.4
+Version 0.7.0 - 0.7.5
 ---------------------
 - Refactoring of how Crumb works, now using string.Formatter.
   This will help with new features due to simpler logic.Now it is not possible to change the syntax of the Crumbs,
@@ -20,6 +20,8 @@ Version 0.7.0 - 0.7.4
 - Fix bug for Python 2.7
 
 - Fix the bug in .rst for PyPI.
+
+- Code cleanup
 
 
 Version 0.6.0 - 0.6.2
