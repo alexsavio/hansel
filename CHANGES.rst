@@ -3,6 +3,14 @@
 Changelog
 =========
 
+Version 0.8.0 - 
+---------------
+- Set to True the default value for `check_exists` in `Crumb.ls` function. 
+  I don't think anybody is interested in non-existing paths.
+
+- Now it is possible to set a non-open item in a Crumb, i.e., I can replace the value for an already set crumb argument.
+
+
 Version 0.7.0 - 0.7.5
 ---------------------
 - Refactoring of how Crumb works, now using string.Formatter.
