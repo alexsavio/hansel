@@ -162,7 +162,11 @@ class Crumb(object):
 
     def _last_open_arg(self):
         """ Return the name and idx of the last (right-most) open argument."""
-        for dpth, arg in reversed(list(self._open_arg_items())):
+        open_args = list(self._open_arg_items())
+        if not open_args:
+            return None, None
+
+        for dpth, arg in reversed(open_args):
             return dpth, arg
 
     def _first_open_arg(self):
@@ -408,7 +412,7 @@ class Crumb(object):
         if not anames and not aself:
             return
 
-        if not aself:
+        if not aself or aself is None:
             raise AttributeError('This Crumb has no remaining arguments: {}.'.format(self.path))
 
         if not anames.issubset(aself):
@@ -522,6 +526,9 @@ class Crumb(object):
         if not arg_name:
             _, arg_name = self._last_open_arg()
 
+        if arg_name is None:
+            return [list(self.arg_values.items())]
+
         arg_deps   = self._arg_parents(arg_name)
         values_map = None
         for arg in arg_deps:
@@ -594,8 +601,10 @@ class Crumb(object):
         if not arg_name:
             _, arg_name = self._last_open_arg()
 
-        self._check_open_args([arg_name])
-        self._check_for_ls(make_crumbs, fullpath)
+        if arg_name is not None:
+            self._check_args([arg_name], self.all_args())
+
+        self._check_ls_params(make_crumbs, fullpath)
         values_map = self.values_map(arg_name, check_exists=check_exists)
         if fullpath:
             paths = self.build_paths(values_map, make_crumbs=make_crumbs)
@@ -604,7 +613,7 @@ class Crumb(object):
 
         return sorted(paths)
 
-    def _check_for_ls(self, make_crumbs, fullpath):
+    def _check_ls_params(self, make_crumbs, fullpath):
         """ Raise errors if the arguments are not good for ls function."""
         # if the first chunk of the path is a parameter, I am not interested in this (for now)
         # check if the path is absolute, if not raise an NotImplementedError
@@ -709,9 +718,6 @@ class Crumb(object):
             return self.ls(arg_name, fullpath=False, make_crumbs=False, check_exists=True)
 
     def __setitem__(self, key, value):
-        if not _has_arg(self.path, arg_name=key):
-            raise KeyError("Expected `arg_name` to be one of ({}),"
-                           " got {}.".format(list(self.open_args()), key))
         _ = self.update(**{key: value})
 
     def __ge__(self, other):

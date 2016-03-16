@@ -510,6 +510,33 @@ def test_exists2(tmp_crumb):
     assert not tmp_crumb.exists()
 
 
+def test_setitem(tmp_crumb):
+    assert not op.exists(tmp_crumb.split()[0])
+
+    values_dict = {'session_id': ['session_{:02}'.format(i) for i in range(2)],
+                   'subject_id': ['subj_{:03}'.format(i)    for i in range(3)],
+                   'modality':   ['anat'],
+                   'image':      ['mprage1.nii', 'mprage2.nii', 'mprage3.nii'],
+                  }
+
+    assert not tmp_crumb.exists()
+
+    _ = mktree(tmp_crumb, list(ParameterGrid(values_dict)))
+
+    cr = list(tmp_crumb.ls())[0]
+
+    assert not list(cr.open_args())
+
+    assert cr['image'] == [values_dict['image'][0]]
+
+    cr['image'] = 'mprage2.nii'
+
+    assert cr['image'] == ['mprage2.nii']
+
+    assert 'mprage2.nii' in cr.path
+    assert 'mprage2.nii' in cr.ls()[0].path
+
+
 def test_contains(tmp_crumb):
     assert 'modality'   in tmp_crumb
     assert 'subject_id' in tmp_crumb
