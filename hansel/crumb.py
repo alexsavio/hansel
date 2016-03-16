@@ -115,6 +115,10 @@ class Crumb(object):
         """ Clear the pattern of the given argument `arg_name`."""
         self.set_pattern(arg_name, '')
 
+    def clear(self, arg_name):
+        """ Clear the value of the given argument `arg_name`."""
+        del self._argval[arg_name]
+
     @property
     def arg_values(self):
         """ Return a dict with the arg_names and values of the already replaced crumb arguments."""
