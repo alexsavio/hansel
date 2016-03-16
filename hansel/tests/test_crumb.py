@@ -536,6 +536,11 @@ def test_setitem(tmp_crumb):
     assert 'mprage2.nii' in cr.path
     assert 'mprage2.nii' in cr.ls()[0].path
 
+    cr.clear('image')
+    assert 'image' in list(cr.open_args())
+    assert not 'mprage2.nii' in cr.path
+    assert not 'mprage2.nii' in cr.ls()[0].path
+
 
 def test_contains(tmp_crumb):
     assert 'modality'   in tmp_crumb
