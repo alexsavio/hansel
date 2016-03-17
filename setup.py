@@ -42,7 +42,7 @@ setup_dict = dict(
     description='from hansel import Crumb to find your file path.',
 
     url='https://pypi.python.org/pypi/hansel',
-    license='New BSD',
+    license='Apache 2.0',
     author='alexsavio',
     author_email='alexsavio@gmail.com',
     maintainer='alexsavio',
@@ -64,7 +64,7 @@ setup_dict = dict(
         'Development Status :: 4 - Beta',
         'Natural Language :: English',
         'Environment :: Console',
-        'License :: OSI Approved :: BSD License',
+        'License :: OSI Approved :: Apache Software License',
         'Operating System :: OS Independent',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Operating System :: POSIX',
