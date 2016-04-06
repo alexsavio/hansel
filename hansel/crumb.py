@@ -7,11 +7,11 @@ Crumb class: the smart path model class.
 import re
 import os.path     as op
 from   copy        import deepcopy
-from   collections import OrderedDict, Mapping, Sequence
+from   collections import OrderedDict
 from   six         import string_types
 try:
     from pathlib2 import Path
-except:
+except ImportError:
     from pathlib  import Path
 
 
@@ -28,7 +28,6 @@ from   ._utils import (
                        _arg_names,
                        _find_arg_depth,
                        _check,
-                       _has_arg,
                        _depth_names,
                        _depth_names_regexes,
                        _is_crumb_arg,
