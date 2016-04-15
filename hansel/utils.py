@@ -6,13 +6,13 @@ Utilities to make crumbs
 """
 import fnmatch
 import operator
+import itertools
 import os
 import os.path as op
 import re
-from   collections import Mapping, defaultdict
+from   collections import Mapping, defaultdict, OrderedDict
 from   copy        import deepcopy
 from   functools   import partial, reduce
-from   itertools   import product
 
 from   six import string_types
 
@@ -238,7 +238,7 @@ def joint_value_map(crumb, arg_names, check_exists=True):
             values_map_checked = values_map[:]
         else:
             args_crumbs = [(args, crumb.replace(**dict(args)))
-                           for args in set(product(*values_map))]
+                           for args in set(itertools.product(*values_map))]
 
             values_map_checked = [args for args, cr in args_crumbs
                                   if cr.exists()]
@@ -334,7 +334,7 @@ def valuesmap_to_dict(values_map):
         If any list inside the `values_map` doesn't have all the keys in the
         first dict.
     """
-    return append_dict_values([dict(rec) for rec in values_map])
+    return append_dict_values([OrderedDict(rec) for rec in values_map])
 
 
 def append_dict_values(list_of_dicts, keys=None):
@@ -374,10 +374,7 @@ def append_dict_values(list_of_dicts, keys=None):
     dict_of_lists = defaultdict(list)
     for d in list_of_dicts:
         for k in keys:
-            try:
-                dict_of_lists[k].append(d[k])
-            except KeyError:
-                raise KeyError('Error looking for key {} in dict.'.format(k))
+            dict_of_lists[k].append(d[k])
     return dict_of_lists
 
 
@@ -438,8 +435,8 @@ class ParameterGrid(object):
                 yield {}
             else:
                 keys, values = zip(*items)
-                for v in product(*values):
-                    params = dict(zip(keys, v))
+                for v in itertools.product(*values):
+                    params = OrderedDict(zip(keys, v))
                     yield params
 
     def __len__(self):
