@@ -10,6 +10,12 @@ Version 0.8.0 -
 
 - Now it is possible to set a non-open item in a Crumb, i.e., I can replace the value for an already set crumb argument.
 
+- Update README.rst
+
+- Code clean-up.
+
+- Replace dict to OrderedDict output in `valuesmap_to_dict` function.
+
 
 Version 0.7.0 - 0.7.5
 ---------------------
