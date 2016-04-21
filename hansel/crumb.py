@@ -109,7 +109,10 @@ class Crumb(object):
 
     def set_pattern(self, arg_name, arg_regex):
         """ Set the pattern `arg_regex` to the given argument `arg_name`."""
-        self._path = _build_path(self._path, arg_values=self.arg_values, with_regex=True, regexes={arg_name: arg_regex})
+        self._path = _build_path(self._path,
+                                 arg_values=self.arg_values,
+                                 with_regex=True,
+                                 regexes={arg_name: arg_regex})
 
     def clear_pattern(self, arg_name):
         """ Clear the pattern of the given argument `arg_name`."""
@@ -184,19 +187,20 @@ class Crumb(object):
         return arg_name == self._first_open_arg()[1]
 
     def has_set(self, arg_name):
-        """ Return True if the argument `arg_name` has been set to a specific value,
-        False if it is still a crumb argument."""
+        """ Return True if the argument `arg_name` has been set to a
+        specific value, False if it is still a crumb argument."""
         return arg_name not in set(self.open_args())
 
     def open_args(self):
-        """ Return an iterator to the crumb argument names in `self` that have not been replaced yet.
+        """ Return an iterator to the crumb argument names in `self`
+        that have not been replaced yet.
         In the same order as they appear in the crumb path."""
         for _, arg_name in self._open_arg_items():
             yield arg_name
 
     def all_args(self):
-        """ Return an iterator to all the crumb argument names in `self`, first the open ones and then the
-        replaced ones.
+        """ Return an iterator to all the crumb argument names in `self`,
+        first the open ones and then the replaced ones.
 
         Returns
         -------
@@ -220,16 +224,20 @@ class Crumb(object):
             crumb = self
 
         if isinstance(crumb, Crumb):
-            nucr = Crumb(crumb._path, ignore_list=crumb._ignore, regex=crumb._re_method)
+            nucr = Crumb(crumb._path,
+                         ignore_list=crumb._ignore,
+                         regex=crumb._re_method)
             nucr._argval = deepcopy(crumb._argval)
             return nucr
         elif isinstance(crumb, string_types):
             return Crumb.from_path(crumb)
         else:
-            raise TypeError("Expected a Crumb or a str to copy, got {}.".format(type(crumb)))
+            raise TypeError("Expected a Crumb or a str to copy, "
+                            "got {}.".format(type(crumb)))
 
     def isabs(self):
-        """ Return True if the current crumb path has an absolute path, False otherwise.
+        """ Return True if the current crumb path has an absolute path,
+        False otherwise.
         This means that its path is valid and starts with a `op.sep` character
         or hard disk letter.
         """
@@ -238,8 +246,8 @@ class Crumb(object):
 
     def abspath(self, first_is_basedir=False):
         """ Return a copy of `self` with an absolute crumb path.
-        Add as prefix the absolute path to the current directory if the current
-        crumb is not absolute.
+        Add as prefix the absolute path to the current directory if
+        the current crumb is not absolute.
         Parameters
         ----------
         first_is_basedir: bool
@@ -512,8 +520,8 @@ class Crumb(object):
         return list(reversed(arg_dads))
 
     def values_map(self, arg_name='', check_exists=False):
-        """ Return a list of tuples of crumb arguments with their values from the first argument
-        until `arg_name`.
+        """ Return a list of tuples of crumb arguments with their values from the
+        first argument until `arg_name`.
         Parameters
         ----------
         arg_name: str
@@ -524,7 +532,8 @@ class Crumb(object):
         Returns
         -------
         values_map: list of lists of 2-tuples
-            I call values_map what is called `record` in pandas. It is a list of lists of 2-tuples, where each 2-tuple
+            I call values_map what is called `record` in pandas.
+            It is a list of lists of 2-tuples, where each 2-tuple
             has the shape (arg_name, arg_value).
         """
         if not arg_name:
@@ -623,7 +632,8 @@ class Crumb(object):
         # check if the path is absolute, if not raise an NotImplementedError
         if not self.isabs():
             raise NotImplementedError("Cannot list paths that start with an argument. "
-                                      "If this is a relative path, use the `abspath()` member function.")
+                                      "If this is a relative path, use the `abspath()` "
+                                      "member function.")
 
         if make_crumbs and not fullpath:
             raise ValueError("`make_crumbs` can only work if `fullpath` is also True.")
@@ -674,7 +684,10 @@ class Crumb(object):
             return False
 
         _, last = self._last_open_arg()
-        paths = self.ls(last, fullpath=True, make_crumbs=False, check_exists=False)
+        paths = self.ls(last,
+                        fullpath=True,
+                        make_crumbs=False,
+                        check_exists=False)
 
         return any((_split_exists(lp) for lp in paths))
 
@@ -689,7 +702,10 @@ class Crumb(object):
             return False
 
         _, last = self._last_open_arg()
-        paths = self.ls(last, fullpath=True, make_crumbs=True, check_exists=True)
+        paths = self.ls(last,
+                        fullpath=True,
+                        make_crumbs=True,
+                        check_exists=True)
 
         return any((op.isfile(str(lp)) for lp in paths))
 
@@ -701,7 +717,10 @@ class Crumb(object):
         paths: list of pathlib.Path
         """
         if list(self.open_args()):
-            return self.ls(self._last_open_arg()[1], fullpath=True, make_crumbs=True, check_exists=True)
+            return self.ls(self._last_open_arg()[1],
+                           fullpath=True,
+                           make_crumbs=True,
+                           check_exists=True)
         else:
             return [self]
 
@@ -719,7 +738,10 @@ class Crumb(object):
         if arg_name in self._argval:
             return [self._argval[arg_name]]
         else:
-            return self.ls(arg_name, fullpath=False, make_crumbs=False, check_exists=True)
+            return self.ls(arg_name,
+                           fullpath=False,
+                           make_crumbs=False,
+                           check_exists=True)
 
     def __setitem__(self, key, value):
         _ = self.update(**{key: value})
