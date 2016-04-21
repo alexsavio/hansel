@@ -6,13 +6,15 @@ Utilities to make crumbs
 """
 import fnmatch
 import operator
+import itertools
 import os
 import os.path as op
 import re
-from   collections import Mapping, defaultdict
+from   collections import Mapping, defaultdict, OrderedDict
 from   copy        import deepcopy
 from   functools   import partial, reduce
-from   itertools   import product
+
+from   six import string_types
 
 from ._utils import _check_is_subset
 
@@ -43,7 +45,8 @@ def remove_ignored(ignore, strs):
 
 
 def fnmatch_filter(pattern, items, *args):
-    """ Return the items from `items` that match the fnmatch expression in `pattern`.
+    """ Return the items from `items` that match the fnmatch expression in
+    `pattern`.
     Parameters
     ----------
     pattern: str
@@ -63,7 +66,8 @@ def fnmatch_filter(pattern, items, *args):
 
 
 def regex_match_filter(pattern, items, *args):
-    """ Return the items from `items` that match the regular expression in `pattern`.
+    """ Return the items from `items` that match the regular expression in
+    `pattern`.
     Parameters
     ----------
     pattern: str
@@ -163,8 +167,8 @@ def list_subpaths(path, just_dirs=False, ignore=None, pattern=None,
 
 
 def list_intersection(list1, list2):
-    """ Return a list of elements that are the intersection between the set of elements
-    of `list1` and `list2`·
+    """ Return a list of elements that are the intersection between the set of
+    elements of `list1` and `list2`·
     This will keep the same order of the elements in `list1`.
     """
     return (arg_name for arg_name in list1 if arg_name in list2)
@@ -203,24 +207,29 @@ def _get_matching_items(list1, list2, items=None):
 
 
 def joint_value_map(crumb, arg_names, check_exists=True):
-    """ Return a list of tuples of crumb argument values of the given `arg_names`.
+    """ Return a list of tuples of crumb argument values of the given
+    `arg_names`.
     Parameters
     ----------
     arg_name: str
 
     check_exists: bool
-        If True will return only a values_map with sets of crumb arguments that fill a crumb to an existing path.
-        Otherwise it won't check if they exist and return all possible combinations.
+        If True will return only a values_map with sets of crumb arguments that
+        fill a crumb to an existing path.
+        Otherwise it won't check if they exist and return all possible
+        combinations.
 
     Returns
     -------
     values_map: list of lists of 2-tuples
-        I call values_map what is called `record` in pandas. It is a list of lists of 2-tuples, where each 2-tuple
-        has the shape (arg_name, arg_value).
+        I call values_map what is called `record` in pandas. It is a list of
+        lists of 2-tuples, where each 2-tuple has the
+        shape (arg_name, arg_value).
     """
     values_map = []
     for arg_name in arg_names:
-        values_map.append(list((arg_name, arg_value) for arg_value in crumb[arg_name]))
+        values_map.append(list((arg_name, arg_value)
+                          for arg_value in crumb[arg_name]))
 
     if len(arg_names) == 1:
         return [(i, ) for i in values_map[0]]
@@ -228,8 +237,11 @@ def joint_value_map(crumb, arg_names, check_exists=True):
         if not check_exists:
             values_map_checked = values_map[:]
         else:
-            args_crumbs = [(args, crumb.replace(**dict(args))) for args in set(product(*values_map))]
-            values_map_checked = [args for args, cr in args_crumbs if cr.exists()]
+            args_crumbs = [(args, crumb.replace(**dict(args)))
+                           for args in set(itertools.product(*values_map))]
+
+            values_map_checked = [args for args, cr in args_crumbs
+                                  if cr.exists()]
 
     return sorted(values_map_checked)
 
@@ -239,7 +251,8 @@ def intersection(crumb1, crumb2, on=None):
     Crumbs with common values for the common arguments of both crumbs.
 
     If `on` is None, will use all the common arguments names of both crumbs.
-    Otherwise will use only the elements of `on`. All its items must be in both crumbs.
+    Otherwise will use only the elements of `on`. All its items must be in
+    both crumbs.
 
     Returns
     -------
@@ -252,7 +265,7 @@ def intersection(crumb1, crumb2, on=None):
 
     crumb2: hansel.Crumb
 
-    on: list of str
+    on: str or list of str
         Crumb argument names common to both input crumbs.
 
     Raises
@@ -269,18 +282,26 @@ def intersection(crumb1, crumb2, on=None):
 
     Notes
     -----
-    Use with care, ideally the argument matches should be in the same order in both crumbs.
+    Use with care, ideally the argument matches should be in the same order in
+    both crumbs.
 
     Both crumbs must have at least one matching identifier argument and one
     of those must be the one in `id_colname`.
 
     # TODO: this function can still be more efficient.
     """
-    arg_names = list(_get_matching_items(list(crumb1.all_args()), list(crumb2.all_args()), items=on))
+    if isinstance(on, string_types):
+        on = [on]
+
+    arg_names = list(_get_matching_items(list(crumb1.all_args()),
+                                         list(crumb2.all_args()),
+                                         items=on))
 
     if not arg_names:
         raise KeyError("Could not find matching arguments between "
-                       "{} and  {} limited by {}.".format(list(crumb1.all_args()), list(crumb2.all_args()), on))
+                       "{} and  {} limited by {}.".format(list(crumb1.all_args()),
+                                                          list(crumb2.all_args()),
+                                                          on))
 
     maps1 = joint_value_map(crumb1, arg_names, check_exists=True)
     maps2 = joint_value_map(crumb2, arg_names, check_exists=True)
@@ -291,8 +312,9 @@ def intersection(crumb1, crumb2, on=None):
 
 
 def valuesmap_to_dict(values_map):
-    """ Converts a values_map or records type (a list of list of 2-tuple with shape '(arg_name, arg_value)')
-    to a dictionary of lists of values where the keys are the arg_names.
+    """ Converts a values_map or records type (a list of list of 2-tuple with
+    shape '(arg_name, arg_value)') to a dictionary of lists of values where the
+    keys are the arg_names.
     Parameters
     ----------
     values_map: list of list of 2-tuple of str
@@ -300,7 +322,8 @@ def valuesmap_to_dict(values_map):
     Returns
     -------
     adict: dict
-        The dictionary with the values in `values_map` in the form of a dictionary.
+        The dictionary with the values in `values_map` in the form of a
+        dictionary.
 
     Raises
     ------
@@ -308,19 +331,23 @@ def valuesmap_to_dict(values_map):
         If the list_of_dicts is empty or can't be indexed.
 
     KeyError
-        If any list inside the `values_map` doesn't have all the keys in the first dict.
+        If any list inside the `values_map` doesn't have all the keys in the
+        first dict.
     """
-    return append_dict_values([dict(rec) for rec in values_map])
+    return append_dict_values([OrderedDict(rec) for rec in values_map])
 
 
 def append_dict_values(list_of_dicts, keys=None):
-    """Return a dict of lists from a list of dicts with the same keys as the internal dicts.
-    For each dict in list_of_dicts with look for the values of the given keys and append it to the output dict.
+    """Return a dict of lists from a list of dicts with the same keys as the
+    internal dicts.
+    For each dict in list_of_dicts with look for the values of the given keys
+    and append it to the output dict.
 
     Parameters
     ----------
     list_of_dicts: list of dicts
-        The first dict in this list will be used as reference for the key names of all the other dicts.
+        The first dict in this list will be used as reference for the key names
+        of all the other dicts.
 
     keys: list of str
         List of keys to create in the output dict
@@ -335,7 +362,8 @@ def append_dict_values(list_of_dicts, keys=None):
         If the list_of_dicts is empty or can't be indexed.
 
     KeyError
-        If any dict inside the `list_of_dicts` doesn't have all the keys in the first dict.
+        If any dict inside the `list_of_dicts` doesn't have all the keys in the
+        first dict.
     """
     if keys is None:
         try:
@@ -346,10 +374,7 @@ def append_dict_values(list_of_dicts, keys=None):
     dict_of_lists = defaultdict(list)
     for d in list_of_dicts:
         for k in keys:
-            try:
-                dict_of_lists[k].append(d[k])
-            except KeyError:
-                raise KeyError('Error looking for key {} in dict.'.format(k))
+            dict_of_lists[k].append(d[k])
     return dict_of_lists
 
 
@@ -410,8 +435,8 @@ class ParameterGrid(object):
                 yield {}
             else:
                 keys, values = zip(*items)
-                for v in product(*values):
-                    params = dict(zip(keys, v))
+                for v in itertools.product(*values):
+                    params = OrderedDict(zip(keys, v))
                     yield params
 
     def __len__(self):

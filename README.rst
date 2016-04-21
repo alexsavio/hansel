@@ -7,6 +7,8 @@ Parametric file paths to access and build structured folder trees.
 
 It almost doesn't have `Dependencies`_, check how to `Install`_ it.
 
+Github repository: https://github.com/alexsavio/hansel
+
 Usage
 =====
 
