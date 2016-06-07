@@ -16,6 +16,8 @@ Version 0.8.0 -
 
 - Replace dict to OrderedDict output in `valuesmap_to_dict` function.
 
+- Add regex option within `arg_name` argument of `ls` and `__get_item__`.
+
 
 Version 0.7.0 - 0.7.5
 ---------------------
