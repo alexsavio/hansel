@@ -80,7 +80,7 @@ tag: clean
 	git tag v$(version)
 	git push --tags
 
-release: clean
+release: clean tag
 	python setup.py sdist upload
 	python setup.py bdist_wheel upload
 
