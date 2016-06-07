@@ -381,7 +381,7 @@ Unfold the whole crumb path to get the whole file tree in a list of paths:
     .. code:: python
 
         >>> all_images = Crumb("/home/hansel/raw/{subject_id}/{session_id}/{modality}/{image}")
-        >>> all_images = crumb.unfold()
+        >>> all_images = all_images.unfold()
         >>> print(all_images)
         [Crumb("/home/hansel/data/raw/0040000/session_1/anat_1/mprage.nii.gz"),
          Crumb("/home/hansel/data/raw/0040000/session_1/rest_1/rest.nii.gz"),
@@ -410,8 +410,8 @@ The syntax for crumb arguments with a regular expression is: ``"{<arg_name>:<arg
     .. code:: python
 
         # only the session_0 folders
-        >>> s0_imgs = Crumb("/home/hansel/raw/{subject_id}/{session_id:*_0}/{modality}/{image}")
-        >>> s0_imgs = crumb.unfold()
+        >>> s0_cr = Crumb("/home/hansel/raw/{subject_id}/{session_id:*_0}/{modality}/{image}")
+        >>> s0_imgs = s0_cr.ls()
         >>> print(s0_imgs)
         [Crumb("/home/hansel/data/raw/0040000/session_0/anat_1/mprage.nii.gz"),
          Crumb("/home/hansel/data/raw/0040000/session_0/rest_1/rest.nii.gz"),
@@ -425,9 +425,9 @@ set the ``regex`` argument to ``'re'`` or ``'re.ignorecase'`` in the constructor
     .. code:: python
 
         # only the ``session_0`` folders
-        >>> s0_imgs = Crumb("/home/hansel/raw/{subject_id}/{session_id:^.*_0$}/{modality}/{image}",
+        >>> s0_cr = Crumb("/home/hansel/raw/{subject_id}/{session_id:^.*_0$}/{modality}/{image}",
         >>>                 regex='re')
-        >>> s0_imgs = crumb.unfold()
+        >>> s0_imgs = s0_cr.ls()
         >>> print(s0_imgs)
         [Crumb("/home/hansel/data/raw/0040000/session_0/anat_1/mprage.nii.gz"),
          Crumb("/home/hansel/data/raw/0040000/session_0/rest_1/rest.nii.gz"),
@@ -439,19 +439,35 @@ The regular expressions can be checked with the `patterns` property.
 
     .. code:: python
 
-        >>> print(s0_imgs.patterns)
+        >>> print(s0_cr.patterns)
         {'session_id': '^.*_0$', 'modality': '', 'image': '', 'subject_id': ''}
 
 And can be also modified with the `set_pattern` function.
 
     .. code:: python
 
-        >>> s0_imgs.set_pattern('modality', 'a.*')
-        >>> print(s0_imgs.patterns)
+        >>> s0_cr.set_pattern('modality', 'a.*')
+        >>> print(s0_cr.patterns)
         {'session_id': '^.*_0$', 'modality': 'a.*', 'image': '', 'subject_id': ''}
-        >>> print(s0_imgs.path)
+        >>> print(s0_cr.path)
         /home/hansel/raw/{subject_id}/{session_id:^.*_0$}/{modality:a.*}/{image}
 
+
+A regular expression can be temporarily set with the `ls` function and the `[]`
+operator.
+
+    ..code:: python
+
+        >>> mprage_s0_imgs = s0_cr.ls('image:mprage.*')
+        >>> print(mprage_s0_imgs)
+        [Crumb("/home/hansel/data/raw/0040000/session_0/anat_1/mprage.nii.gz"),
+         Crumb("/home/hansel/data/raw/0040001/session_0/anat_1/mprage.nii.gz"),
+         ...
+
+        >>> print(s0_cr['image:mprage.*']
+        [Crumb("/home/hansel/data/raw/0040000/session_0/anat_1/mprage.nii.gz"),
+         Crumb("/home/hansel/data/raw/0040001/session_0/anat_1/mprage.nii.gz"),
+         ...
 
 
 More functionalities, ideas and comments are welcome.
