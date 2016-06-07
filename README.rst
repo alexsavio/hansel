@@ -456,7 +456,7 @@ And can be also modified with the `set_pattern` function.
 A regular expression can be temporarily set with the `ls` function and the `[]`
 operator.
 
-    ..code:: python
+    .. code:: python
 
         >>> mprage_s0_imgs = s0_cr.ls('image:mprage.*')
         >>> print(mprage_s0_imgs)
