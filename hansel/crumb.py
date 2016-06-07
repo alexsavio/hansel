@@ -585,6 +585,8 @@ class Crumb(object):
         arg_name: str
             Name of the argument crumb to be unfolded.
             If empty will pick the arg_name of the last open argument of the Crumb.
+            `arg_name` can also contain file patterns in the same syntax as
+            the `regex` argument type used in the `__init__` of the object.
 
         fullpath: bool
             If True will build the full path of the crumb path, will also append
@@ -613,15 +615,33 @@ class Crumb(object):
         if not arg_name:
             _, arg_name = self._last_open_arg()
 
-        if arg_name is not None:
+        if arg_name is None:
+            arg_name = ''
+
+        # check if there is any regex in the arg_name, if True, set the pattern
+        # later check if the arg_name is correct
+        arg_regex = False
+        if arg_name:
+            _, (arg_name, arg_regex) = tuple(_depth_names_regexes('{' + arg_name + '}'))[0]
+            if arg_regex:
+                old_regex = self.patterns[arg_name]
+                self.set_pattern(arg_name=arg_name, arg_regex=arg_regex)
+
             self._check_args([arg_name], self.all_args())
 
+        # build the paths or value maps
         self._check_ls_params(make_crumbs, fullpath)
         values_map = self.values_map(arg_name, check_exists=check_exists)
         if fullpath:
             paths = self.build_paths(values_map, make_crumbs=make_crumbs)
         else:
             paths = (dict(val)[arg_name] for val in values_map)
+
+        # clear and set the old the pattern if it was set for this query
+        if arg_regex:
+            self.clear_pattern(arg_name=arg_name)
+            if old_regex:
+                self.set_pattern(arg_name=arg_name, arg_regex=old_regex)
 
         return sorted(paths)
 
@@ -722,6 +742,18 @@ class Crumb(object):
                            check_exists=True)
         else:
             return [self]
+
+    def get_first(self, arg_name):
+        """ Return the first existing value of the crumb argument `arg_name`.
+        Parameters
+        ----------
+        arg_name: str
+
+        Returns
+        -------
+        values: str
+        """
+        return self[arg_name][0]
 
     def __getitem__(self, arg_name):
         """ Return the existing values of the crumb argument `arg_name`

@@ -19,7 +19,7 @@ _cnv_idx = 3
 
 
 def _yield_items(crumb_path, index=None):
-    """ An iterator over the items in `crumb_path` given by string.Formatter. """
+    """ An iterator over the items in `crumb_path` given by string.Formatter."""
     if index is None:
         return Formatter().parse(crumb_path)
     else:
@@ -29,8 +29,8 @@ def _yield_items(crumb_path, index=None):
 
 
 def _enum_items(crumb_path):
-    """ An iterator over the enumerated items, i.e., (index, items) in `crumb_path`
-     given by string.Formatter. """
+    """ An iterator over the enumerated items, i.e., (index, items) in
+    `crumb_path` given by string.Formatter. """
     return ((idx, items) for idx, items in enumerate(Formatter().parse(crumb_path)))
 
 
@@ -117,7 +117,8 @@ def _first_txt(crumb_path):
 
 
 def _find_arg_depth(crumb_path, arg_name):
-    """ Return the depth, name and regex of the argument with name `arg_name`. """
+    """ Return the depth, name and regex of the argument with name `arg_name`.
+    """
     for depth, (txt, fld, rgx, conv) in _depth_items(crumb_path):
         if fld == arg_name:
             return depth, fld, rgx
@@ -132,8 +133,8 @@ def _has_arg(crumb_path, arg_name):
 
 
 def _check(crumb_path):
-    """ Raises some Errors if there is something wrong with `crumb_path`, if not the type
-    needed or is not valid.
+    """ Raises some Errors if there is something wrong with `crumb_path`, if
+    not the type needed or is not valid.
     Parameters
     ----------
     crumb_path: str
@@ -144,10 +145,12 @@ def _check(crumb_path):
      - TypeError if the crumb_path is not a str or a Crumb.
     """
     if not isinstance(crumb_path, string_types):
-        raise TypeError("Expected `crumb_path` to be a {}, got {}.".format(string_types, type(crumb_path)))
+        raise TypeError("Expected `crumb_path` to be a {}, "
+                        "got {}.".format(string_types, type(crumb_path)))
 
     if not is_valid(crumb_path):
-        raise ValueError("The current crumb path has errors, got {}.".format(crumb_path))
+        raise ValueError("The current crumb path has errors, "
+                         "got {}.".format(crumb_path))
 
     return crumb_path
 
@@ -166,14 +169,17 @@ def _get_path(crumb_path):
         crumb_path = crumb_path._path
 
     if not isinstance(crumb_path, string_types):
-        raise TypeError("Expected `crumb_path` to be a {}, got {}.".format(string_types, type(crumb_path)))
+        raise TypeError("Expected `crumb_path` to be a {}, "
+                        "got {}.".format(string_types, type(crumb_path)))
 
     return crumb_path
 
 
 def _is_crumb_arg(crumb_arg):
-    """ Returns True if `crumb_arg` is a well formed crumb argument, i.e.,
-    is a string that starts with `start_sym` and ends with `end_sym`. False otherwise."""
+    """ Return True if `crumb_arg` is a well formed crumb argument, i.e.,
+    is a string that starts with `start_sym` and ends with `end_sym`.
+    False otherwise.
+    """
     if not isinstance(crumb_arg, string_types):
         return False
     start_sym, end_sym = ('{', '}')
@@ -202,8 +208,8 @@ def _format_arg(arg_name, regex=''):
 
 
 def has_crumbs(crumb_path):
-    """ Return True if the `crumb_path.split(op.sep)` has item which is a crumb argument
-    that starts with '{' and ends with '}'."""
+    """ Return True if the `crumb_path.split(op.sep)` has item which is a
+    crumb argument that starts with '{' and ends with '}'."""
     crumb_path = _get_path(crumb_path)
 
     splt = crumb_path.split(op.sep)
@@ -215,8 +221,9 @@ def has_crumbs(crumb_path):
 
 
 def _split(crumb_path):
-    """ Split `crumb_path` in two parts, the first is the base folder without any crumb argument
-        and the second is the rest of `crumb_path` beginning with the first crumb argument.
+    """ Split `crumb_path` in two parts, the first is the base folder without
+        any crumb argument and the second is the rest of `crumb_path` beginning
+        with the first crumb argument.
         If `crumb_path` starts with an argument, will return ('', crumb_path).
     """
     crumb_path = _get_path(crumb_path)
@@ -243,7 +250,8 @@ def _split(crumb_path):
 
 
 def _makedirs(dirpath, exist_ok=True):
-    """ Is a replacement for os.makedirs for Python 2.7, with the exist_ok argument."""
+    """ Is a replacement for os.makedirs for Python 2.7, with the `exist_ok`
+    argument."""
     if op.exists(dirpath):
         if not exist_ok:
             raise IOError("Folder {} already exists.".format(dirpath))
@@ -254,7 +262,8 @@ def _makedirs(dirpath, exist_ok=True):
 
 
 def _make_new_dirs(dirpath):
-    """ Call os.makedirs(dirpath), will return dirpath if no exception is raised."""
+    """ Call os.makedirs(dirpath), will return dirpath if no exception is
+    raised."""
     try:
         os.makedirs(dirpath)
     except:

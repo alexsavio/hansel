@@ -630,6 +630,8 @@ def test_ls_with_check(tmp_crumb):
     assert 'image' in img_crumb._argval
     assert img_crumb['image'] == ['mprage1.nii']
 
+    assert img_crumb['image'][0] == img_crumb.get_first('image')
+
     img_crumb['modality'] = 'anat'
     assert 'modality' in img_crumb._argval
     assert img_crumb['modality'] == ['anat']
@@ -667,6 +669,7 @@ def test_regex(tmp_crumb):
     re_subj_ids = crumb['subject_id']
 
     assert re_subj_ids == ['subj_{:03}'.format(i) for i in range(20, 30)]
+    assert crumb.ls('subject_id:^subj_02.*$') == crumb.ls('subject_id')
 
     crumb = Crumb(tmp_crumb.path.replace('{subject_id}', '{subject_id:subj_02*}'),
                   regex='fnmatch')  # fnmatch
@@ -674,6 +677,13 @@ def test_regex(tmp_crumb):
     fn_subj_ids = crumb['subject_id']
 
     assert fn_subj_ids == re_subj_ids
+    cr_bkp = crumb.copy()
+    assert crumb.ls('subject_id:subj_02*') == crumb.ls('subject_id')
+    assert crumb['subject_id'][0] == crumb.get_first('subject_id')
+    assert crumb.patterns['subject_id'] == cr_bkp.patterns['subject_id']
+
+    assert not crumb.ls('subject_id:subj_03*') == crumb.ls('subject_id')
+    assert crumb.patterns['subject_id'] == cr_bkp.patterns['subject_id']
 
     pytest.raises(ValueError,
                   Crumb,
@@ -847,4 +857,3 @@ def test_lt(tmp_crumb):
 
     assert     tmp_crumb > tmp_crumb2
     assert not tmp_crumb < tmp_crumb2
-
