@@ -50,7 +50,7 @@ lint:
 	flake8 $(project-name) test
 
 test:
-	py.test
+	py.test -v
 
 test-cov:
 	py.test --cov-report term-missing --cov=$(project-name)
