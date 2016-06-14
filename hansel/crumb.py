@@ -560,9 +560,9 @@ class Crumb(object):
                 values_map = self._arg_values(arg, values_map)
         elif arg_name in self.arg_values:
             values_map = [[(arg_name, self.arg_values[arg_name])]]
-        else:
-             raise ValueError('Could not build a map of values with '
-                              'argument {}.'.format(arg_name))
+        else:  # this probably will never be reached.
+            raise ValueError('Could not build a map of values with '
+                             'argument {}.'.format(arg_name))
 
         return sorted(self._build_and_check(values_map) if check_exists else values_map)
 
