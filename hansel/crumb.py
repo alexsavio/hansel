@@ -151,12 +151,14 @@ class Crumb(object):
         return has_crumbs(crumb_path)
 
     def _open_arg_items(self):
-        """ Return an iterator to the crumb _argidx items in `self` that have not been replaced yet.
-        In the same order as they appear in the crumb path.
+        """ Return an iterator to the crumb _argidx items in `self` that have
+        not been replaced yet. In the same order as they appear in the crumb path.
 
         Returns
         -------
-        crumb_args: set of str
+        depth_args: generator of 2-tuple of int and str
+            For each item will return the depth index of the undefined crumb
+            argument and its name.
 
         Note
         ----
@@ -167,7 +169,7 @@ class Crumb(object):
             yield depth, arg_name
 
     def _last_open_arg(self):
-        """ Return the name and idx of the last (right-most) open argument."""
+        """ Return the idx and name of the last (right-most) open argument."""
         open_args = list(self._open_arg_items())
         if not open_args:
             return None, None
@@ -176,7 +178,7 @@ class Crumb(object):
             return dpth, arg
 
     def _first_open_arg(self):
-        """ Return the name and idx of the first (left-most) open argument."""
+        """ Return the idx and name of the first (left-most) open argument."""
         for dpth, arg in self._open_arg_items():
             return dpth, arg
 
@@ -347,6 +349,10 @@ class Crumb(object):
 
         IOError: if this crosses to any path that is non-existing.
         """
+        # if arg_name is not None and arg_values is None:
+        #     if arg_name in self.arg_values:
+        #         return [[(arg_name, self.arg_values[arg_name])]]
+
         if arg_values is None and not self._is_first_open_arg(arg_name):
             raise ValueError("Cannot get the list of values for {} if"
                              " the previous arguments are not filled"
@@ -494,7 +500,12 @@ class Crumb(object):
         -------
         arg_deps: Mapping[str, int]
         """
-        dpth, _, _ = _find_arg_depth(self.path, arg_name)
+        if arg_name not in self.arg_values:
+            path = self.path
+        else:
+            path = self._path
+
+        dpth, _, _ = _find_arg_depth(path, arg_name)
         return OrderedDict([(arg, idx) for idx, arg in self._open_arg_items() if idx <= dpth])
 
     def _args_open_parents(self, arg_names):
@@ -541,16 +552,23 @@ class Crumb(object):
         if arg_name is None:
             return [list(self.arg_values.items())]
 
-        arg_deps   = self._arg_parents(arg_name)
+        arg_deps = self._arg_parents(arg_name)
+
         values_map = None
-        for arg in arg_deps:
-            values_map = self._arg_values(arg, values_map)
+        if arg_deps:
+            for arg in arg_deps:
+                values_map = self._arg_values(arg, values_map)
+        elif arg_name in self.arg_values:
+            values_map = [[(arg_name, self.arg_values[arg_name])]]
+        else:
+             raise ValueError('Could not build a map of values with '
+                              'argument {}.'.format(arg_name))
 
         return sorted(self._build_and_check(values_map) if check_exists else values_map)
 
     def _build_and_check(self, values_map):
         """ Return a values_map of arg_values that lead to existing crumb paths."""
-        paths = [cr for cr in self.build_paths(values_map, make_crumbs=True)]
+        paths = list(self.build_paths(values_map, make_crumbs=True))
         return [args for args, path in zip(values_map, paths) if path.exists()]
 
     def build_paths(self, values_map, make_crumbs=True):

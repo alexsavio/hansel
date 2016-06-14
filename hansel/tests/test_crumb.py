@@ -567,6 +567,9 @@ def test_ls_with_check(tmp_crumb):
 
     paths = mktree(tmp_crumb, list(ParameterGrid(values_dict)))
 
+    sbj_crumb = tmp_crumb.replace(subject_id='subj_000')
+    assert sbj_crumb.ls('subject_id', make_crumbs=False, fullpath=False) == ['subj_000']
+
     assert op.exists(tmp_crumb.split()[0])
 
     assert all([op.exists(p.path) for p in paths])
