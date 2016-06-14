@@ -3,8 +3,13 @@
 Changelog
 =========
 
-Version 0.8.0 - 
----------------
+Version 0.9.0
+-------------
+- Annoying bug fixed.
+
+
+Version 0.8.0 - 0.8.3
+---------------------
 - Set to True the default value for `check_exists` in `Crumb.ls` function. 
   I don't think anybody is interested in non-existing paths.
 
