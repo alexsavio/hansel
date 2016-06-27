@@ -384,7 +384,7 @@ def groupby_pattern(crumb, arg_name, groups):
 
     Parameters
     ----------
-    crumb: str
+    crumb: Crumb
         Crumb to the folder tree.
 
     arg_name: str
