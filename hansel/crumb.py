@@ -105,7 +105,6 @@ class Crumb(object):
     def patterns(self):
         """ Returns a dict with the arg_names as keys and regular expressions as values."""
         return {arg: rgx for _, (arg, rgx) in _depth_names_regexes(self._path) if rgx}
-        #return {arg: rgx for _, (arg, rgx) in _depth_names_regexes(self.path)}
 
     def set_pattern(self, arg_name, arg_regex):
         """ Set the pattern `arg_regex` to the given argument `arg_name`."""
