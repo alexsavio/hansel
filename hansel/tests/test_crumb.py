@@ -89,6 +89,30 @@ def test_copy_string(crumb):
     assert crumb2 == crumb
 
 
+def test_copy_equal(crumb):
+    crumb2 = crumb.copy(crumb._path)
+    assert crumb2 == crumb
+
+    crumb3 = crumb.copy(crumb)
+    assert crumb3 == crumb
+
+    crumb3.set_pattern('image', 'anat*')
+    assert crumb3 != crumb
+
+    crumb4 = crumb3.copy()
+    assert crumb4 == crumb3
+    assert crumb4.patterns == crumb3.patterns
+
+    crumb4['image'] = 'anat.nii.gz'
+    crumb5 = crumb4.copy(crumb4.path)
+    assert crumb5 != crumb4
+    assert crumb5.patterns != crumb4.patterns
+
+    crumb6 = crumb4.copy(crumb4._path)
+    assert crumb6 != crumb4
+    assert crumb6.patterns == crumb4.patterns
+
+
 def test_replace_and_setitem(crumb):
     # crumb = Crumb("{base_dir}/raw/{subject_id}/{session_id}/{modality}/{image}")
     args = list(_arg_names(crumb.path))
@@ -697,6 +721,9 @@ def test_regex(tmp_crumb):
     assert crumb2._re_method == crumb._re_method
     assert crumb2._re_args == crumb._re_args
     assert crumb2.patterns == crumb.patterns
+
+    assert len(crumb2.patterns) == 1
+    assert 'subject_id' in crumb2.patterns.keys()
 
 
 def test_regex_ignorecase(tmp_crumb):

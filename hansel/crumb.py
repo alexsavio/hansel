@@ -104,7 +104,8 @@ class Crumb(object):
     @property
     def patterns(self):
         """ Returns a dict with the arg_names as keys and regular expressions as values."""
-        return {arg: rgx for _, (arg, rgx) in _depth_names_regexes(self.path)}
+        return {arg: rgx for _, (arg, rgx) in _depth_names_regexes(self._path) if rgx}
+        #return {arg: rgx for _, (arg, rgx) in _depth_names_regexes(self.path)}
 
     def set_pattern(self, arg_name, arg_regex):
         """ Set the pattern `arg_regex` to the given argument `arg_name`."""
@@ -230,11 +231,12 @@ class Crumb(object):
                          regex=crumb._re_method)
             nucr._argval = deepcopy(crumb._argval)
             return nucr
-        elif isinstance(crumb, string_types):
+
+        if isinstance(crumb, string_types):
             return Crumb.from_path(crumb)
-        else:
-            raise TypeError("Expected a Crumb or a str to copy, "
-                            "got {}.".format(type(crumb)))
+
+        raise TypeError("Expected a Crumb or a str to copy, "
+                        "got {}.".format(type(crumb)))
 
     def isabs(self):
         """ Return True if the current crumb path has an absolute path,
