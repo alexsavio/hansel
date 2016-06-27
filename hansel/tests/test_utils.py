@@ -16,6 +16,7 @@ from hansel.utils import (rm_dups,
                           _get_matching_items,
                           append_dict_values,
                           valuesmap_to_dict,
+                          groupby_pattern,
                           )
 
 from hansel import Crumb, mktree
@@ -223,4 +224,35 @@ def test_intersection():
     pytest.raises(KeyError, intersection, tmp_crumb1, Crumb(op.expanduser('~/{files}')))
 
     pytest.raises(KeyError, intersection, tmp_crumb1, Crumb(op.expanduser('~/{files}')), on=['files'])
+
+
+def test_group_pattern():
+    crumb = Crumb("{base_dir}/raw/{subject_id}/{session_id}/{image}")
+    base_dir1 = tempfile.mkdtemp(prefix='crumbtest1_')
+    tmp_crumb1 = crumb.replace(base_dir=base_dir1)
+
+    assert not op.exists(tmp_crumb1._path)
+    assert not tmp_crumb1.has_files()
+
+    values_dict1 = {'session_id': ['session_{:02}'.format(i) for i in range( 2)],
+                    'subject_id': ['subj_{:03}'.format(i)    for i in range( 3)],
+                    'image':      ['mprage.nii', 'pet.nii', 'rest.nii', 'remaining'],
+                    }
+
+    _ = mktree(tmp_crumb1, list(ParameterGrid(values_dict1)))
+
+    patterns = {'anat': 'mprage*',
+                'pet' : 'pet*',
+                'rest': 'rest*',
+               }
+
+    matches = groupby_pattern(tmp_crumb1, 'image', patterns)
+
+    assert patterns.keys() == matches.keys()
+
+    for name, paths in matches.items():
+        assert len(paths) == 6
+        for p in paths:
+             assert isinstance(p, Crumb)
+             assert patterns[name] in p.patterns.values()
 

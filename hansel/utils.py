@@ -39,7 +39,7 @@ def remove_ignored(ignore, strs):
     return the result in a list."""
     nustrs = deepcopy(strs)
     for ign in ignore:
-        nustrs = [item for item in nustrs if not fnmatch.fnmatch(item, ign)]
+        nustrs = (item for item in nustrs if not fnmatch.fnmatch(item, ign))
 
     return nustrs
 
@@ -62,7 +62,7 @@ def fnmatch_filter(pattern, items, *args):
     matches: list of str
         Matched items
     """
-    return [item for item in items if fnmatch.fnmatch(item, pattern)]
+    return (item for item in items if fnmatch.fnmatch(item, pattern))
 
 
 def regex_match_filter(pattern, items, *args):
@@ -84,7 +84,7 @@ def regex_match_filter(pattern, items, *args):
         Matched items
     """
     test = re.compile(pattern, *args)
-    return [s for s in items if test.match(s)]
+    return (s for s in items if test.match(s))
 
 
 def list_children(path, just_dirs=False):
@@ -376,6 +376,41 @@ def append_dict_values(list_of_dicts, keys=None):
         for k in keys:
             dict_of_lists[k].append(d[k])
     return dict_of_lists
+
+
+def groupby_pattern(crumb, arg_name, groups):
+    """ Return a dictionary with the matches of `groups` values in the
+    crumb argument `arg_name` in `crumb`.
+
+    Parameters
+    ----------
+    crumb: str
+        Crumb to the folder tree.
+
+    arg_name: str
+        Name of the crumb argument in `crumb` that must be matched with the values of
+        the `groups` dict.
+
+    Returns
+    -------
+    grouped: dict[str] -> list[Crumb]
+        Map of paths from groups to the corresponding path matches.
+    """
+    if arg_name not in crumb:
+        raise KeyError('Crumb {} has no argument {}.'.format(crumb, arg_name))
+
+    paths_matched = set()
+    mods = defaultdict(list)
+    for mod_name, pattern in groups.items():
+        crumb.set_pattern(arg_name, pattern)
+        paths = crumb.ls(arg_name)
+        if paths:
+            mods[mod_name] = paths
+            paths_matched = paths_matched.union(paths)
+
+        crumb.clear_pattern(arg_name)
+
+    return mods
 
 
 class ParameterGrid(object):
