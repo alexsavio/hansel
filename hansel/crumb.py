@@ -643,7 +643,7 @@ class Crumb(object):
         if arg_name:
             _, (arg_name, arg_regex) = tuple(_depth_names_regexes('{' + arg_name + '}'))[0]
             if arg_regex:
-                old_regex = self.patterns[arg_name]
+                old_regex = self.patterns.get(arg_name, None)
                 self.set_pattern(arg_name=arg_name, arg_regex=arg_regex)
 
             self._check_args([arg_name], self.all_args())
@@ -659,7 +659,7 @@ class Crumb(object):
         # clear and set the old the pattern if it was set for this query
         if arg_regex:
             self.clear_pattern(arg_name=arg_name)
-            if old_regex:
+            if old_regex is not None:
                 self.set_pattern(arg_name=arg_name, arg_regex=old_regex)
 
         return sorted(paths)

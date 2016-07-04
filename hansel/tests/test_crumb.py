@@ -774,6 +774,9 @@ def test_regex_replace(tmp_crumb):
     crumb = Crumb(tmp_crumb.path.replace('{subject_id}', '{subject_id:subj_02*}'),
                   regex='fnmatch')  # fnmatch
 
+    assert tmp_crumb.ls('subject_id:subj_02*', make_crumbs=False) == \
+           crumb.ls('subject_id', make_crumbs=False)
+
     anat_crumb = crumb.replace(modality='anat')
     assert anat_crumb.exists()
 
