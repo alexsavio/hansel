@@ -4,12 +4,13 @@
 """
 Utilities to make crumbs
 """
+import os
+import re
+import os.path as op
 import fnmatch
 import operator
 import itertools
-import os
-import os.path as op
-import re
+import shutil
 from   collections import Mapping, defaultdict, OrderedDict
 from   copy        import deepcopy
 from   functools   import partial, reduce
@@ -376,6 +377,43 @@ def append_dict_values(list_of_dicts, keys=None):
         for k in keys:
             dict_of_lists[k].append(d[k])
     return dict_of_lists
+
+
+def copy_args(src_crumb, dst_crumb):
+    """ Will copy the argument values of `src_crumb` to the open arguments of
+    `dst_crumb`.
+    """
+    for arg_name in dst_crumb.open_args():
+        dst_crumb[arg_name] = src_crumb[arg_name][0]
+
+
+def copy_all_files(src_path, dst_path, ignore=None):
+    """ Will copy everything from `src_path` to `dst_path`.
+    Both can be a folder path or a file path.
+    """
+    if op.isdir(src_path):
+        shutil.copytree(src_path, dst_path)
+    elif op.isfile(src_path):
+        os.makedirs(op.dirname(dst_path), exist_ok=True)
+        shutil.copy2(src_path, dst_path)
+
+
+def crumb_copy(src_crumb, dst_crumb):
+    """ Will copy the content of `src_crumb` into `dst_crumb` folder.
+    For this `src_crumb` and `dst_crumb` must have similar set of argument
+    names.
+    All the defined arguments of `src_crumb.ls()[0]` must define `dst_crumb`
+    entirely and create a path to a file or folder.
+    """
+    for src in src_crumb.ls():
+        dst = dst_crumb.copy()
+        copy_args(src, dst)
+        if dst.has_crumbs():
+            raise AttributeError("Destination crumb still has open arguments, "
+                                 "can't copy. Got {}.".format(str(dst)))
+
+        print("Copying {} -> {}".format(src.path, dst.path))
+        copy_all_files(src.path, dst.path)
 
 
 def groupby_pattern(crumb, arg_name, groups):

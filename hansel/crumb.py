@@ -109,7 +109,7 @@ class Crumb(object):
     def set_pattern(self, arg_name, arg_regex):
         """ Set the pattern `arg_regex` to the given argument `arg_name`."""
         self._path = _build_path(self._path,
-                                 arg_values=self.arg_values,
+                                 arg_values={},
                                  with_regex=True,
                                  regexes={arg_name: arg_regex})
 
