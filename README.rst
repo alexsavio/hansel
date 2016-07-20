@@ -470,6 +470,22 @@ operator.
          ...
 
 
+`crumb_copy`
+~~~~~~~~~~~~
+
+Copy a folder structure from one crumb to the other. The source crumb
+must be fully specified, i.e., all crumb arguments must get an existing value.
+In addition the destination crumb can only have a subset of the crumb arguments
+of the source crumb.
+
+    .. code:: python
+
+        >>> from hansel import Crumb, crumb_copy
+        >>> src_cr = Crumb("/home/hansel/raw/{subj_id}/{sess}/{modal}/{img}")
+        >>> dst_cr = Crumb("/home/hansel/copy/{subj_id}/{sess}/{img}")
+        >>> crumb_copy(src_cr, dst_cr)
+
+
 More functionalities, ideas and comments are welcome.
 
 
