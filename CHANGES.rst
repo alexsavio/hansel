@@ -7,7 +7,7 @@ Version 0.9.0 - 0.9.1
 ---------------------
 - Annoying bug fixed.
 
-  - Add `crumb_copy`.
+- Add `crumb_copy`.
 
 
 Version 0.8.0 - 0.8.3
