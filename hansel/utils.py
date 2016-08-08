@@ -387,18 +387,27 @@ def copy_args(src_crumb, dst_crumb):
         dst_crumb[arg_name] = src_crumb[arg_name][0]
 
 
-def copy_all_files(src_path, dst_path, ignore=None):
+def copy_all_files(src_path, dst_path, make_links=False, exist_ok=True):
     """ Will copy everything from `src_path` to `dst_path`.
     Both can be a folder path or a file path.
     """
+    if not exist_ok:
+        if op.exists(dst_path):
+            raise IOError('Destination folder {} already exists.'.format(dst_path))
+
+    if not make_links:
+        copy_func = shutil.copy2
+    else:
+        copy_func = os.symlink
+
     if op.isdir(src_path):
-        shutil.copytree(src_path, dst_path)
+        shutil.copytree(src_path, dst_path, copy_function=copy_func, symlinks=make_links)
     elif op.isfile(src_path):
-        os.makedirs(op.dirname(dst_path), exist_ok=True)
-        shutil.copy2(src_path, dst_path)
+        os.makedirs(op.dirname(dst_path), exist_ok=exist_ok)
+        copy_func(src_path, dst_path)
 
 
-def crumb_copy(src_crumb, dst_crumb):
+def crumb_copy(src_crumb, dst_crumb, make_links=False, exist_ok=True):
     """ Will copy the content of `src_crumb` into `dst_crumb` folder.
     For this `src_crumb` and `dst_crumb` must have similar set of argument
     names.
@@ -413,7 +422,7 @@ def crumb_copy(src_crumb, dst_crumb):
                                  "can't copy. Got {}.".format(str(dst)))
 
         print("Copying {} -> {}".format(src.path, dst.path))
-        copy_all_files(src.path, dst.path)
+        copy_all_files(src.path, dst.path, make_links=make_links, exist_ok=exist_ok)
 
 
 def groupby_pattern(crumb, arg_name, groups):
