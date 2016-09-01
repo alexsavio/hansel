@@ -21,7 +21,6 @@ from   .utils  import (
                        regex_match_filter,
                        )
 
-#from hansel._utils import deprecated
 from   ._utils import (
                        _first_txt,
                        _build_path,
