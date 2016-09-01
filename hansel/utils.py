@@ -21,7 +21,7 @@ from ._utils import _check_is_subset
 
 
 def rm_dups(lst):
-    """ Return a sorted lst of non-duplicated elements from `lst`.
+    """Return a sorted lst of non-duplicated elements from `lst`.
 
     Parameters
     ----------
@@ -36,7 +36,7 @@ def rm_dups(lst):
 
 
 def remove_ignored(ignore, strs):
-    """ Remove from `strs` the matches to the `fnmatch` (glob) patterns and
+    """Remove from `strs` the matches to the `fnmatch` (glob) patterns and
     return the result in a list."""
     nustrs = deepcopy(strs)
     for ign in ignore:
@@ -46,7 +46,7 @@ def remove_ignored(ignore, strs):
 
 
 def fnmatch_filter(pattern, items, *args):
-    """ Return the items from `items` that match the fnmatch expression in
+    """Return the items from `items` that match the fnmatch expression in
     `pattern`.
     Parameters
     ----------
@@ -67,7 +67,7 @@ def fnmatch_filter(pattern, items, *args):
 
 
 def regex_match_filter(pattern, items, *args):
-    """ Return the items from `items` that match the regular expression in
+    """Return the items from `items` that match the regular expression in
     `pattern`.
     Parameters
     ----------
@@ -89,7 +89,7 @@ def regex_match_filter(pattern, items, *args):
 
 
 def list_children(path, just_dirs=False):
-    """ Return the immediate elements (files and folders) in `path`.
+    """Return the immediate elements (files and folders) in `path`.
     Parameters
     ----------
     path: str
@@ -127,7 +127,7 @@ def list_children(path, just_dirs=False):
 
 def list_subpaths(path, just_dirs=False, ignore=None, pattern=None,
                   filter_func=fnmatch_filter, filter_args=None):
-    """ Return the immediate elements (files and folders) within `path`.
+    """Return the immediate elements (files and folders) within `path`.
     Parameters
     ----------
     path: str
@@ -168,7 +168,7 @@ def list_subpaths(path, just_dirs=False, ignore=None, pattern=None,
 
 
 def list_intersection(list1, list2):
-    """ Return a list of elements that are the intersection between the set of
+    """Return a list of elements that are the intersection between the set of
     elements of `list1` and `list2`·
     This will keep the same order of the elements in `list1`.
     """
@@ -176,7 +176,7 @@ def list_intersection(list1, list2):
 
 
 def _get_matching_items(list1, list2, items=None):
-    """ If `items` is None, Return a list of items that are in
+    """If `items` is None, Return a list of items that are in
     `list1` and `list2`. Otherwise will return the elements of `items` if
     they are in both lists.
     Keep the order in `list1` or in `items`.
@@ -208,7 +208,7 @@ def _get_matching_items(list1, list2, items=None):
 
 
 def joint_value_map(crumb, arg_names, check_exists=True):
-    """ Return a list of tuples of crumb argument values of the given
+    """Return a list of tuples of crumb argument values of the given
     `arg_names`.
     Parameters
     ----------
@@ -248,7 +248,7 @@ def joint_value_map(crumb, arg_names, check_exists=True):
 
 
 def intersection(crumb1, crumb2, on=None):
-    """ Return an 'inner join' of both given Crumbs, i.e., will return a list of
+    """Return an 'inner join' of both given Crumbs, i.e., will return a list of
     Crumbs with common values for the common arguments of both crumbs.
 
     If `on` is None, will use all the common arguments names of both crumbs.
@@ -313,7 +313,7 @@ def intersection(crumb1, crumb2, on=None):
 
 
 def valuesmap_to_dict(values_map):
-    """ Converts a values_map or records type (a list of list of 2-tuple with
+    """Converts a values_map or records type (a list of list of 2-tuple with
     shape '(arg_name, arg_value)') to a dictionary of lists of values where the
     keys are the arg_names.
     Parameters
@@ -380,19 +380,25 @@ def append_dict_values(list_of_dicts, keys=None):
 
 
 def copy_args(src_crumb, dst_crumb):
-    """ Will copy the argument values of `src_crumb` to the open arguments of
+    """Will copy the argument values of `src_crumb` to the open arguments of
     `dst_crumb`.
     """
     for arg_name in dst_crumb.open_args():
         dst_crumb[arg_name] = src_crumb[arg_name][0]
 
 
+def _remove_if_ok_and_exists(path, exist_ok):
+    if not exist_ok and op.exists(path):
+        raise IOError('Path {} already exists.'.format(path))
+    elif op.exists(path):
+        os.remove(path)
+
+
 def copy_all_files(src_path, dst_path, exist_ok=True, verbose=False):
-    """ Will copy everything from `src_path` to `dst_path`.
+    """Will copy everything from `src_path` to `dst_path`.
     Both can be a folder path or a file path.
     """
-    if not exist_ok and op.exists(dst_path):
-        raise IOError('Destination path {} already exists.'.format(dst_path))
+    _remove_if_ok_and_exists(dst_path, exist_ok=exist_ok)
 
     copy_func = shutil.copy2
 
@@ -411,9 +417,8 @@ def copy_all_files(src_path, dst_path, exist_ok=True, verbose=False):
 
 
 def link_all_files(src_path, dst_path, exist_ok=True, verbose=False):
-    """ Make link from src_path to dst_path."""
-    if not exist_ok and op.exists(dst_path):
-        raise IOError('Destination path {} already exists.'.format(dst_path))
+    """Make link from src_path to dst_path."""
+    _remove_if_ok_and_exists(dst_path, exist_ok=exist_ok)
 
     if not op.isabs(src_path):
         src_path = op.relpath(src_path, op.dirname(dst_path))
@@ -427,7 +432,7 @@ def link_all_files(src_path, dst_path, exist_ok=True, verbose=False):
 
 def crumb_copy(src_crumb, dst_crumb, make_links=False, exist_ok=False,
                verbose=False):
-    """ Will copy the content of `src_crumb` into `dst_crumb` folder.
+    """Will copy the content of `src_crumb` into `dst_crumb` folder.
     For this `src_crumb` and `dst_crumb` must have similar set of argument
     names.
     All the defined arguments of `src_crumb.ls()[0]` must define `dst_crumb`
@@ -449,7 +454,7 @@ def crumb_copy(src_crumb, dst_crumb, make_links=False, exist_ok=False,
 
 
 def groupby_pattern(crumb, arg_name, groups):
-    """ Return a dictionary with the matches of `groups` values in the
+    """Return a dictionary with the matches of `groups` values in the
     crumb argument `arg_name` in `crumb`.
 
     Parameters
