@@ -359,12 +359,6 @@ class Crumb(object):
                              " the previous arguments are not filled"
                              " in `paths`.".format(arg_name))
 
-        # check if the path is absolute, if not raise an AttributeError
-        # this shouldn't really happen because this is a private function.
-        # This check is going to be here temporarily: TODO
-        if not self.isabs():
-            raise AttributeError("Expected an absolute crumb path but got {}.".format(self.path))
-
         path = self.path
         dpth, arg_name, arg_regex = _find_arg_depth(path, arg_name)
         splt = path.split(op.sep)
@@ -668,7 +662,7 @@ class Crumb(object):
         """ Raise errors if the arguments are not good for ls function."""
         # if the first chunk of the path is a parameter, I am not interested in this (for now)
         # check if the path is absolute, if not raise an NotImplementedError
-        if not self.isabs():
+        if not self.isabs() and self.path.startswith('{'):
             raise NotImplementedError("Cannot list paths that start with an argument. "
                                       "If this is a relative path, use the `abspath()` "
                                       "member function.")
