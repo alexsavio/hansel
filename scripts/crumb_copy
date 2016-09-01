@@ -4,8 +4,8 @@ structure of the destination tree can be modified.
 
 Examples:
 
-crumb_copy --link /data/hansel/cobre/{sid}/{session}/{img} /data/hansel/cobre2/{sid}/{img}
-crumb_copy cobre/{sid}/{session}/{img:anat*} cobre_anat/{sid}/{img}
+crumb_copy --link "/data/hansel/cobre/{sid}/{session}/{img}" "/data/hansel/cobre2/{sid}/{img}"
+crumb_copy "cobre/{sid}/{session}/{img:anat*}" "cobre_anat/{sid}/{img}"
 """
 
 def call_crumb_copy(src, dst, **kwargs):
