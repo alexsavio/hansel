@@ -52,7 +52,7 @@ setup_dict = dict(
 
     install_requires=['six'],
 
-    scripts=[],
+    scripts=['scripts/crumb_copy'],
 
     long_description=read('README.rst', 'CHANGES.rst'),
 
