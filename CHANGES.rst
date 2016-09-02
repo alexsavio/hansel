@@ -3,11 +3,17 @@
 Changelog
 =========
 
-Version 0.9.0 - 0.9.1
+Version 0.9.0 - 0.9.2
 ---------------------
 - Annoying bug fixed.
 
 - Add `crumb_copy`.
+
+- Now it doesn't bother with relative paths.
+
+- Fix `crumb_copy` for existing paths and linking relative paths.
+
+- Add `crumb_copy` CLI.
 
 
 Version 0.8.0 - 0.8.3
