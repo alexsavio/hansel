@@ -389,7 +389,7 @@ def copy_args(src_crumb, dst_crumb):
 
 def _remove_if_ok_and_exists(path, exist_ok):
     if not exist_ok and op.exists(path):
-        raise IOError('Path {} already exists.'.format(path))
+        raise FileExistsError('Path {} already exists.'.format(path))
     elif op.exists(path):
         os.remove(path)
 
@@ -398,14 +398,14 @@ def copy_all_files(src_path, dst_path, exist_ok=True, verbose=False):
     """Will copy everything from `src_path` to `dst_path`.
     Both can be a folder path or a file path.
     """
-    _remove_if_ok_and_exists(dst_path, exist_ok=exist_ok)
-
     copy_func = shutil.copy2
-
     if verbose:
         print("Copying {} -> {}".format(src_path, dst_path))
 
     if op.isdir(src_path):
+        if exist_ok:
+            shutil.rmtree(dst_path)
+
         shutil.copytree(src_path, dst_path, copy_function=copy_func)
     elif op.isfile(src_path):
         os.makedirs(op.dirname(dst_path), exist_ok=exist_ok)
@@ -418,15 +418,15 @@ def copy_all_files(src_path, dst_path, exist_ok=True, verbose=False):
 
 def link_all_files(src_path, dst_path, exist_ok=True, verbose=False):
     """Make link from src_path to dst_path."""
-    _remove_if_ok_and_exists(dst_path, exist_ok=exist_ok)
-
     if not op.isabs(src_path):
         src_path = op.relpath(src_path, op.dirname(dst_path))
 
     if verbose:
         print("Linking {} -> {}".format(src_path, dst_path))
 
-    os.makedirs(op.dirname(dst_path), exist_ok=exist_ok)
+    os.makedirs(op.dirname(dst_path), exist_ok=True)
+
+    _remove_if_ok_and_exists(dst_path, exist_ok=exist_ok)
     os.symlink(src_path, dst_path)
 
 
@@ -449,7 +449,6 @@ def crumb_copy(src_crumb, dst_crumb, make_links=False, exist_ok=False,
         if dst.has_crumbs():
             raise AttributeError("Destination crumb still has open arguments, "
                                  "can't copy. Got {}.".format(str(dst)))
-
         copy_func(src.path, dst.path, exist_ok=exist_ok, verbose=verbose)
 
 

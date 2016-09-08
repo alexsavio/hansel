@@ -13,6 +13,7 @@ from hansel.utils import (rm_dups,
                           ParameterGrid,
                           list_intersection,
                           intersection,
+                          crumb_copy,
                           _get_matching_items,
                           append_dict_values,
                           valuesmap_to_dict,
@@ -256,3 +257,42 @@ def test_group_pattern():
              assert isinstance(p, Crumb)
              assert patterns[name] in p.patterns.values()
 
+
+def _test_crumb_copy(make_links=False):
+    crumb = Crumb("{base_dir}/raw/{subject_id}/{session_id}/{image}")
+    base_dir1 = tempfile.mkdtemp(prefix='crumb_copy_test1_')
+    tmp_crumb1 = crumb.replace(base_dir=base_dir1)
+
+    assert not op.exists(tmp_crumb1._path)
+    assert not tmp_crumb1.has_files()
+
+    values_dict1 = {'session_id': ['session_{:02}'.format(i) for i in range( 2)],
+                    'subject_id': ['subj_{:03}'.format(i)    for i in range( 3)],
+                    'image':      ['mprage.nii', 'pet.nii', 'rest.nii', 'remaining'],
+                    }
+
+    _ = mktree(tmp_crumb1, list(ParameterGrid(values_dict1)))
+
+    base_dir2 = tempfile.mkdtemp(prefix='crumb_copy_test2_')
+    tmp_crumb2 = crumb.replace(base_dir=base_dir2)
+
+    # make first copy
+    crumb_copy(tmp_crumb1, tmp_crumb2, make_links=make_links)
+    assert all([cr.exists() for cr in tmp_crumb2.ls()])
+
+    # copy again without exist_ok
+    pytest.raises(FileExistsError, crumb_copy, tmp_crumb1, tmp_crumb2, make_links=make_links)
+    assert all([cr.exists() for cr in tmp_crumb2.ls()])
+
+    # copy again with exist_ok
+    crumb_copy(tmp_crumb1, tmp_crumb2, exist_ok=True, make_links=make_links)
+    assert all([cr.exists() for cr in tmp_crumb2.ls()])
+
+    if make_links:
+        assert all([op.islink(cr.path) for cr in tmp_crumb2.ls()])
+
+
+from functools import partial
+
+test_crumb_copy                = partial(_test_crumb_copy, make_links=False)
+test_crumb_copy_make_link_dirs = partial(_test_crumb_copy, make_links=True)
