@@ -108,7 +108,7 @@ Imagine this folder tree:
     >>>               ignore_list=['.*'])
 
 Once you have a fully defined Crumb, you can use its ``path`` for operations with the corresponding file.
-For that you have to convert it to string by doing ``str(crumb)`` or ``crumb.path``.
+For that you have to convert it to string by using ``str(crumb)`` or ``crumb.path``.
 
 See more quick examples after the `Long Intro`_ check `More features and tricks`_.
 
