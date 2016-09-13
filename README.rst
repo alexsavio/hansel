@@ -3,7 +3,7 @@ hansel
 
 Parametric file paths to access and build structured folder trees.
 
-|PyPI| |Build Status| |Coverage Status| |PyPI Downloads| |Code Health| |Scrutinizer|
+|PyPI| |Build Status| |Coverage Status| |PyPI Downloads| |Code Health|
 
 It almost doesn't have `Dependencies`_, check how to `Install`_ it.
 
@@ -601,7 +601,3 @@ or
 .. |Code Health| image:: https://landscape.io/github/alexsavio/hansel/master/landscape.svg?style=flat
         :target: https://landscape.io/github/alexsavio/hansel/master
         :alt: Code Health
-
-.. |Scrutinizer| image:: https://img.shields.io/scrutinizer/g/alexsavio/hansel.svg
-        :target: https://scrutinizer-ci.com/g/alexsavio/hansel/?branch=master
-        :alt: Scrutinizer Code Quality
