@@ -17,7 +17,7 @@ Version 0.9.0 - 0.9.3
 
 - Make `click` a dependency and move `crumb_copy` to `crumb copy`.
 
-- Add `crumb ls` CLI.
+- Add `crumb ls` and `crumb intersect` CLI.
 
 
 Version 0.8.0 - 0.8.3

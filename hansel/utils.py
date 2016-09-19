@@ -462,8 +462,8 @@ def groupby_pattern(crumb, arg_name, groups):
         Crumb to the folder tree.
 
     arg_name: str
-        Name of the crumb argument in `crumb` that must be matched with the values of
-        the `groups` dict.
+        Name of the crumb argument in `crumb` that must be matched with the
+        values of the `groups` dict.
 
     groups: dict[str]->str
         A dict where the keys are group names and the values are regular

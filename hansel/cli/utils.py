@@ -3,6 +3,8 @@
 Utilities for the CLI functions.
 """
 from __future__ import print_function, division, unicode_literals, absolute_import
+
+import os.path as path
 import re
 
 import click
@@ -47,7 +49,7 @@ class CrumbPath(click.ParamType):
 
     def convert(self, value, param, ctx):
         try:
-            cr = Crumb(value)
+            cr = Crumb(path.expanduser(value))
         except ValueError:
             self.fail('%s is not a valid crumb path.' % value, param, ctx)
         else:
