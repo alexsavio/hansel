@@ -3,7 +3,7 @@
 Changelog
 =========
 
-Version 0.9.0 - 0.9.2
+Version 0.9.0 - 0.9.3
 ---------------------
 - Annoying bug fixed.
 
@@ -15,10 +15,14 @@ Version 0.9.0 - 0.9.2
 
 - Add `crumb_copy` CLI.
 
+- Make `click` a dependency and move `crumb_copy` to `crumb copy`.
+
+- Add `crumb ls` CLI.
+
 
 Version 0.8.0 - 0.8.3
 ---------------------
-- Set to True the default value for `check_exists` in `Crumb.ls` function. 
+- Set to True the default value for `check_exists` in `Crumb.ls` function.
   I don't think anybody is interested in non-existing paths.
 
 - Now it is possible to set a non-open item in a Crumb, i.e., I can replace the value for an already set crumb argument.
@@ -129,4 +133,3 @@ Version 0.1.0 - 0.1.1
 - Fix bugs.
 - Add `Crumb.unfold` function.
 - Move `mktree` out of `Crumb` class.
-

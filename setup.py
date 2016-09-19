@@ -52,7 +52,10 @@ setup_dict = dict(
 
     install_requires=['six'],
 
-    scripts=['scripts/crumb_copy'],
+    entry_points='''
+      [console_scripts]
+      crumb=hansel.cli:cli
+      ''',
 
     long_description=read('README.rst', 'CHANGES.rst'),
 
