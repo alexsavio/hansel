@@ -17,7 +17,7 @@ from   functools   import partial, reduce
 
 from   six import string_types
 
-from ._utils import _check_is_subset
+from ._utils import _check_is_subset, _is_crumb_arg
 
 
 def rm_dups(lst):
@@ -489,6 +489,14 @@ def groupby_pattern(crumb, arg_name, groups):
         crumb.clear_pattern(arg_name)
 
     return mods
+
+
+def is_crumb_arg(crumb_arg):
+    """ Return True if `crumb_arg` is a well formed crumb argument, i.e.,
+    is a string that starts with `start_sym` and ends with `end_sym`.
+    False otherwise.
+    """
+    return _is_crumb_arg(crumb_arg)
 
 
 class ParameterGrid(object):

@@ -19,6 +19,8 @@ Version 0.9.0 - 0.9.3
 
 - Add `crumb ls` and `crumb intersect` CLI.
 
+- Add `is_crumb_arg` function to utils.
+
 
 Version 0.8.0 - 0.8.3
 ---------------------
