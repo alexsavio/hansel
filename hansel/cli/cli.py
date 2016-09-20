@@ -40,8 +40,8 @@ def ls(crumb, ignore, arg):
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
-@click.argument('src_path', type=CrumbPath(), callback=check_not_none)
-@click.argument('dst_path', type=CrumbPath(), callback=check_not_none)
+@click.argument('src_crumb', type=CrumbPath(), callback=check_not_none)
+@click.argument('dst_crumb', type=CrumbPath(), callback=check_not_none)
 @click.option('-l', '--link', is_flag=True, flag_value=True,
               help='Flag to indicate to whether make links instead of copying.')
 @click.option('-q', '--quiet', is_flag=True, flag_value=True,
