@@ -32,11 +32,19 @@ def ls(crumb, ignore, arg):
     crumb ls -i ".*" "/data/hansel/cobre/{sid}/{session}/{img:anat*}"\n
     crumb ls -a "sid" "/data/hansel/cobre/{sid}/{session}/{img:anat*}"\n
     """
+    if not crumb.isabs():
+        crumb = crumb.abspath()
+
     crumb._ignore = ignore
     if arg:
-        echo_list(crumb[arg])
+        lst = crumb[arg]
     else:
-        echo_list(crumb.ls())
+        lst = crumb.ls()
+
+    if not lst:
+        exit(-1)
+
+    echo_list(lst)
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
@@ -65,6 +73,10 @@ def copy(src_crumb, dst_crumb, link, quiet, ignore, exist_ok):
     if ignore:
         src_crumb._ignore = ignore
         dst_crumb._ignore = ignore
+
+    if not src_crumb.ls():
+        click.echo('Could not find any file that matched {}.'.format(src_crumb))
+        exit(-1)
 
     crumb_copy(src_crumb, dst_crumb,
                make_links=link,
