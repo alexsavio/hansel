@@ -50,8 +50,6 @@ def ls(crumb, ignore, arg):
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('src_crumb', type=CrumbPath(), callback=check_not_none)
 @click.argument('dst_crumb', type=CrumbPath(), callback=check_not_none)
-@click.option('-l', '--link', is_flag=True, flag_value=True,
-              help='Flag to indicate to whether make links instead of copying.')
 @click.option('-q', '--quiet', is_flag=True, flag_value=True,
               help='Flag to remove verbose.')
 @click.option('-e', '--exist_ok', is_flag=True, flag_value=True,
@@ -65,7 +63,7 @@ def copy(src_crumb, dst_crumb, link, quiet, ignore, exist_ok):
     structure of the destination tree can be modified.
 
     Examples: \n
-    crumb copy --link "/data/hansel/cobre/{sid}/{session}/{img}" "/data/hansel/cobre2/{sid}/{img}" \n
+    crumb copy "/data/hansel/cobre/{sid}/{session}/{img}" "/data/hansel/cobre2/{sid}/{img}" \n
     crumb copy "cobre/{sid}/{session}/{img:anat*}" "cobre_anat/{sid}/{img}" \n
     """
     from .. import crumb_copy
@@ -79,7 +77,45 @@ def copy(src_crumb, dst_crumb, link, quiet, ignore, exist_ok):
         exit(-1)
 
     crumb_copy(src_crumb, dst_crumb,
-               make_links=link,
+               make_links=False,
+               exist_ok=exist_ok,
+               verbose=(not quiet))
+
+
+
+@cli.command(context_settings=CONTEXT_SETTINGS)
+@click.argument('src_crumb', type=CrumbPath(), callback=check_not_none)
+@click.argument('dst_crumb', type=CrumbPath(), callback=check_not_none)
+@click.option('-q', '--quiet', is_flag=True, flag_value=True,
+              help='Flag to remove verbose.')
+@click.option('-e', '--exist_ok', is_flag=True, flag_value=True,
+              help='Flag to allow overwriting destination path.')
+@click.option('-i', '--ignore', type=str, multiple=True,
+              help='A global ignore fnmatch expression for the listing. '
+                   'You can add as many of this argument as you want. '
+                   'Example: ".*" or "*~"')
+def link(src_crumb, dst_crumb, link, quiet, ignore, exist_ok):
+    """Uses hansel.Crumb to link one file tree to another file tree. The
+    structure of the destination tree can be modified.
+    Only the leaf nodes will be linked, the folder structure above will be
+    created.
+
+    Examples: \n
+    crumb link "/data/hansel/cobre/{sid}/{session}/{img}" "/data/hansel/cobre2/{sid}/{img}" \n
+    crumb link "cobre/{sid}/{session}/{img:anat*}" "cobre_anat/{sid}/{img}" \n
+    """
+    from .. import crumb_copy
+
+    if ignore:
+        src_crumb._ignore = ignore
+        dst_crumb._ignore = ignore
+
+    if not src_crumb.ls():
+        click.echo('Could not find any file that matched {}.'.format(src_crumb))
+        exit(-1)
+
+    crumb_copy(src_crumb, dst_crumb,
+               make_links=True,
                exist_ok=exist_ok,
                verbose=(not quiet))
 

@@ -14,6 +14,7 @@ from hansel.utils import (rm_dups,
                           list_intersection,
                           intersection,
                           crumb_copy,
+                          crumb_link,
                           _get_matching_items,
                           append_dict_values,
                           valuesmap_to_dict,
@@ -276,16 +277,21 @@ def _test_crumb_copy(make_links=False):
     base_dir2 = tempfile.mkdtemp(prefix='crumb_copy_test2_')
     tmp_crumb2 = crumb.replace(base_dir=base_dir2)
 
+    if make_links:
+        copy_func = crumb_link
+    else:
+        copy_func = crumb_copy
+
     # make first copy
-    crumb_copy(tmp_crumb1, tmp_crumb2, make_links=make_links)
+    copy_func(tmp_crumb1, tmp_crumb2)
     assert all([cr.exists() for cr in tmp_crumb2.ls()])
 
     # copy again without exist_ok
-    pytest.raises(FileExistsError, crumb_copy, tmp_crumb1, tmp_crumb2, make_links=make_links)
+    pytest.raises(FileExistsError, copy_func, tmp_crumb1, tmp_crumb2)
     assert all([cr.exists() for cr in tmp_crumb2.ls()])
 
     # copy again with exist_ok
-    crumb_copy(tmp_crumb1, tmp_crumb2, exist_ok=True, make_links=make_links)
+    copy_func(tmp_crumb1, tmp_crumb2, exist_ok=True)
     assert all([cr.exists() for cr in tmp_crumb2.ls()])
 
     if make_links:

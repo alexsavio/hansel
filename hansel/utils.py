@@ -430,26 +430,43 @@ def link_all_files(src_path, dst_path, exist_ok=True, verbose=False):
     os.symlink(src_path, dst_path)
 
 
-def crumb_copy(src_crumb, dst_crumb, make_links=False, exist_ok=False,
-               verbose=False):
+def _crumb_fill_dst(src_crumb, dst_crumb):
+    """ Will list `src_crumb` and copy the resulting item arguments into
+    `dst_crumb`.
+    All the defined arguments of `src_crumb.ls()[0]` must define `dst_crumb`
+    entirely and create a path to a file or folder.
+    """
+    for src in src_crumb.ls():
+        dst = dst_crumb.copy()
+        copy_args(src, dst)
+        if dst.has_crumbs():
+            raise AttributeError("Destination crumb still has open arguments, "
+                                 "expected to fill it. Got {}.".format(str(dst)))
+        yield src, dst
+
+
+def crumb_copy(src_crumb, dst_crumb, exist_ok=False, verbose=False):
     """Will copy the content of `src_crumb` into `dst_crumb` folder.
     For this `src_crumb` and `dst_crumb` must have similar set of argument
     names.
     All the defined arguments of `src_crumb.ls()[0]` must define `dst_crumb`
     entirely and create a path to a file or folder.
     """
-    if make_links:
-        copy_func = link_all_files
-    else:
-        copy_func = copy_all_files
+    for src, dst in _crumb_fill_dst(src_crumb, dst_crumb):
+        copy_all_files(src.path, dst.path, exist_ok=exist_ok, verbose=verbose)
 
-    for src in src_crumb.ls():
-        dst = dst_crumb.copy()
-        copy_args(src, dst)
-        if dst.has_crumbs():
-            raise AttributeError("Destination crumb still has open arguments, "
-                                 "can't copy. Got {}.".format(str(dst)))
-        copy_func(src.path, dst.path, exist_ok=exist_ok, verbose=verbose)
+
+def crumb_link(src_crumb, dst_crumb, exist_ok=False, verbose=False):
+    """Will link the content of `src_crumb` into `dst_crumb` folder.
+    For this `src_crumb` and `dst_crumb` must have similar set of argument
+    names.
+    All the defined arguments of `src_crumb.ls()[0]` must define `dst_crumb`
+    entirely and create a path to a file or folder.
+    It will create the folder structure in the base of `dst_crumb` and link
+    exclusively the leaf nodes.
+    """
+    for src, dst in _crumb_fill_dst(src_crumb, dst_crumb):
+        link_all_files(src.path, dst.path, exist_ok=exist_ok, verbose=verbose)
 
 
 def groupby_pattern(crumb, arg_name, groups):
