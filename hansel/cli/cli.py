@@ -58,7 +58,7 @@ def ls(crumb, ignore, arg):
               help='A global ignore fnmatch expression for the listing. '
                    'You can add as many of this argument as you want. '
                    'Example: ".*" or "*~"')
-def copy(src_crumb, dst_crumb, link, quiet, ignore, exist_ok):
+def copy(src_crumb, dst_crumb, quiet, ignore, exist_ok):
     """Uses hansel.Crumb to copy one file tree to another file tree. The
     structure of the destination tree can be modified.
 
@@ -77,7 +77,6 @@ def copy(src_crumb, dst_crumb, link, quiet, ignore, exist_ok):
         exit(-1)
 
     crumb_copy(src_crumb, dst_crumb,
-               make_links=False,
                exist_ok=exist_ok,
                verbose=(not quiet))
 
@@ -94,7 +93,7 @@ def copy(src_crumb, dst_crumb, link, quiet, ignore, exist_ok):
               help='A global ignore fnmatch expression for the listing. '
                    'You can add as many of this argument as you want. '
                    'Example: ".*" or "*~"')
-def link(src_crumb, dst_crumb, link, quiet, ignore, exist_ok):
+def link(src_crumb, dst_crumb, quiet, ignore, exist_ok):
     """Uses hansel.Crumb to link one file tree to another file tree. The
     structure of the destination tree can be modified.
     Only the leaf nodes will be linked, the folder structure above will be
@@ -104,7 +103,7 @@ def link(src_crumb, dst_crumb, link, quiet, ignore, exist_ok):
     crumb link "/data/hansel/cobre/{sid}/{session}/{img}" "/data/hansel/cobre2/{sid}/{img}" \n
     crumb link "cobre/{sid}/{session}/{img:anat*}" "cobre_anat/{sid}/{img}" \n
     """
-    from .. import crumb_copy
+    from .. import crumb_link
 
     if ignore:
         src_crumb._ignore = ignore
@@ -114,8 +113,7 @@ def link(src_crumb, dst_crumb, link, quiet, ignore, exist_ok):
         click.echo('Could not find any file that matched {}.'.format(src_crumb))
         exit(-1)
 
-    crumb_copy(src_crumb, dst_crumb,
-               make_links=True,
+    crumb_link(src_crumb, dst_crumb,
                exist_ok=exist_ok,
                verbose=(not quiet))
 
