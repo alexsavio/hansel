@@ -24,8 +24,7 @@ def cli():
                    'Will not print full paths, but only values for this '
                    'crumb argument.')
 def ls(crumb, ignore, arg):
-    """Uses hansel.Crumb to list all the possible values that match the
-    given crumb path.
+    """List all the possible values that match the given crumb path.
 
     Examples: \n
     crumb ls "/data/hansel/cobre/{sid:4*100}/{session}/{img}"\n
@@ -59,7 +58,7 @@ def ls(crumb, ignore, arg):
                    'You can add as many of this argument as you want. '
                    'Example: ".*" or "*~"')
 def copy(src_crumb, dst_crumb, quiet, ignore, exist_ok):
-    """Uses hansel.Crumb to copy one file tree to another file tree. The
+    """Copy one file tree to another file tree. The
     structure of the destination tree can be modified.
 
     Examples: \n
@@ -94,7 +93,7 @@ def copy(src_crumb, dst_crumb, quiet, ignore, exist_ok):
                    'You can add as many of this argument as you want. '
                    'Example: ".*" or "*~"')
 def link(src_crumb, dst_crumb, quiet, ignore, exist_ok):
-    """Uses hansel.Crumb to link one file tree to another file tree. The
+    """Link one file tree to another file tree. The
     structure of the destination tree can be modified.
     Only the leaf nodes will be linked, the folder structure above will be
     created.
@@ -128,8 +127,7 @@ def link(src_crumb, dst_crumb, quiet, ignore, exist_ok):
               help='Will not print full paths, but only values for this '
                    'crumb argument.')
 def intersect(crumb1, crumb2, on, arg):
-    """Uses hansel.Crumb to copy one file tree to another file tree. The
-    structure of the destination tree can be modified.
+    """Return the intersection between crumb1 and crumb2 on a given argument.
 
     Examples: \n
     crumb intersect --on "sid" "/data/hansel/cobre/{sid}/{session}/{img}" "/data/hansel/cobre2/{sid}/{img}"\n
