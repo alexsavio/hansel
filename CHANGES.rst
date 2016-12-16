@@ -5,8 +5,6 @@ Changelog
 
 Version 0.9.0 - 0.9.6
 ---------------------
-- fix `test__yield_items`.
-
 - "cli diff" and "cli intersect" have the same interface.
 
 - changed how "cli intersect" prints results. Added 'base_crumb' option.
@@ -16,6 +14,8 @@ Version 0.9.0 - 0.9.6
 - add `crumb diff` to CLI.
 
 - add `difference` utility function with test.
+
+- add `test__utils.py` as a WIP.
 
 - move CLI to click.
 
