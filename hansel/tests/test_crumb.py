@@ -813,6 +813,31 @@ def test_regex_replace2(tmp_crumb):
     assert tmp_crumb['subject_id'] == crumb2['subject_id']
 
 
+def test_set_patterns(tmp_crumb):
+    assert not op.exists(tmp_crumb.path)
+
+    values_dict = {'session_id': ['session_{:02}'.format(i) for i in range(  2)],
+                   'subject_id': ['subj_{:03}'.format(i)    for i in range(100)],
+                   'modality':   ['anat'],
+                   'image':      ['mprage1.nii'],
+                   }
+
+    _ = mktree(tmp_crumb, list(ParameterGrid(values_dict)))
+
+    # a crumb without the pattern, the pattern is added later
+    crumb2 = Crumb(tmp_crumb.path, regex='fnmatch')
+
+    crumb3 = crumb2.copy()
+    crumb3.set_patterns()
+    assert crumb2 == crumb3
+
+    pytest.raises(KeyError, crumb2.set_patterns, somekey='somevalue')
+
+    crumb3.set_pattern('subject_id', 'subj_02*')
+    crumb2.set_patterns(subject_id='subj_02*')
+    assert crumb2['subject_id'] == crumb3['subject_id']
+
+
 def test_has_files(tmp_crumb):
     assert not op.exists(tmp_crumb.path)
 

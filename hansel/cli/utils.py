@@ -49,7 +49,7 @@ class CrumbPath(click.ParamType):
 
     def convert(self, value, param, ctx):
         try:
-            cr = Crumb(path.expanduser(value))
+            cr = Crumb(path.expanduser(value), ignore_list=['.*'])
         except ValueError:
             self.fail('%s is not a valid crumb path.' % value, param, ctx)
         else:
@@ -59,3 +59,8 @@ class CrumbPath(click.ParamType):
 def echo_list(alist):
     for i in alist:
         click.echo(i)
+
+
+def _print_values_map_as_csv(list_of_lists):
+    for values in list_of_lists:
+        click.echo(','.join([item[1] for item in values]))

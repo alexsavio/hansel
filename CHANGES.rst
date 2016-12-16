@@ -3,8 +3,22 @@
 Changelog
 =========
 
-Version 0.9.0 - 0.9.4
+Version 0.9.0 - 0.9.6
 ---------------------
+- fix `test__yield_items`.
+
+- "cli diff" and "cli intersect" have the same interface.
+
+- changed how "cli intersect" prints results. Added 'base_crumb' option.
+
+- added to CLI default ignore list for crumbs: `['.*']`.
+
+- add `crumb diff` to CLI.
+
+- add `difference` utility function with test.
+
+- move CLI to click.
+
 - Annoying bug fixed.
 
 - Add `crumb_copy`.

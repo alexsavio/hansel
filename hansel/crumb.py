@@ -29,6 +29,7 @@ from   ._utils import (
                        _check,
                        _depth_names,
                        _depth_names_regexes,
+                       _has_arg,
                        _is_crumb_arg,
                        _split_exists,
                        _split,
@@ -107,10 +108,19 @@ class Crumb(object):
 
     def set_pattern(self, arg_name, arg_regex):
         """ Set the pattern `arg_regex` to the given argument `arg_name`."""
+        if not _has_arg(self.path, arg_name):
+            raise KeyError('Crumb argument {} is not present '
+                           'in {}.'.format(arg_name, self))
+
         self._path = _build_path(self._path,
                                  arg_values={},
                                  with_regex=True,
                                  regexes={arg_name: arg_regex})
+
+    def set_patterns(self, **kwargs):
+        """ Set the pattern to the given arguments as keywords. """
+        for arg, pat in kwargs.items():
+            self.set_pattern(arg, pat)
 
     def clear_pattern(self, arg_name):
         """ Clear the pattern of the given argument `arg_name`."""

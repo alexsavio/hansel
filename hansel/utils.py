@@ -191,7 +191,7 @@ def _get_matching_items(list1, list2, items=None):
     ValueError:
         If an element of items does not exists in either `list1` or `list2`.
     """
-    if items is None:
+    if not items or items is None:
         arg_names = list_intersection(list1, list2)
     else:
         try:
@@ -288,8 +288,6 @@ def intersection(crumb1, crumb2, on=None):
 
     Both crumbs must have at least one matching identifier argument and one
     of those must be the one in `id_colname`.
-
-    # TODO: this function can still be more efficient.
     """
     if isinstance(on, string_types):
         on = [on]
@@ -310,6 +308,69 @@ def intersection(crumb1, crumb2, on=None):
     intersect = set(maps1) & (set(maps2))
 
     return sorted(list(intersect))
+
+
+def difference(crumb1, crumb2, on=None):
+    """Return the difference `crumb1` - `crumb2`, i.e., will return a list of
+    Crumbs that are in `crumb1` but not in `crumb2`.
+
+    If `on` is None, will use all the common arguments names of both crumbs.
+    Otherwise will use only the elements of `on`. All its items must be in
+    both crumbs.
+
+    Returns
+    -------
+    arg_names: list
+        The matching items.
+
+    Parameters
+    ----------
+    crumb1: hansel.Crumb
+
+    crumb2: hansel.Crumb
+
+    on: str or list of str
+        Crumb argument names common to both input crumbs.
+
+    Raises
+    ------
+    ValueError:
+        If an element of `on` does not exists in either `list1` or `list2`.
+
+    KeyError:
+        If the result is empty.
+
+    Returns
+    -------
+    inner_join: list[hansel.Crumb]
+
+    Notes
+    -----
+    Use with care, ideally the argument matches should be in the same order in
+    both crumbs.
+
+    Both crumbs must have at least one matching identifier argument and one
+    of those must be the one in `id_colname`.
+    """
+    if isinstance(on, string_types):
+        on = [on]
+
+    arg_names = list(_get_matching_items(list(crumb1.all_args()),
+                                         list(crumb2.all_args()),
+                                         items=on))
+
+    if not arg_names:
+        raise KeyError("Could not find matching arguments between "
+                       "{} and  {} limited by {}.".format(list(crumb1.all_args()),
+                                                          list(crumb2.all_args()),
+                                                          on))
+
+    maps1 = joint_value_map(crumb1, arg_names, check_exists=True)
+    maps2 = joint_value_map(crumb2, arg_names, check_exists=True)
+
+    diff = set(maps1).difference(set(maps2))
+
+    return sorted(list(diff))
 
 
 def valuesmap_to_dict(values_map):
