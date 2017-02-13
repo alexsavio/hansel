@@ -3,8 +3,16 @@
 Changelog
 =========
 
+Version 1.0.0 -
+---------------
+
+- add CLI docs to README.
+
+
+
 Version 0.9.0 - 0.9.6
 ---------------------
+
 - "cli diff" and "cli intersect" have the same interface.
 
 - changed how "cli intersect" prints results. Added 'base_crumb' option.

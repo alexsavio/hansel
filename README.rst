@@ -492,6 +492,48 @@ of the source crumb.
 More functionalities, ideas and comments are welcome.
 
 
+Command Line
+============
+
+`hansel` will install a command called `crumb`.
+This CLI has been made with `Click <http://click.pocoo.org/>`__,
+so try `crumb -h` to see more details.
+
+You can use `Crumb.ls`:
+
+    .. code:: bash
+
+        crumb ls "/data/hansel/cobre/{sid:4*100}/{session}/{img}"
+
+
+Copy one file tree to another file tree with `crumb copy`:
+
+    .. code:: bash
+
+        crumb copy "/data/hansel/cobre/{sid}/{session}/{img}" "/data/hansel/cobre2/{sid}/{img}"
+
+
+Link one file tree to another file tree with `link`:
+
+    .. code:: bash
+
+        crumb link "/data/hansel/cobre/{sid}/{session}/{img}" "/data/hansel/cobre2/{sid}/{img}"
+
+
+Return the intersection between crumb1 and crumb2 on a given argument with the `intersect` function:
+
+    .. code:: bash
+
+        crumb intersect --on "sid" "/data/hansel/cobre/{sid}/{session}/{img}" "/data/hansel/cobre2/{sid}/{img}"
+
+
+Return the difference `crumb1 - crumb2` on a given argument with the `diff` function:
+
+    .. code:: bash
+
+        crumb diff --on "sid" "/data/hansel/cobre/{sid}/{session}/{img}" "/data/hansel/cobre2/{sid}/{img}"
+
+
 Dependencies
 ============
 
