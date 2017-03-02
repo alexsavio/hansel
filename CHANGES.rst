@@ -3,11 +3,14 @@
 Changelog
 =========
 
-Version 1.0.0 -
----------------
+Version 1.0.0 - Version 1.0.1
+-----------------------------
 
 - add CLI docs to README.
 
+- set in `ls` function `make_crumbs` to False if `fullpath` is also False.
+
+- make in `ls` function `arg_name` parameter mandatory when `fullpath` is False.
 
 
 Version 0.9.0 - 0.9.6
