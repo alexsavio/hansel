@@ -391,8 +391,8 @@ def test_ls_raises():
     pytest.raises(NotImplementedError, crumb.ls, 'home')
 
     crumb['home'] = op.expanduser('~')
-    pytest.raises(ValueError, crumb.ls, 'user_folder',
-                  make_crumbs=True, fullpath=False)
+
+    pytest.raises(ValueError, crumb.ls, '', fullpath=False)
 
 
 def test_ls_and_getitem():
