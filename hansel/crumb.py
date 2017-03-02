@@ -634,6 +634,9 @@ class Crumb(object):
         >>> cr = Crumb(op.join(op.expanduser('~'), '{user_folder}'))
         >>> user_folders = cr.ls('user_folder',fullpath=True,make_crumbs=True)
         """
+        if not arg_name and not fullpath:
+            raise ValueError('Expecting an `arg_name` if `fullpath` is False.')
+
         if not arg_name:
             _, arg_name = self._last_open_arg()
 
@@ -653,6 +656,12 @@ class Crumb(object):
 
         # build the paths or value maps
         self._check_ls_params(make_crumbs, fullpath)
+
+        # make_crumbs only makes sense if fullpath is True
+        if not fullpath:
+            make_crumbs = fullpath
+
+        # create the grid of values for the arguments
         values_map = self.values_map(arg_name, check_exists=check_exists)
         if fullpath:
             paths = self.build_paths(values_map, make_crumbs=make_crumbs)
@@ -675,9 +684,6 @@ class Crumb(object):
             raise NotImplementedError("Cannot list paths that start with an argument. "
                                       "If this is a relative path, use the `abspath()` "
                                       "member function.")
-
-        if make_crumbs and not fullpath:
-            raise ValueError("`make_crumbs` can only work if `fullpath` is also True.")
 
     def touch(self, exist_ok=True):
         """ Create a leaf directory and all intermediate ones using the non
