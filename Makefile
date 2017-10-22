@@ -23,10 +23,10 @@ help:
 	@echo "deps - install dependencies"
 	@echo "tag - create a git tag with current version"
 
-install: install_deps
+install: deps
 	python setup.py install
 
-develop: install_deps
+develop: deps
 	python setup.py develop
 
 deps:
