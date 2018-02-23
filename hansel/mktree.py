@@ -38,7 +38,7 @@ def mktree(crumb, values_map):
 
     if not isinstance(values_map, (list, dict)):
         raise TypeError("Expected keys in `values_map` to be a Sequence, "
-                         "got {}.".format(type(values_map)))
+                        "got {}.".format(type(values_map)))
 
     paths = []
     for idx, aval in enumerate(values_map):

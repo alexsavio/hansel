@@ -10,7 +10,7 @@ import os.path as op
 import warnings
 from string import Formatter
 
-from   six import string_types
+from six import string_types
 
 _txt_idx = 0
 _fld_idx = 1
@@ -23,7 +23,7 @@ def _yield_items(crumb_path, index=None):
     if index is None:
         return Formatter().parse(crumb_path)
 
-    #for (literal_text, field_name, format_spec, conversion) in fmt.parse(crumb_path):
+    # for (literal_text, field_name, format_spec, conversion) in fmt.parse(crumb_path):
     # (txt, fld, fmt, conv)
     return (items[index] for items in Formatter().parse(crumb_path) if items[index] is not None)
 
@@ -38,7 +38,7 @@ def _depth_items(crumb_path, index=None):
     """ Return a generator with  (depth, items) in `crumb_path`. Being `depth`
      the place in the file path each argument is."""
     if index is None:
-        index = slice(_txt_idx, _cnv_idx+1)
+        index = slice(_txt_idx, _cnv_idx + 1)
 
     depth = 0
     for idx, items in _enum_items(crumb_path):
@@ -347,6 +347,7 @@ def deprecated(replacement=None):
     0
     >>>
     """
+
     def outer(fun):
         msg = "psutil.%s is deprecated" % fun.__name__
         if replacement is not None:
@@ -360,4 +361,5 @@ def deprecated(replacement=None):
             return fun(*args, **kwargs)
 
         return inner
+
     return outer

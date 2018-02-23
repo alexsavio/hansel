@@ -93,9 +93,9 @@ def pandas_fill_crumbs(df, crumb, names_map=None):
         nmap = dict(nmap)
 
     values_map = (df
-                    .pipe(_pandas_rename_cols, nmap)
-                    .pipe(df_to_valuesmap, list(crumb.all_args()),
-                          arg_names=list(nmap.values()))
+                  .pipe(_pandas_rename_cols, nmap)
+                  .pipe(df_to_valuesmap, list(crumb.all_args()),
+                        arg_names=list(nmap.values()))
                   )
 
     return (crumb.replace(**dict(argvals)) for argvals in values_map)
