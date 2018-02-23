@@ -1,13 +1,13 @@
 language: python
 
-python:
-  - "3.6"
-  - "3.5"
-  - "2.7"
-
-env:
-  - PIPENV_VENV_IN_PROJECT=./.venv
-  - PIP_USE_MIRRORS=true
+matrix:
+  include:
+  - python: "2.7"
+    env: PIPENV_VENV_IN_PROJECT=./.venv
+  - python: "3.5"
+    env: PIPENV_VENV_IN_PROJECT=./.venv
+  - python: "3.6"
+    env: PIPENV_VENV_IN_PROJECT=./.venv
 
 install:
   - pip install -U pipenv
