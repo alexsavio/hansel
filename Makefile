@@ -21,16 +21,22 @@ help:
 	@echo "install - install"
 	@echo "develop - install in development mode"
 	@echo "deps - install dependencies"
+	@echo "dev_deps - install dependencies for development"
+	@echo "release - package a release in wheel and tarball"
+	@echo "upload - make a release and run the scripts/deploy.sh"
 	@echo "tag - create a git tag with current version"
 
-install: deps
-	python setup.py install
+install:
+	pipenv run python setup.py install
 
-develop: deps
-	python setup.py develop
+develop: dev_deps
+	pipenv run python setup.py develop
 
 deps:
-	pip install -r requirements.txt
+	pipenv install
+
+dev_deps:
+	pipenv install --dev
 
 clean: clean-build clean-pyc
 
@@ -47,44 +53,39 @@ clean-pyc:
 	find . -name '*.log*' -delete
 
 lint:
-	flake8 $(project-name) test
+	pipenv run flake8 $(project-name)/
 
 test:
-	py.test -v
+	pipenv run py.test -v
 
 test-cov:
-	py.test --cov-report term-missing --cov=$(project-name)
+	pipenv run py.test --cov-report term-missing --cov=$(project-name)
 
 test-dbg:
-	py.test --pdb
+	pipenv run py.test --pdb
 
 test-all:
-	tox
+	pipenv run tox
 
 coverage:
-	coverage run --source $(project-name) setup.py test
-	coverage report -m
-	coverage html
-	open htmlcov/index.html
+	pipenv run coverage run --source $(project-name) py.test
+	pipenv run coverage report -m
 
-docs:
-	rm -f docs/$(project-name).rst
-	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ $(project-name)
-	$(MAKE) -C docs clean
-	$(MAKE) -C docs html
-	open docs/_build/html/index.html
+build:
+	pipenv run python setup.py sdist --formats gztar bdist_wheel upload
 
 tag: clean
 	@echo "Creating git tag v$(version)"
 	git tag v$(version)
 	git push --tags
 
-release: clean tag
-	python setup.py sdist upload
-	python setup.py bdist_wheel upload
+release: clean build tag
 
-sdist: clean
-	python setup.py sdist
-	python setup.py bdist_wheel upload
-	ls -l dist
+patch:
+	pipenv run bumpversion patch
+
+minor:
+	pipenv run bumpversion minor
+
+major:
+	pipenv run bumpversion major
