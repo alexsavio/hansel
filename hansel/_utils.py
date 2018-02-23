@@ -22,10 +22,10 @@ def _yield_items(crumb_path, index=None):
     """ An iterator over the items in `crumb_path` given by string.Formatter."""
     if index is None:
         return Formatter().parse(crumb_path)
-    else:
-        #for (literal_text, field_name, format_spec, conversion) in fmt.parse(crumb_path):
-        # (txt, fld, fmt, conv)
-        return (items[index] for items in Formatter().parse(crumb_path))
+
+    #for (literal_text, field_name, format_spec, conversion) in fmt.parse(crumb_path):
+    # (txt, fld, fmt, conv)
+    return (items[index] for items in Formatter().parse(crumb_path) if items[index] is not None)
 
 
 def _enum_items(crumb_path):

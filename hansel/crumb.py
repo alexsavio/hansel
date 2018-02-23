@@ -5,38 +5,38 @@
 Crumb class: the smart path model class.
 """
 import re
-import os.path     as op
-from   copy        import deepcopy
-from   collections import OrderedDict
-from   six         import string_types
+import os
+from copy import deepcopy
+from collections import OrderedDict
+from six import string_types
+
 try:
     from pathlib2 import Path
 except ImportError:
-    from pathlib  import Path
+    from pathlib import Path
 
+from hansel.utils import (
+    list_subpaths,
+    fnmatch_filter,
+    regex_match_filter,
+)
 
-from   .utils  import (
-                       list_subpaths,
-                       fnmatch_filter,
-                       regex_match_filter,
-                       )
-
-from   ._utils import (
-                       _first_txt,
-                       _build_path,
-                       _arg_names,
-                       _find_arg_depth,
-                       _check,
-                       _depth_names,
-                       _depth_names_regexes,
-                       _has_arg,
-                       _is_crumb_arg,
-                       _split_exists,
-                       _split,
-                       _touch,
-                       has_crumbs,
-                       is_valid,
-                       )
+from hansel._utils import (
+    _first_txt,
+    _build_path,
+    _arg_names,
+    _find_arg_depth,
+    _check,
+    _depth_names,
+    _depth_names_regexes,
+    _has_arg,
+    _is_crumb_arg,
+    _split_exists,
+    _split,
+    _touch,
+    has_crumbs,
+    is_valid,
+)
 
 
 class Crumb(object):
@@ -59,13 +59,14 @@ class Crumb(object):
     Examples
     --------
     >>> crumb = Crumb("{base_dir}/raw/{subject_id}/{session_id}/{modality}/{image}")
-    >>> cr = Crumb(op.join(op.expanduser('~'), '{user_folder}'))
+    >>> cr = Crumb(os.path.join(os.path.expanduser('~'), '{user_folder}'))
     """
+
     def __init__(self, crumb_path, ignore_list=None, regex='fnmatch'):
-        self._path      = _check(crumb_path)
-        self._argval    = {}  # what is the value of the argument in the current path, if any has been set.
+        self._path = _check(crumb_path)
+        self._argval = {}  # what is the value of the argument in the current path, if any has been set.
         self._re_method = regex
-        self._re_args   = None
+        self._re_args = None
 
         if ignore_list is None:
             ignore_list = []
@@ -87,7 +88,7 @@ class Crumb(object):
             self._match_filter = regex_match_filter
         elif self._re_method == 're.ignorecase':
             self._match_filter = regex_match_filter
-            self._re_args      = (re.IGNORECASE, )
+            self._re_args = (re.IGNORECASE,)
         else:
             raise ValueError('Expected regex method value to be "fnmatch", "re" or "re.ignorecase"'
                              ', got {}.'.format(self._re_method))
@@ -249,11 +250,11 @@ class Crumb(object):
     def isabs(self):
         """ Return True if the current crumb path has an absolute path,
         False otherwise.
-        This means that its path is valid and starts with a `op.sep` character
+        This means that its path is valid and starts with a `os.path.sep` character
         or hard disk letter.
         """
         subp = _first_txt(self.path)
-        return op.isabs(subp)
+        return os.path.isabs(subp)
 
     def abspath(self, first_is_basedir=False):
         """ Return a copy of `self` with an absolute crumb path.
@@ -290,18 +291,18 @@ class Crumb(object):
         -------
         abspath: str
         """
-        if op.isabs(self._path):
+        if os.path.isabs(self._path):
             return self._path
 
-        splits = self._path.split(op.sep)
-        basedir = [op.abspath(op.curdir)]
+        splits = self._path.split(os.path.sep)
+        basedir = [os.path.abspath(os.path.curdir)]
 
         if _is_crumb_arg(splits[0]):
             if first_is_basedir:
                 splits.pop(0)
 
         basedir.extend(splits)
-        return op.sep.join(basedir)
+        return os.path.sep.join(basedir)
 
     def split(self):
         """ Return a list of sub-strings of the current crumb path where the
@@ -370,7 +371,7 @@ class Crumb(object):
 
         path = self.path
         dpth, arg_name, arg_regex = _find_arg_depth(path, arg_name)
-        splt = path.split(op.sep)
+        splt = path.split(os.path.sep)
 
         if dpth == len(splt) - 1:  # this means we have to list files too
             just_dirs = False
@@ -378,7 +379,7 @@ class Crumb(object):
             just_dirs = True
 
         if arg_values is None:
-            vals = self._arg_values_from_base(basedir=op.sep.join(splt[:dpth]),
+            vals = self._arg_values_from_base(basedir=os.path.sep.join(splt[:dpth]),
                                               arg_name=arg_name,
                                               arg_regex=arg_regex,
                                               just_dirs=just_dirs)
@@ -399,7 +400,7 @@ class Crumb(object):
             nupath = _split(_build_path(path, arg_values=dict(aval)))[0]
 
             # THIS HAPPENS, LEAVE IT. TODO: make a test for this line
-            if not op.exists(nupath):
+            if not os.path.exists(nupath):
                 continue
 
             paths = list_subpaths(nupath,
@@ -429,7 +430,7 @@ class Crumb(object):
             Raise a KeyError if `arg_names` is not a subset of `self_args`.
         """
         anames = set(arg_names)
-        aself  = set(self_args)
+        aself = set(self_args)
         if not anames and not aself:
             return
 
@@ -580,7 +581,7 @@ class Crumb(object):
         Parameters
         ----------
         values_map: list of sequences of 2-tuple
-            Example: [[('subject_id', 'haensel'), ('candy', 'lollipop.png')],
+            Example: [[('subject_id', 'haensel'), ('candy', 'lollipos.path.png')],
                       [('subject_id', 'gretel'),  ('candy', 'jujube.png')],
                      ]
 
@@ -631,7 +632,7 @@ class Crumb(object):
 
         Examples
         --------
-        >>> cr = Crumb(op.join(op.expanduser('~'), '{user_folder}'))
+        >>> cr = Crumb(os.path.join(os.path.expanduser('~'), '{user_folder}'))
         >>> user_folders = cr.ls('user_folder',fullpath=True,make_crumbs=True)
         """
         if not arg_name and not fullpath:
@@ -715,7 +716,7 @@ class Crumb(object):
         -------
         cr: Crumb
         """
-        return Crumb(op.join(self.path, suffix))
+        return Crumb(os.path.join(self.path, suffix))
 
     def exists(self):
         """ Return True if the current crumb path is a possibly existing path,
@@ -725,9 +726,9 @@ class Crumb(object):
         exists: bool
         """
         if not has_crumbs(self.path):
-            return op.exists(str(self)) or op.islink(str(self))
+            return os.path.exists(str(self)) or os.path.islink(str(self))
 
-        if not op.exists(self.split()[0]):
+        if not os.path.exists(self.split()[0]):
             return False
 
         _, last = self._last_open_arg()
@@ -745,7 +746,7 @@ class Crumb(object):
         -------
         has_files: bool
         """
-        if not op.exists(self.split()[0]):
+        if not os.path.exists(self.split()[0]):
             return False
 
         _, last = self._last_open_arg()
@@ -754,7 +755,7 @@ class Crumb(object):
                         make_crumbs=True,
                         check_exists=True)
 
-        return any((op.isfile(str(lp)) for lp in paths))
+        return any((os.path.isfile(str(lp)) for lp in paths))
 
     def unfold(self):
         """ Return a list of all the existing paths until the last crumb argument.
