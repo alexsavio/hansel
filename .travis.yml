@@ -3,11 +3,8 @@ language: python
 matrix:
   include:
   - python: "2.7"
-    env: PIPENV_VENV_IN_PROJECT=./.venv
   - python: "3.5"
-    env: PIPENV_VENV_IN_PROJECT=./.venv
   - python: "3.6"
-    env: PIPENV_VENV_IN_PROJECT=./.venv
 
 install:
   - pip install -U pipenv
@@ -17,9 +14,9 @@ install:
 
 script:
   - pipenv run flake8 hansel
-  - pipenv run python setup.py test
-  - pipenv run coverage run --source=hansel setup.py test
+  - pipenv run pytest -v
+  - pipenv run pytest --cov=hansel
 
 after_success:
   - pipenv run coveralls
-  - rm -rf ${PIPENV_VENV_IN_PROJECT}
+  - pipenv --rm

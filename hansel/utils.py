@@ -6,7 +6,6 @@ Utilities to make crumbs
 """
 import os
 import re
-import os.path as op
 import fnmatch
 import operator
 import itertools
@@ -107,18 +106,18 @@ def list_children(path, just_dirs=False):
     -------
     paths: list of str
     """
-    if not op.exists(path):
+    if not os.path.exists(path):
         raise IOError("Expected an existing path, but could not"
                       " find {}.".format(path))
 
-    if op.isfile(path):
+    if os.path.isfile(path):
         if just_dirs:
             vals = []
         else:
             vals = [path]
     else:
         if just_dirs:  # this means we have to list only folders
-            vals = [d for d in os.listdir(path) if op.isdir(op.join(path, d))]
+            vals = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
         else:  # this means we have to list files
             vals = os.listdir(path)
 
@@ -199,8 +198,6 @@ def _get_matching_items(list1, list2, items=None):
             _check_is_subset(items, list2)
         except KeyError:
             arg_names = []
-        except:
-            raise
         else:
             arg_names = items
 
@@ -451,9 +448,10 @@ def copy_args(src_crumb, dst_crumb):
 
 
 def _remove_if_ok_and_exists(path, exist_ok):
-    if not exist_ok and op.exists(path):
-        raise FileExistsError('Path {} already exists.'.format(path))
-    elif op.exists(path):
+    if not exist_ok and os.path.exists(path):
+        raise IOError('Path {} already exists.'.format(path))
+
+    if os.path.exists(path):
         os.remove(path)
 
 
@@ -465,13 +463,13 @@ def copy_all_files(src_path, dst_path, exist_ok=True, verbose=False):
     if verbose:
         print("Copying {} -> {}".format(src_path, dst_path))
 
-    if op.isdir(src_path):
+    if os.path.isdir(src_path):
         if exist_ok:
             shutil.rmtree(dst_path)
 
         shutil.copytree(src_path, dst_path, copy_function=copy_func)
-    elif op.isfile(src_path):
-        os.makedirs(op.dirname(dst_path), exist_ok=exist_ok)
+    elif os.path.isfile(src_path):
+        os.makedirs(os.path.dirname(dst_path), exist_ok=exist_ok)
         try:
             copy_func(src_path, dst_path, follow_symlinks=True)
         except shutil.SameFileError:
@@ -481,13 +479,13 @@ def copy_all_files(src_path, dst_path, exist_ok=True, verbose=False):
 
 def link_all_files(src_path, dst_path, exist_ok=True, verbose=False):
     """Make link from src_path to dst_path."""
-    if not op.isabs(src_path):
-        src_path = op.relpath(src_path, op.dirname(dst_path))
+    if not os.path.isabs(src_path):
+        src_path = os.path.relpath(src_path, os.path.dirname(dst_path))
 
     if verbose:
         print("Linking {} -> {}".format(src_path, dst_path))
 
-    os.makedirs(op.dirname(dst_path), exist_ok=True)
+    os.makedirs(os.path.dirname(dst_path), exist_ok=True)
 
     _remove_if_ok_and_exists(dst_path, exist_ok=exist_ok)
     os.symlink(src_path, dst_path)

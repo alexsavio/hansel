@@ -804,7 +804,7 @@ class Crumb(object):
                            check_exists=True)
 
     def __setitem__(self, key, value):
-        _ = self.update(**{key: value})
+        self.update(**{key: value})
 
     def __ge__(self, other):
         return self._path >= str(other)

@@ -68,7 +68,7 @@ test-all:
 	pipenv run tox
 
 coverage:
-	pipenv run coverage run --source $(project-name) py.test
+	pipenv run pytest --cov=hansel
 	pipenv run coverage report -m
 
 build:

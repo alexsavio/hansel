@@ -14,6 +14,7 @@ from setuptools import setup, find_packages
 
 requirements = [
     'click>=6.7',
+    'six',
 ]
 
 # long description
