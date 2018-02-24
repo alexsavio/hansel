@@ -22,7 +22,7 @@ def import_pyfile(pathname, mod_name=''):
         If file is not found
     """
     if not os.path.isfile(pathname):
-        raise IOError('File {0} not found.'.format(pathname))
+        raise FileNotFoundError('File {0} not found.'.format(pathname))
 
     import importlib.machinery
     loader = importlib.machinery.SourceFileLoader('', pathname)

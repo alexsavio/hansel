@@ -9,7 +9,6 @@ try:
 except ImportError:
     from pathlib import Path
 
-from six import string_types
 from hansel import Crumb, mktree
 from hansel.utils import ParameterGrid
 from hansel._utils import (
@@ -279,7 +278,7 @@ def test_split(crumb):
         if os.path.isdir(s):
             assert os.path.exists(s)
         else:
-            assert _is_crumb_arg(s) or isinstance(s, string_types)
+            assert _is_crumb_arg(s) or isinstance(s, str)
 
 
 def test_split2():
@@ -377,11 +376,11 @@ def test_ls_and_getitem():
     assert set(lst) == set([d for d in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, d))])
 
     flst = crumb.ls('user_folder', fullpath=True, make_crumbs=False, check_exists=False)
-    assert all([isinstance(f, string_types) for f in flst])
+    assert all([isinstance(f, str) for f in flst])
     assert all([not os.path.exists(f) for f in flst])
 
     flst = crumb.ls('files', fullpath=True, make_crumbs=False, check_exists=False)
-    assert all([isinstance(f, string_types) for f in flst])
+    assert all([isinstance(f, str) for f in flst])
     assert all([os.path.exists(f) or os.path.islink(f) for f in flst])
 
     flst = crumb.ls('files', fullpath=True, make_crumbs=True, check_exists=False)

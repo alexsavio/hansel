@@ -13,7 +13,7 @@ help:
 	@echo "test - run tests quickly with the default Python"
 	@echo "test-cov - run tests with the default Python and report coverage"
 	@echo "test-dbg - run tests and debug with pdb"
-	@echo "testall - run tests on every Python version with tox"
+	@echo "testloop - run tests in a loop"
 	@echo "coverage - check code coverage quickly with the default Python"
 	@echo "docs - generate Sphinx HTML documentation, including API docs"
 	@echo "release - package and upload a release"
@@ -64,8 +64,8 @@ test-cov:
 test-dbg:
 	pipenv run py.test --pdb
 
-test-all:
-	pipenv run tox
+testloop:
+	pipenv run py.test -f
 
 coverage:
 	pipenv run pytest --cov=hansel

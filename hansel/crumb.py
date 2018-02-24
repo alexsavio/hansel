@@ -8,7 +8,6 @@ import re
 import os
 from copy import deepcopy
 from collections import OrderedDict
-from six import string_types
 
 try:
     from pathlib2 import Path
@@ -110,13 +109,14 @@ class Crumb(object):
     def set_pattern(self, arg_name, arg_regex):
         """ Set the pattern `arg_regex` to the given argument `arg_name`."""
         if not _has_arg(self.path, arg_name):
-            raise KeyError('Crumb argument {} is not present '
-                           'in {}.'.format(arg_name, self))
+            raise KeyError('Crumb argument {} is not present in {}.'.format(arg_name, self))
 
-        self._path = _build_path(self._path,
-                                 arg_values={},
-                                 with_regex=True,
-                                 regexes={arg_name: arg_regex})
+        self._path = _build_path(
+            self._path,
+            arg_values={},
+            with_regex=True,
+            regexes={arg_name: arg_regex}
+        )
 
     def set_patterns(self, **kwargs):
         """ Set the pattern to the given arguments as keywords. """
@@ -235,13 +235,15 @@ class Crumb(object):
             crumb = self
 
         if isinstance(crumb, Crumb):
-            nucr = Crumb(crumb._path,
-                         ignore_list=crumb._ignore,
-                         regex=crumb._re_method)
+            nucr = Crumb(
+                crumb._path,
+                ignore_list=crumb._ignore,
+                regex=crumb._re_method
+            )
             nucr._argval = deepcopy(crumb._argval)
             return nucr
 
-        if isinstance(crumb, string_types):
+        if isinstance(crumb, str):
             return Crumb.from_path(crumb)
 
         raise TypeError("Expected a Crumb or a str to copy, "
@@ -329,7 +331,7 @@ class Crumb(object):
             return crumb_path.copy()
         elif isinstance(crumb_path, Path):
             return cls(str(crumb_path))
-        elif isinstance(crumb_path, string_types):
+        elif isinstance(crumb_path, str):
             return cls(crumb_path)
         else:
             raise TypeError("Expected a `val` to be a `str`, got {}.".format(type(crumb_path)))
@@ -379,15 +381,19 @@ class Crumb(object):
             just_dirs = True
 
         if arg_values is None:
-            vals = self._arg_values_from_base(basedir=os.path.sep.join(splt[:dpth]),
-                                              arg_name=arg_name,
-                                              arg_regex=arg_regex,
-                                              just_dirs=just_dirs)
+            vals = self._arg_values_from_base(
+                basedir=os.path.sep.join(splt[:dpth]),
+                arg_name=arg_name,
+                arg_regex=arg_regex,
+                just_dirs=just_dirs
+            )
         else:
-            vals = self._extend_arg_values(arg_values=arg_values,
-                                           arg_name=arg_name,
-                                           arg_regex=arg_regex,
-                                           just_dirs=just_dirs)
+            vals = self._extend_arg_values(
+                arg_values=arg_values,
+                arg_name=arg_name,
+                arg_regex=arg_regex,
+                just_dirs=just_dirs
+            )
 
         return vals
 
@@ -403,11 +409,13 @@ class Crumb(object):
             if not os.path.exists(nupath):
                 continue
 
-            paths = list_subpaths(nupath,
-                                  just_dirs=just_dirs,
-                                  ignore=self._ignore,
-                                  pattern=arg_regex,
-                                  filter_func=self._match_filter)
+            paths = list_subpaths(
+                nupath,
+                just_dirs=just_dirs,
+                ignore=self._ignore,
+                pattern=arg_regex,
+                filter_func=self._match_filter
+            )
 
             #  extend `val` tuples with the new list of values for `aval`
             vals.extend([aval + [(arg_name, sp)] for sp in paths])
@@ -469,7 +477,7 @@ class Crumb(object):
         self._check_args(kwargs.keys(), self_args=self.all_args())
 
         for k, v in kwargs.items():
-            if not isinstance(v, string_types):
+            if not isinstance(v, str):
                 raise ValueError("Expected a string for the value of argument {}, "
                                  "got {}.".format(k, v))
 
