@@ -14,7 +14,6 @@ from collections import Mapping, defaultdict, OrderedDict
 from copy import deepcopy
 from functools import partial, reduce
 
-from six import string_types
 
 from hansel._utils import _check_is_subset, _is_crumb_arg
 
@@ -289,7 +288,7 @@ def intersection(crumb1, crumb2, on=None):
     Both crumbs must have at least one matching identifier argument and one
     of those must be the one in `on`.
     """
-    if isinstance(on, string_types):
+    if isinstance(on, str):
         on = [on]
 
     arg_names = list(_get_matching_items(list(crumb1.all_args()), list(crumb2.all_args()), items=on))
@@ -351,7 +350,7 @@ def difference(crumb1, crumb2, on=None):
     Both crumbs must have at least one matching identifier argument and one
     of those must be the one in `id_colname`.
     """
-    if isinstance(on, string_types):
+    if isinstance(on, str):
         on = [on]
 
     arg_names = list(_get_matching_items(list(crumb1.all_args()),

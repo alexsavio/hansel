@@ -6,9 +6,7 @@ Crumb manipulation utilities
 """
 import os
 from string import Formatter
-
-from six import string_types
-
+from typing import Iterable
 
 _txt_idx = 0
 _fld_idx = 1
@@ -16,7 +14,7 @@ _rgx_idx = 2
 _cnv_idx = 3
 
 
-def _yield_items(crumb_path, index=None):
+def _yield_items(crumb_path: str, index=None) -> Iterable:
     """ An iterator over the items in `crumb_path` given by string.Formatter."""
     if index is None:
         return Formatter().parse(crumb_path)
@@ -142,9 +140,9 @@ def _check(crumb_path):
      - ValueError if the path of the Crumb has errors using `self.is_valid`.
      - TypeError if the crumb_path is not a str or a Crumb.
     """
-    if not isinstance(crumb_path, string_types):
+    if not isinstance(crumb_path, str):
         raise TypeError("Expected `crumb_path` to be a {}, "
-                        "got {}.".format(string_types, type(crumb_path)))
+                        "got {}.".format(str, type(crumb_path)))
 
     if not is_valid(crumb_path):
         raise ValueError("The current crumb path has errors, "
@@ -166,9 +164,9 @@ def _get_path(crumb_path):
     if hasattr(crumb_path, '_path'):
         crumb_path = crumb_path._path
 
-    if not isinstance(crumb_path, string_types):
+    if not isinstance(crumb_path, str):
         raise TypeError("Expected `crumb_path` to be a {}, "
-                        "got {}.".format(string_types, type(crumb_path)))
+                        "got {}.".format(str, type(crumb_path)))
 
     return crumb_path
 
@@ -178,7 +176,7 @@ def _is_crumb_arg(crumb_arg):
     is a string that starts with `start_sym` and ends with `end_sym`.
     False otherwise.
     """
-    if not isinstance(crumb_arg, string_types):
+    if not isinstance(crumb_arg, str):
         return False
     start_sym, end_sym = ('{', '}')
     return crumb_arg.startswith(start_sym) and crumb_arg.endswith(end_sym)
