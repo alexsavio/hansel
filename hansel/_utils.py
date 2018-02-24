@@ -247,25 +247,6 @@ def _split(crumb_path):
     return base, rest
 
 
-def _makedirs(dirpath, exist_ok=True):
-    """ Is a replacement for os.makedirs for Python 2.7, with the `exist_ok`
-    argument."""
-    if os.path.exists(dirpath):
-        if not exist_ok:
-            raise IOError("Folder {} already exists.".format(dirpath))
-        else:
-            return dirpath
-
-    return _make_new_dirs(dirpath)
-
-
-def _make_new_dirs(dirpath):
-    """ Call os.makedirs(dirpath), will return dirpath if no exception is
-    raised."""
-    os.makedirs(dirpath)
-    return dirpath
-
-
 def _touch(crumb_path, exist_ok=True):
     """ Create a leaf directory and all intermediate ones
     using the non crumbed part of `crumb_path`.
@@ -288,7 +269,8 @@ def _touch(crumb_path, exist_ok=True):
     else:
         nupath = crumb_path
 
-    return _makedirs(nupath, exist_ok=exist_ok)
+    os.makedirs(nupath, exist_ok=exist_ok)
+    return nupath
 
 
 def _split_exists(crumb_path):

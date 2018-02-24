@@ -449,7 +449,7 @@ def copy_args(src_crumb, dst_crumb):
 
 def _remove_if_ok_and_exists(path, exist_ok):
     if not exist_ok and os.path.exists(path):
-        raise IOError('Path {} already exists.'.format(path))
+        raise FileExistsError('Path {} already exists.'.format(path))
 
     if os.path.exists(path):
         os.remove(path)

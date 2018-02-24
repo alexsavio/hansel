@@ -3,6 +3,12 @@
 Changelog
 =========
 
+Version 2.0.0
+-------------
+
+- Drop support for Python 2.7. Add support for Python 3.6.
+
+
 Version 1.0.0 - Version 1.0.2
 -----------------------------
 
