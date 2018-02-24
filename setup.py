@@ -30,7 +30,7 @@ def read(*filenames, **kwargs):
 
 setup_dict = dict(
     name='hansel',
-    version='version="2.0.0",',
+    version='2.0.0',
     description='Easily traverse your structured folder tree.',
     url='https://pypi.python.org/pypi/hansel',
     license='Apache 2.0',

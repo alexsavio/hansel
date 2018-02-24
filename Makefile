@@ -72,7 +72,7 @@ coverage:
 	pipenv run coverage report -m
 
 build:
-	pipenv run python setup.py sdist --formats gztar bdist_wheel upload
+	pipenv run python setup.py sdist --formats gztar bdist_wheel
 
 tag: clean
 	@echo "Creating git tag v$(version)"
@@ -80,6 +80,7 @@ tag: clean
 	git push --tags
 
 release: clean build tag
+	pipenv run python setup.py sdist upload
 
 patch:
 	pipenv run bumpversion patch
