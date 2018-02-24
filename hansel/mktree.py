@@ -37,8 +37,7 @@ def mktree(crumb, values_map):
         return [crumb.touch()]
 
     if not isinstance(values_map, (list, dict)):
-        raise TypeError("Expected keys in `values_map` to be a Sequence, "
-                         "got {}.".format(type(values_map)))
+        raise TypeError("Expected keys in `values_map` to be a Sequence, got {}.".format(type(values_map)))
 
     paths = []
     for idx, aval in enumerate(values_map):
@@ -46,8 +45,10 @@ def mktree(crumb, values_map):
             aval = dict(aval)
 
         if not set(aval.keys()).issubset(set(crumb.all_args())):
-            raise ValueError("Expected keys in `values_map` item to be a subset of {}, "
-                             "got {}.".format(crumb.all_args(), aval.keys()))
+            raise ValueError("Expected keys in `values_map` item to be a subset of {}, got {}.".format(
+                crumb.all_args(),
+                aval.keys())
+            )
 
         rem_deps = crumb._args_open_parents(list(aval.keys()))
         if rem_deps:
@@ -56,6 +57,6 @@ def mktree(crumb, values_map):
 
         paths.append(crumb.replace(**aval))
 
-    _ = [path.touch() for path in paths]
+    [path.touch() for path in paths]
 
     return paths

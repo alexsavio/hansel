@@ -1,15 +1,7 @@
-# -*- coding: utf-8 -*-
-# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
-# vi: set ft=python sts=4 ts=4 sw=4 et:
-
-import pytest
-
 import pandas as pd
 
 from hansel.pandas import pandas_fill_crumbs
-from hansel.utils  import valuesmap_to_dict
-
-from test_utils import tmp_tree
+from hansel.utils import valuesmap_to_dict
 
 
 def test_values_map_from_df(tmp_tree):
@@ -23,8 +15,9 @@ def test_values_map_from_df(tmp_tree):
     df2 = pd.DataFrame.from_dict(adict)
     assert all(df1 == df2)
 
-    assert all(pd.DataFrame.from_dict   ([dict(rec) for rec in recs]) ==
-               pd.DataFrame.from_records([dict(rec) for rec in recs]))
+    assert all(
+        pd.DataFrame.from_dict([dict(rec) for rec in recs]) == pd.DataFrame.from_records([dict(rec) for rec in recs])
+    )
 
 
 def test_pandas_fill_crumbs(tmp_tree):

@@ -1,24 +1,21 @@
 language: python
 
-python:
-  - "3.4"
-  - "3.5"
-  - "2.7"
-
-env:
-  - PIP_USE_MIRRORS=true
+matrix:
+  include:
+  - python: "3.5"
+  - python: "3.6"
 
 install:
-  - pip install -U pip setuptools
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then pip install pathlib2; fi
-  - pip install -r requirements.txt
-  - python setup.py install
-  - pip install pandas
-  - pip install coveralls
+  - pip install -U pipenv
+  - pipenv install --dev
+  - pipenv run python setup.py install
+  - pipenv run pip install pandas
 
 script:
-  - python setup.py test
-  - coverage run --source=hansel setup.py test
+  - pipenv run flake8 hansel
+  - pipenv run pytest -v
+  - pipenv run pytest --cov=hansel
 
 after_success:
-  - coveralls
+  - pipenv run coveralls
+  - pipenv --rm

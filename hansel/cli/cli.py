@@ -81,7 +81,6 @@ def copy(src_crumb, dst_crumb, quiet, ignore, exist_ok):
                verbose=(not quiet))
 
 
-
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('src_crumb', type=CrumbPath(), callback=check_not_none)
 @click.argument('dst_crumb', type=CrumbPath(), callback=check_not_none)

@@ -6,18 +6,17 @@ Utilities to make crumbs
 """
 import os
 import re
-import os.path as op
 import fnmatch
 import operator
 import itertools
 import shutil
-from   collections import Mapping, defaultdict, OrderedDict
-from   copy        import deepcopy
-from   functools   import partial, reduce
+from collections import Mapping, defaultdict, OrderedDict
+from copy import deepcopy
+from functools import partial, reduce
 
-from   six import string_types
+from six import string_types
 
-from ._utils import _check_is_subset, _is_crumb_arg
+from hansel._utils import _check_is_subset, _is_crumb_arg
 
 
 def rm_dups(lst):
@@ -107,19 +106,19 @@ def list_children(path, just_dirs=False):
     -------
     paths: list of str
     """
-    if not op.exists(path):
+    if not os.path.exists(path):
         raise IOError("Expected an existing path, but could not"
                       " find {}.".format(path))
 
-    if op.isfile(path):
+    if os.path.isfile(path):
         if just_dirs:
             vals = []
         else:
             vals = [path]
     else:
-        if just_dirs: # this means we have to list only folders
-            vals = [d for d in os.listdir(path) if op.isdir(op.join(path, d))]
-        else:   # this means we have to list files
+        if just_dirs:  # this means we have to list only folders
+            vals = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
+        else:  # this means we have to list files
             vals = os.listdir(path)
 
     return vals
@@ -199,8 +198,6 @@ def _get_matching_items(list1, list2, items=None):
             _check_is_subset(items, list2)
         except KeyError:
             arg_names = []
-        except:
-            raise
         else:
             arg_names = items
 
@@ -210,9 +207,12 @@ def _get_matching_items(list1, list2, items=None):
 def joint_value_map(crumb, arg_names, check_exists=True):
     """Return a list of tuples of crumb argument values of the given
     `arg_names`.
+
     Parameters
     ----------
-    arg_name: str
+    crumb: hansel.Crumb
+
+    arg_names: List[str]
 
     check_exists: bool
         If True will return only a values_map with sets of crumb arguments that
@@ -230,10 +230,10 @@ def joint_value_map(crumb, arg_names, check_exists=True):
     values_map = []
     for arg_name in arg_names:
         values_map.append(list((arg_name, arg_value)
-                          for arg_value in crumb[arg_name]))
+                               for arg_value in crumb[arg_name]))
 
     if len(arg_names) == 1:
-        return [(i, ) for i in values_map[0]]
+        return [(i,) for i in values_map[0]]
     else:
         if not check_exists:
             values_map_checked = values_map[:]
@@ -287,20 +287,19 @@ def intersection(crumb1, crumb2, on=None):
     both crumbs.
 
     Both crumbs must have at least one matching identifier argument and one
-    of those must be the one in `id_colname`.
+    of those must be the one in `on`.
     """
     if isinstance(on, string_types):
         on = [on]
 
-    arg_names = list(_get_matching_items(list(crumb1.all_args()),
-                                         list(crumb2.all_args()),
-                                         items=on))
+    arg_names = list(_get_matching_items(list(crumb1.all_args()), list(crumb2.all_args()), items=on))
 
     if not arg_names:
-        raise KeyError("Could not find matching arguments between "
-                       "{} and  {} limited by {}.".format(list(crumb1.all_args()),
-                                                          list(crumb2.all_args()),
-                                                          on))
+        raise KeyError("Could not find matching arguments between {} and  {} limited by {}.".format(
+            list(crumb1.all_args()),
+            list(crumb2.all_args()),
+            on)
+        )
 
     maps1 = joint_value_map(crumb1, arg_names, check_exists=True)
     maps2 = joint_value_map(crumb2, arg_names, check_exists=True)
@@ -449,9 +448,10 @@ def copy_args(src_crumb, dst_crumb):
 
 
 def _remove_if_ok_and_exists(path, exist_ok):
-    if not exist_ok and op.exists(path):
+    if not exist_ok and os.path.exists(path):
         raise FileExistsError('Path {} already exists.'.format(path))
-    elif op.exists(path):
+
+    if os.path.exists(path):
         os.remove(path)
 
 
@@ -463,13 +463,13 @@ def copy_all_files(src_path, dst_path, exist_ok=True, verbose=False):
     if verbose:
         print("Copying {} -> {}".format(src_path, dst_path))
 
-    if op.isdir(src_path):
+    if os.path.isdir(src_path):
         if exist_ok:
             shutil.rmtree(dst_path)
 
         shutil.copytree(src_path, dst_path, copy_function=copy_func)
-    elif op.isfile(src_path):
-        os.makedirs(op.dirname(dst_path), exist_ok=exist_ok)
+    elif os.path.isfile(src_path):
+        os.makedirs(os.path.dirname(dst_path), exist_ok=exist_ok)
         try:
             copy_func(src_path, dst_path, follow_symlinks=True)
         except shutil.SameFileError:
@@ -479,13 +479,13 @@ def copy_all_files(src_path, dst_path, exist_ok=True, verbose=False):
 
 def link_all_files(src_path, dst_path, exist_ok=True, verbose=False):
     """Make link from src_path to dst_path."""
-    if not op.isabs(src_path):
-        src_path = op.relpath(src_path, op.dirname(dst_path))
+    if not os.path.isabs(src_path):
+        src_path = os.path.relpath(src_path, os.path.dirname(dst_path))
 
     if verbose:
         print("Linking {} -> {}".format(src_path, dst_path))
 
-    os.makedirs(op.dirname(dst_path), exist_ok=True)
+    os.makedirs(os.path.dirname(dst_path), exist_ok=True)
 
     _remove_if_ok_and_exists(dst_path, exist_ok=exist_ok)
     os.symlink(src_path, dst_path)

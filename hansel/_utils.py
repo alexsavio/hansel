@@ -4,13 +4,11 @@
 """
 Crumb manipulation utilities
 """
-import functools
 import os
-import os.path as op
-import warnings
 from string import Formatter
 
-from   six import string_types
+from six import string_types
+
 
 _txt_idx = 0
 _fld_idx = 1
@@ -22,10 +20,10 @@ def _yield_items(crumb_path, index=None):
     """ An iterator over the items in `crumb_path` given by string.Formatter."""
     if index is None:
         return Formatter().parse(crumb_path)
-    else:
-        #for (literal_text, field_name, format_spec, conversion) in fmt.parse(crumb_path):
-        # (txt, fld, fmt, conv)
-        return (items[index] for items in Formatter().parse(crumb_path))
+
+    # for (literal_text, field_name, format_spec, conversion) in fmt.parse(crumb_path):
+    # (txt, fld, fmt, conv)
+    return (items[index] for items in Formatter().parse(crumb_path) if items[index] is not None)
 
 
 def _enum_items(crumb_path):
@@ -38,12 +36,12 @@ def _depth_items(crumb_path, index=None):
     """ Return a generator with  (depth, items) in `crumb_path`. Being `depth`
      the place in the file path each argument is."""
     if index is None:
-        index = slice(_txt_idx, _cnv_idx+1)
+        index = slice(_txt_idx, _cnv_idx + 1)
 
     depth = 0
     for idx, items in _enum_items(crumb_path):
         if items[_fld_idx]:
-            depth += items[_txt_idx].count(op.sep)
+            depth += items[_txt_idx].count(os.path.sep)
             yield depth, items[index]
 
 
@@ -103,7 +101,7 @@ def _build_path(crumb_path, arg_values, with_regex=True, regexes=None):
 def is_valid(crumb_path):
     """ Return True if `crumb_path` is a valid Crumb value, False otherwise. """
     try:
-        _ = list(_depth_names_regexes(crumb_path))
+        list(_depth_names_regexes(crumb_path))
     except ValueError:
         return False
     else:
@@ -208,11 +206,11 @@ def _format_arg(arg_name, regex=''):
 
 
 def has_crumbs(crumb_path):
-    """ Return True if the `crumb_path.split(op.sep)` has item which is a
+    """ Return True if the `crumb_path.split(os.path.sep)` has item which is a
     crumb argument that starts with '{' and ends with '}'."""
     crumb_path = _get_path(crumb_path)
 
-    splt = crumb_path.split(op.sep)
+    splt = crumb_path.split(os.path.sep)
     for i in splt:
         if _is_crumb_arg(i):
             return True
@@ -234,42 +232,19 @@ def _split(crumb_path):
     if not is_valid(crumb_path):
         raise ValueError('Crumb path {} is not valid.'.format(crumb_path))
 
-    start_sym, end_sym = '{', '}'
+    start_sym = '{'
     if crumb_path.startswith(start_sym):
         base = ''
         rest = crumb_path
     else:
         idx = crumb_path.find(start_sym)
         base = crumb_path[0:idx]
-        if base.endswith(op.sep):
+        if base.endswith(os.path.sep):
             base = base[:-1]
 
         rest = crumb_path[idx:]
 
     return base, rest
-
-
-def _makedirs(dirpath, exist_ok=True):
-    """ Is a replacement for os.makedirs for Python 2.7, with the `exist_ok`
-    argument."""
-    if op.exists(dirpath):
-        if not exist_ok:
-            raise IOError("Folder {} already exists.".format(dirpath))
-        else:
-            return dirpath
-
-    return _make_new_dirs(dirpath)
-
-
-def _make_new_dirs(dirpath):
-    """ Call os.makedirs(dirpath), will return dirpath if no exception is
-    raised."""
-    try:
-        os.makedirs(dirpath)
-    except:
-        raise
-    else:
-        return dirpath
 
 
 def _touch(crumb_path, exist_ok=True):
@@ -294,7 +269,8 @@ def _touch(crumb_path, exist_ok=True):
     else:
         nupath = crumb_path
 
-    return _makedirs(nupath, exist_ok=exist_ok)
+    os.makedirs(nupath, exist_ok=exist_ok)
+    return nupath
 
 
 def _split_exists(crumb_path):
@@ -309,7 +285,7 @@ def _split_exists(crumb_path):
     else:
         rpath = str(crumb_path)
 
-    return op.exists(rpath) or op.islink(rpath)
+    return os.path.exists(rpath) or os.path.islink(rpath)
 
 
 def _check_is_subset(list1, list2):
@@ -317,47 +293,3 @@ def _check_is_subset(list1, list2):
     if not set(list1).issubset(set(list2)):
         raise KeyError('The `list1` argument should be a subset of `list2`, '
                        'got {} and {}.'.format(list1, list2))
-
-
-def deprecated(replacement=None):
-    """A decorator which can be used to mark functions as deprecated.
-    replacement is a callable that will be called with the same args
-    as the decorated function.
-
-    >>> @deprecated()
-    ... def foo(x):
-    ...     return x
-    ...
-    >>> ret = foo(1)
-    DeprecationWarning: foo is deprecated
-    >>> ret
-    1
-    >>>
-    >>>
-    >>> def newfun(x):
-    ...     return 0
-    ...
-    >>> @deprecated(newfun)
-    ... def foo(x):
-    ...     return x
-    ...
-    >>> ret = foo(1)
-    DeprecationWarning: foo is deprecated; use newfun instead
-    >>> ret
-    0
-    >>>
-    """
-    def outer(fun):
-        msg = "psutil.%s is deprecated" % fun.__name__
-        if replacement is not None:
-            msg += "; use %s instead" % replacement
-        if fun.__doc__ is None:
-            fun.__doc__ = msg
-
-        @functools.wraps(fun)
-        def inner(*args, **kwargs):
-            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
-            return fun(*args, **kwargs)
-
-        return inner
-    return outer
