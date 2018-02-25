@@ -5,10 +5,13 @@
 Utilities to fill crumbs with data from pandas DataFrames.
 #TODO: add tests
 """
-from hansel.utils import _get_matching_items
+from typing import Iterator, Dict
+
+import hansel
+from hansel.utils import _get_matching_items, CrumbArgsSequences
 
 
-def _pandas_rename_cols(df, col_map):
+def _pandas_rename_cols(df: 'pandas.DataFrame', col_map: Dict[str, str]) -> 'pandas.DataFrame':
     """ Return a copy of `df` with the columns renamed as in `col_map`.
     Parameters
     ----------
@@ -28,7 +31,11 @@ def _pandas_rename_cols(df, col_map):
     return renamed
 
 
-def df_to_valuesmap(df, crumb_arg_names, arg_names=None):
+def df_to_valuesmap(
+    df: 'pandas.DataFrame',
+    crumb_arg_names: Iterator[str],
+    arg_names: Iterator[str]=None
+) -> CrumbArgsSequences:
     """ Return a values_map from data in `df` and
     the matching column and arguments names from `df`, `crumb_arg_names`
     and `arg_names`.
@@ -36,7 +43,7 @@ def df_to_valuesmap(df, crumb_arg_names, arg_names=None):
     ----------
     df: pandas.DataFrame
 
-    crumb: hansel.Crumb
+    crumb_arg_names:
 
     arg_names: sequence of str
         A list of the crumb arguments and DataFrame columns to extract
@@ -59,7 +66,11 @@ def df_to_valuesmap(df, crumb_arg_names, arg_names=None):
     return (list(rec.items()) for rec in df[crumb_names].to_dict(orient='records'))
 
 
-def pandas_fill_crumbs(df, crumb, names_map=None):
+def pandas_fill_crumbs(
+    df: 'pandas.DataFrame',
+    crumb: hansel.Crumb,
+    names_map: CrumbArgsSequences=None
+) -> Iterator[hansel.Crumb]:
     """ Create a generator of crumbs filled with the `df` column names and `crumb`
     arguments that match or the ones indicated in `names_map`.
     Parameters
@@ -97,4 +108,4 @@ def pandas_fill_crumbs(df, crumb, names_map=None):
                   .pipe(df_to_valuesmap, list(crumb.all_args()), arg_names=list(nmap.values()))
                   )
 
-    return (crumb.replace(**dict(argvals)) for argvals in values_map)
+    yield from (crumb.replace(**dict(argvals)) for argvals in values_map)

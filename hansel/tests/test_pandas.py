@@ -1,11 +1,11 @@
 import pandas as pd
 
 from hansel.pandas import pandas_fill_crumbs
-from hansel.utils import valuesmap_to_dict
+from hansel.operations import valuesmap_to_dict
 
 
-def test_values_map_from_df(tmp_tree):
-    tmp_crumb = tmp_tree[0]
+def test_values_map_from_df(tmp_tree_crumb):
+    tmp_crumb = tmp_tree_crumb
 
     recs = tmp_crumb.values_map('image')
 
@@ -20,9 +20,9 @@ def test_values_map_from_df(tmp_tree):
     )
 
 
-def test_pandas_fill_crumbs(tmp_tree):
+def test_pandas_fill_crumbs(tmp_tree_crumb):
 
-    tmp_crumb = tmp_tree[0]
+    tmp_crumb = tmp_tree_crumb
 
     recs = tmp_crumb.values_map('image')
     df = pd.DataFrame.from_dict(valuesmap_to_dict(recs))

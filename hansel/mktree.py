@@ -6,9 +6,13 @@ Crumb class: the smart path model class.
 """
 
 from collections import Mapping
+from typing import List
+
+import hansel
+from hansel.utils import CrumbArgsSequences
 
 
-def mktree(crumb, values_map):
+def mktree(crumb: hansel.Crumb, values_map: CrumbArgsSequences) -> List[str]:
     """ Create the tree of folders given the values for the crumb arguments
     of the current crumb path.
     Parameters
@@ -57,6 +61,7 @@ def mktree(crumb, values_map):
 
         paths.append(crumb.replace(**aval))
 
-    [path.touch() for path in paths]
+    for path in paths:
+        path.touch()
 
     return paths
