@@ -457,18 +457,18 @@ The regular expressions can be checked with the `patterns` property.
 
     .. code:: python
 
-        >>> print(s0_rest_cr.patterns)
-        {'subject_id': '.*00$', 'image_type': 'rest.*'}
+        >>> pprint(s0_rest_cr.patterns)
+        {'image_type': 'rest.*', 'subject_id': '.*00$'}
 
 And can be also modified with the `set_pattern` function.
 
     .. code:: python
 
         >>> s0_rest_cr.set_pattern('session_id', '.*_1$')
-        >>> print(s0_rest_cr.patterns)
-        {'subject_id': '.*00$', 'session_id': '.*_1$', 'image_type': 'rest.*'}
-        >>> print(s0_rest_cr.path)
-        /tmp/hansel/data/raw/{subject_id:.*00$}/{session_id:.*_1$}/{image_type:rest.*}/{image}
+        >>> pprint(s0_rest_cr.patterns)
+        {'image_type': 'rest.*', 'session_id': '.*_1$', 'subject_id': '.*00$'}
+        >>> s0_rest_cr.path
+        '/tmp/hansel/data/raw/{subject_id:.*00$}/{session_id:.*_1$}/{image_type:rest.*}/{image}'
 
 
 A regular expression can be temporarily set with the `ls` function and the `[]`
