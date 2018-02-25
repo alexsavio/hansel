@@ -76,9 +76,7 @@ def copy(src_crumb, dst_crumb, quiet, ignore, exist_ok):
         click.echo('Could not find any file that matched {}.'.format(src_crumb))
         exit(-1)
 
-    crumb_copy(src_crumb, dst_crumb,
-               exist_ok=exist_ok,
-               verbose=(not quiet))
+    crumb_copy(src_crumb, dst_crumb, exist_ok=exist_ok, verbose=(not quiet))
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
@@ -112,9 +110,7 @@ def link(src_crumb, dst_crumb, quiet, ignore, exist_ok):
         click.echo('Could not find any file that matched {}.'.format(src_crumb))
         exit(-1)
 
-    crumb_link(src_crumb, dst_crumb,
-               exist_ok=exist_ok,
-               verbose=(not quiet))
+    crumb_link(src_crumb, dst_crumb, exist_ok=exist_ok, verbose=(not quiet))
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)

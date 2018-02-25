@@ -18,6 +18,7 @@ bumpversion = "*"
 awscli = "*"
 coveralls = "*"
 pandas = "*"
+rstcheck = "*"
 
 
 [packages]

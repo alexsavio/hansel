@@ -3,7 +3,7 @@ hansel
 
 Parametric file paths to access and build structured folder trees.
 
-|PyPI| |Build Status| |Coverage Status| |PyPI Downloads| |Code Health|
+|PyPI| |Build Status| |Coverage Status| |Code Health|
 
 It almost doesn't have `Dependencies`_, check how to `Install`_ it.
 
@@ -45,15 +45,16 @@ Imagine this folder tree:
 
 .. code:: python
 
+    >>> from pprint import pprint
     >>> from hansel import Crumb
 
     # create the crumb
-    >>> crumb = Crumb("{base_dir}/data/raw/{subject_id}/{session_id}/{image_type}/{image}")
+    >>> crumb = Crumb("{base_dir}/raw/{subject_id}/{session_id}/{image_type}/{image}")
 
     # set the base_dir path
-    >>> crumb = crumb.replace(base_dir='/home/hansel')
+    >>> crumb = crumb.replace(base_dir='/tmp/hansel/data')
     >>> print(str(crumb))
-    /home/hansel/data/raw/{subject_id}/{session_id}/{image_type}
+    /tmp/hansel/data/raw/{subject_id}/{session_id}/{image_type}/{image}
 
     # get the ids of the subjects
     >>> subj_ids = crumb['subject_id']
@@ -63,27 +64,27 @@ Imagine this folder tree:
     # get the paths to the subject folders, the output can be strings or crumbs,
     # you choose with the ``make_crumbs`` boolean argument. Default: True.
     >>> subj_paths = crumb.ls('subject_id', make_crumbs=True)
-    >>> print(subj_paths)
-    [Crumb("/home/hansel/data/raw/0040000/{session_id}/{image_type}/{image}"),
-     Crumb("/home/hansel/data/raw/0040001/{session_id}/{image_type}/{image}"),
-     Crumb("/home/hansel/data/raw/0040002/{session_id}/{image_type}/{image}"),
-     Crumb("/home/hansel/data/raw/0040003/{session_id}/{image_type}/{image}"),
-     Crumb("/home/hansel/data/raw/0040004/{session_id}/{image_type}/{image}"),
+    >>> pprint(subj_paths)
+    [Crumb("/tmp/hansel/data/raw/0040000/{session_id}/{image_type}/{image}"),
+     Crumb("/tmp/hansel/data/raw/0040001/{session_id}/{image_type}/{image}"),
+     Crumb("/tmp/hansel/data/raw/0040002/{session_id}/{image_type}/{image}"),
+     Crumb("/tmp/hansel/data/raw/0040003/{session_id}/{image_type}/{image}"),
+     Crumb("/tmp/hansel/data/raw/0040004/{session_id}/{image_type}/{image}"),
      ...
 
     # set the image_type
     >>> anat_crumb = crumb.replace(image_type='anat_1')
     >>> print(anat_crumb)
-    /home/hansel/data/raw/{subject_id}/{session_id}/anat_1/{image}
+    /tmp/hansel/data/raw/{subject_id}/{session_id}/anat_1/{image}
 
     # get the paths to the images inside the anat_1 folders
     >>> anat_paths = anat_crumb.ls('image')
-    >>> print(anat_paths)
-    [Crumb("/home/hansel/data/raw/0040000/session_1/anat_1/mprage.nii.gz"),
-     Crumb("/home/hansel/data/raw/0040001/session_1/anat_1/mprage.nii.gz"),
-     Crumb("/home/hansel/data/raw/0040002/session_1/anat_1/mprage.nii.gz"),
-     Crumb("/home/hansel/data/raw/0040003/session_1/anat_1/mprage.nii.gz"),
-     Crumb("/home/hansel/data/raw/0040004/session_1/anat_1/mprage.nii.gz"),
+    >>> pprint(anat_paths)
+    [Crumb("/tmp/hansel/data/raw/0040000/session_1/anat_1/mprage.nii.gz"),
+     Crumb("/tmp/hansel/data/raw/0040001/session_1/anat_1/mprage.nii.gz"),
+     Crumb("/tmp/hansel/data/raw/0040002/session_1/anat_1/mprage.nii.gz"),
+     Crumb("/tmp/hansel/data/raw/0040003/session_1/anat_1/mprage.nii.gz"),
+     Crumb("/tmp/hansel/data/raw/0040004/session_1/anat_1/mprage.nii.gz"),
      ...
 
     # get the ``session_id`` of each of these ``anat_paths``
@@ -93,19 +94,18 @@ Imagine this folder tree:
 
     # if you don't want the the output to be ``Crumbs`` but string paths:
     >>> anat_paths = anat_crumb.ls('image', make_crumbs=False)
-    >>> print(anat_paths)
-    ["/home/hansel/data/raw/0040000/session_1/anat_1/mprage.nii.gz",
-     "/home/hansel/data/raw/0040001/session_1/anat_1/mprage.nii.gz",
-     "/home/hansel/data/raw/0040002/session_1/anat_1/mprage.nii.gz",
-     "/home/hansel/data/raw/0040003/session_1/anat_1/mprage.nii.gz",
-     "/home/hansel/data/raw/0040004/session_1/anat_1/mprage.nii.gz",
+    >>> pprint(anat_paths)
+    ['/tmp/hansel/data/raw/0040000/session_1/anat_1/mprage.nii.gz',
+     '/tmp/hansel/data/raw/0040001/session_1/anat_1/mprage.nii.gz',
+     '/tmp/hansel/data/raw/0040002/session_1/anat_1/mprage.nii.gz',
+     '/tmp/hansel/data/raw/0040003/session_1/anat_1/mprage.nii.gz',
+     '/tmp/hansel/data/raw/0040004/session_1/anat_1/mprage.nii.gz',
      ...
 
     # you can also use a list of ``fnmatch`` expressions to ignore certain files patterns
     # using the ``ignore_list`` argument in the constructor.
     # For example, the files that start with '.'.
-    >>> crumb = Crumb("{base_dir}/data/raw/{subject_id}/{session_id}/{image_type}/{image}",
-    >>>               ignore_list=['.*'])
+    >>> crumb = Crumb("{base_dir}/data/raw/{subject_id}/{session_id}/{image_type}/{image}", ignore_list=['.*'])
 
 Once you have a fully defined Crumb, you can use its ``path`` for operations with the corresponding file.
 For that you have to convert it to string by using ``str(crumb)`` or ``crumb.path``.
@@ -150,15 +150,15 @@ I can use the ``replace`` function to make set the ``base_dir`` parameter:
 
     >>> crumb = crumb.replace(base_dir='/home/hansel')
     >>> print(str(crumb))
-    /home/hansel/data/raw/{subject_id}/{session_id}/{image_type}
+    /home/hansel/data/raw/{subject_id}/{session_id}/{image_type}/{image}
 
 if I don't need a copy of ``crumb``, I can use the ``[]`` operator:
 
 .. code:: python
 
-    >>> crumb['base_dir'] = '/home/hansel'
+    >>> crumb['base_dir'] = '/tmp/hansel'
     >>> print(str(crumb))
-    /home/hansel/data/raw/{subject_id}/{session_id}/{image_type}
+    /tmp/hansel/data/raw/{subject_id}/{session_id}/{image_type}/{image}
 
 Now that the root path of my dataset is set, I can start querying my
 crumb path.
@@ -171,21 +171,21 @@ I can choose this using the ``make_crumbs`` argument (default: True):
 .. code:: python
 
     >>> subj_crumbs = crumb.ls('subject_id')
-    >>> print(subj_crumbs)
-    [Crumb("/home/hansel/data/raw/0040000/{session_id}/{image_type}/{image}"),
-     Crumb("/home/hansel/data/raw/0040001/{session_id}/{image_type}/{image}"),
-     Crumb("/home/hansel/data/raw/0040002/{session_id}/{image_type}/{image}"),
-     Crumb("/home/hansel/data/raw/0040003/{session_id}/{image_type}/{image}"),
-     Crumb("/home/hansel/data/raw/0040004/{session_id}/{image_type}/{image}"),
+    >>> pprint(subj_crumbs)
+    [Crumb("/tmp/hansel/data/raw/0040000/{session_id}/{image_type}/{image}"),
+     Crumb("/tmp/hansel/data/raw/0040001/{session_id}/{image_type}/{image}"),
+     Crumb("/tmp/hansel/data/raw/0040002/{session_id}/{image_type}/{image}"),
+     Crumb("/tmp/hansel/data/raw/0040003/{session_id}/{image_type}/{image}"),
+     Crumb("/tmp/hansel/data/raw/0040004/{session_id}/{image_type}/{image}"),
      ...
 
-    >>> subj_paths = anat_crumb.ls('subject_id', make_crumbs=False)
-    >>> print(subj_paths)
-    ["/home/hansel/data/raw/0040000/{session_id}/{image_type}/{image}",
-     "/home/hansel/data/raw/0040001/{session_id}/{image_type}/{image}",
-     "/home/hansel/data/raw/0040002/{session_id}/{image_type}/{image}",
-     "/home/hansel/data/raw/0040003/{session_id}/{image_type}/{image}",
-     "/home/hansel/data/raw/0040004/{session_id}/{image_type}/{image}",
+    >>> subj_paths = crumb.ls('subject_id', make_crumbs=False)
+    >>> pprint(subj_paths)
+    ['/tmp/hansel/data/raw/0040000/{session_id}/{image_type}/{image}',
+     '/tmp/hansel/data/raw/0040001/{session_id}/{image_type}/{image}',
+     '/tmp/hansel/data/raw/0040002/{session_id}/{image_type}/{image}',
+     '/tmp/hansel/data/raw/0040003/{session_id}/{image_type}/{image}',
+     '/tmp/hansel/data/raw/0040004/{session_id}/{image_type}/{image}',
      ...
 
 
@@ -212,7 +212,7 @@ I could do this:
 
     >>> anat_crumb = crumb.replace(image_type='anat_1')
     >>> print(anat_crumb)
-    /home/hansel/data/raw/{subject_id}/{session_id}/anat_1/{image}
+    /tmp/hansel/data/raw/{subject_id}/{session_id}/anat_1/{image}
 
 or if I don't need to keep a copy of ``crumb``:
 
@@ -222,12 +222,12 @@ or if I don't need to keep a copy of ``crumb``:
 
     # get the paths to the images inside the anat_1 folders
     >>> anat_paths = crumb.ls('image')
-    >>> print(anat_paths)
-    [Crumb("/home/hansel/data/raw/0040000/session_1/anat_1/mprage.nii.gz"),
-     Crumb("/home/hansel/data/raw/0040001/session_1/anat_1/mprage.nii.gz"),
-     Crumb("/home/hansel/data/raw/0040002/session_1/anat_1/mprage.nii.gz"),
-     Crumb("/home/hansel/data/raw/0040003/session_1/anat_1/mprage.nii.gz"),
-     Crumb("/home/hansel/data/raw/0040004/session_1/anat_1/mprage.nii.gz"),
+    >>> pprint(anat_paths)
+    [Crumb("/tmp/hansel/data/raw/0040000/session_1/anat_1/mprage.nii.gz"),
+     Crumb("/tmp/hansel/data/raw/0040001/session_1/anat_1/mprage.nii.gz"),
+     Crumb("/tmp/hansel/data/raw/0040002/session_1/anat_1/mprage.nii.gz"),
+     Crumb("/tmp/hansel/data/raw/0040003/session_1/anat_1/mprage.nii.gz"),
+     Crumb("/tmp/hansel/data/raw/0040004/session_1/anat_1/mprage.nii.gz"),
      ...
 
 Remember that I can still access the replaced crumb arguments in each of the previous
@@ -237,7 +237,7 @@ crumbs in ``anat_paths``.
 
     >>> subj_ids = [cr['subject_id'][0] for cr in anat_paths]
     >>> print(subj_ids)
-    ['0040000', '0040001', '0040002', '0040003', '0040004', '0040005', ...
+    ['0040000', '0040001', '0040002', '0040003', '0040004', ...
 
     >>> files = [cr['image'][0] for cr in anat_paths]
     >>> print(files)
@@ -256,14 +256,24 @@ Use `mktree` and `ParameterGrid` to create a tree of folders.
 
     .. code:: python
 
-        >>> from hansel import mktree, ParameterGrid
+        >>> from hansel import mktree
+        >>> from hansel.utils import ParameterGrid
 
-        >>> crumb = Crumb("/home/hansel/raw/{subject_id}/{session_id}/{modality}/{image}")
+        >>> crumb = Crumb("/tmp/hansel/data/raw/{subject_id}/{session_id}/{image_type}/{image}")
 
-        >>> values_map = {'session_id': ['session_' + str(i) for i in range(2)],
-        >>>               'subject_id': ['subj_' + str(i) for i in range(3)]}
+        >>> session_ids = ["session_{}".format(i) for i in range(2)]
+        >>> subject_ids = ["subj_{}".format(i) for i in range(3)]
 
-        >>> mktree(crumb, list(ParameterGrid(values_map)))
+        >>> values_map = dict(session_id=session_ids, subject_id=subject_ids)
+
+        >>> crumbs = mktree(crumb, list(ParameterGrid(values_map)))
+        >>> pprint(crumbs)
+        [Crumb("/tmp/hansel/data/raw/subj_0/session_0/{image_type}/{image}"),
+         Crumb("/tmp/hansel/data/raw/subj_1/session_0/{image_type}/{image}"),
+         Crumb("/tmp/hansel/data/raw/subj_2/session_0/{image_type}/{image}"),
+         Crumb("/tmp/hansel/data/raw/subj_0/session_1/{image_type}/{image}"),
+         Crumb("/tmp/hansel/data/raw/subj_1/session_1/{image_type}/{image}"),
+         Crumb("/tmp/hansel/data/raw/subj_2/session_1/{image_type}/{image}")]
 
 
 Check the feasibility of a crumb path
@@ -271,11 +281,11 @@ Check the feasibility of a crumb path
 
     .. code:: python
 
-        >>> crumb = Crumb("/home/hansel/raw/{subject_id}/{session_id}/{modality}/{image}")
+        >>> crumb = Crumb("/tmp/hansel/raw/{subject_id}/{session_id}/{image_type}/{image}")
 
         # ask if there is any subject with the image 'lollipop.png'.
         >>> crumb['image'] = 'lollipop.png'
-        >>> assert crumb.exists()
+        >>> assert not crumb.exists()
 
 
 Check which subjects have 'jujube.png' and 'toffee.png' files
@@ -283,14 +293,14 @@ Check which subjects have 'jujube.png' and 'toffee.png' files
 
     .. code:: python
 
-        >>> crumb = Crumb("/home/hansel/raw/{subject_id}/{session_id}/{modality}/{image}")
+        >>> crumb = Crumb("/tmp/hansel/raw/{subject_id}/{session_id}/{image_type}/{image}")
 
         >>> toffee_crumb = crumb.replace(image='toffee.png')
         >>> jujube_crumb = crumb.replace(image='jujube.png')
 
         # using sets functionality
-        >>> gluttons = set(toffee_crumb['subject_id']).intersection(set(jujube_crumb['subject_id'])
-        >>> print(gluttons)
+        >>> gluttons = set(toffee_crumb['subject_id']).intersection(set(jujube_crumb['subject_id']) # doctest: +SKIP
+        >>> print(gluttons)  # doctest: +SKIP
         ['gretel', 'hansel']
 
 
@@ -310,94 +320,104 @@ If I want to check what subjects are common to both projects:
         >>> from hansel import intersection
 
         # using one argument
-        >>> cr_proj1 = Crumb("/home/hansel/proj1/{subject_id}/{session_id}/{modality}/{image}")
-        >>> cr_proj2 = Crumb("/home/hansel/proj2/{subject_id}/{session_id}/{modality}/{image}")
+        >>> cr_proj1 = Crumb("/tmp/hansel/data/proj1/{subject_id}/{session_id}/{image_type}/{image}")
+        >>> cr_proj2 = Crumb("/tmp/hansel/data/proj2/{subject_id}/{session_id}/{image_type}/{image}")
 
         # set the `on` argument in `intersection` to specify which crumb arguments to merge.
         >>> merged = intersection(cr_proj1, cr_proj2, on=['subject_id'])
-        >>> print(merged)
-        [(('subject_id', '0040000'),), (('subject_id', '0040001'),), (('subject_id', '0040001'),)]
+        >>> pprint(merged)
+        [(('subject_id', '0040006'),),
+         (('subject_id', '0040007'),),
+         (('subject_id', '0040008'),),
+         (('subject_id', '0040009'),)]
 
         # I can pick these subject crumbs from this result using the `build_paths` function.
-        >>> cr1.build_paths(merged, make_crumbs=True)
-        [Crumb("/home/hansel/proj1/0040010/{session}/{mod}/{image}"),
-         Crumb("/home/hansel/proj1/0040110/{session}/{mod}/{image}")]
+        >>> proj1_merged_paths = cr_proj1.build_paths(merged, make_crumbs=True)
+        >>> type(proj1_merged_paths)
+        <class 'generator'>
 
-        >>> cr2.build_paths(merged, make_crumbs=True)
-        [Crumb("/home/hansel/proj2/0040010/{session}/{mod}/{image}"),
-         Crumb("/home/hansel/proj2/0040110/{session}/{mod}/{image}")]
+        >>> pprint(list(proj1_merged_paths))
+        [Crumb("/tmp/hansel/data/proj1/0040006/{session_id}/{image_type}/{image}"),
+         Crumb("/tmp/hansel/data/proj1/0040007/{session_id}/{image_type}/{image}"),
+         Crumb("/tmp/hansel/data/proj1/0040008/{session_id}/{image_type}/{image}"),
+         Crumb("/tmp/hansel/data/proj1/0040009/{session_id}/{image_type}/{image}")]
+
+        >>> pprint(list(cr_proj2.build_paths(merged, make_crumbs=True)))
+        [Crumb("/tmp/hansel/data/proj2/0040006/{session_id}/{image_type}/{image}"),
+         Crumb("/tmp/hansel/data/proj2/0040007/{session_id}/{image_type}/{image}"),
+         Crumb("/tmp/hansel/data/proj2/0040008/{session_id}/{image_type}/{image}"),
+         Crumb("/tmp/hansel/data/proj2/0040009/{session_id}/{image_type}/{image}")]
 
 
 *Two arguments*
 
 Now, imagine that I have different sets of `{image}` for these subjects.
-I want to check what of those subjects have exactly the same images.
-Let's say that the subject `0040001` has a `anatomical.nii.gz` instead of `mprage.nii.gz`.
+I want to check which of those subjects have exactly the same images.
+Let's say that the subject `0040000` has a `anatomical.nii.gz` instead of `mprage.nii.gz`.
 
     .. code:: python
 
         >>> from hansel import intersection
 
         # using one argument
-        >>> cr_proj1 = Crumb("/home/hansel/proj1/{subject_id}/{session_id}/{modality}/{image}")
-        >>> cr_proj2 = Crumb("/home/hansel/proj2/{subject_id}/{session_id}/{modality}/{image}")
+        >>> cr_proj3 = Crumb("/tmp/hansel/data/proj3/{subject_id}/{session_id}/anat_1/{image}")
+        >>> cr_proj4 = Crumb("/tmp/hansel/data/proj4/{subject_id}/{session_id}/anat_1/{image}")
 
         # set the `on` argument in `intersection` to specify which crumb arguments to merge.
-        >>> merged = intersection(cr_proj1, cr_proj2, on=['subject_id', 'image'])
-        >>> print(merged)
-        [(('subject_id', '0040000'), ('image', 'mprage.nii.gz')),
-         (('subject_id', '0040000'), ('image', 'rest.nii.gz')),
-         (('subject_id', '0040001'), ('image', 'rest.nii.gz')),
+        >>> merged = intersection(cr_proj3, cr_proj4, on=['subject_id', 'image'])
+        >>> pprint(merged)
+        [(('subject_id', '0040001'), ('image', 'mprage.nii.gz')),
          (('subject_id', '0040002'), ('image', 'mprage.nii.gz')),
-         (('subject_id', '0040002'), ('image', 'rest.nii.gz'))]
-
+         (('subject_id', '0040003'), ('image', 'mprage.nii.gz')),
+         (('subject_id', '0040004'), ('image', 'mprage.nii.gz')),
+        ...
 
         # I can pick these image crumbs from this result using the `build_paths` function.
-        >>> cr1.build_paths(merged, make_crumbs=True)
-        [Crumb("/home/hansel/proj1/0040000/{session}/{mod}/mprage.nii.gz"),
-         Crumb("/home/hansel/proj1/0040000/{session}/{mod}/rest.nii.gz"),
-         Crumb("/home/hansel/proj1/0040001/{session}/{mod}/rest.nii.gz"),
-         Crumb("/home/hansel/proj1/0040002/{session}/{mod}/mprage.nii.gz"),
-         Crumb("/home/hansel/proj1/0040002/{session}/{mod}/rest.nii.gz")]
+        >>> pprint(list(cr_proj3.build_paths(merged, make_crumbs=True)))
+        [Crumb("/tmp/hansel/data/proj3/0040001/{session_id}/anat_1/mprage.nii.gz"),
+         Crumb("/tmp/hansel/data/proj3/0040002/{session_id}/anat_1/mprage.nii.gz"),
+         Crumb("/tmp/hansel/data/proj3/0040003/{session_id}/anat_1/mprage.nii.gz"),
+         Crumb("/tmp/hansel/data/proj3/0040004/{session_id}/anat_1/mprage.nii.gz"),
+         ...
 
-        >>> cr2.build_paths(merged, make_crumbs=True)
-        [Crumb("/home/alexandre/data/cobre/proj2/0040000/{session}/{mod}/mprage.nii.gz"),
-         Crumb("/home/alexandre/data/cobre/proj2/0040000/{session}/{mod}/rest.nii.gz"),
-         Crumb("/home/alexandre/data/cobre/proj2/0040001/{session}/{mod}/rest.nii.gz"),
-         Crumb("/home/alexandre/data/cobre/proj2/0040002/{session}/{mod}/mprage.nii.gz"),
-         Crumb("/home/alexandre/data/cobre/proj2/0040002/{session}/{mod}/rest.nii.gz")]
+        >>> pprint(list(cr_proj4.build_paths(merged, make_crumbs=True)))
+        [Crumb("/tmp/hansel/data/proj4/0040001/{session_id}/anat_1/mprage.nii.gz"),
+         Crumb("/tmp/hansel/data/proj4/0040002/{session_id}/anat_1/mprage.nii.gz"),
+         Crumb("/tmp/hansel/data/proj4/0040003/{session_id}/anat_1/mprage.nii.gz"),
+         Crumb("/tmp/hansel/data/proj4/0040004/{session_id}/anat_1/mprage.nii.gz"),
+        ...
 
         # adding 'mod' to the intersection would be:
-        >>> intersection(cr1, cr2, on=['subject_id', 'mod', 'image'])
-        [(('subject_id', '0040000'), ('mod', 'anat_1'), ('image', 'mprage.nii.gz')),
-         (('subject_id', '0040000'), ('mod', 'rest_1'), ('image', 'rest.nii.gz')),
-         (('subject_id', '0040001'), ('mod', 'rest_1'), ('image', 'rest.nii.gz')),
-         (('subject_id', '0040002'), ('mod', 'anat_1'), ('image', 'mprage.nii.gz')),
-         (('subject_id', '0040002'), ('mod', 'rest_1'), ('image', 'rest.nii.gz'))]
+        >>> common_values = intersection(cr_proj3, cr_proj4, on=['subject_id', 'session_id', 'image'])
+        >>> pprint(common_values, width=120)
+        [(('subject_id', '0040001'), ('session_id', 'session_1'), ('image', 'mprage.nii.gz')),
+         (('subject_id', '0040002'), ('session_id', 'session_1'), ('image', 'mprage.nii.gz')),
+         (('subject_id', '0040003'), ('session_id', 'session_1'), ('image', 'mprage.nii.gz')),
+         (('subject_id', '0040004'), ('session_id', 'session_1'), ('image', 'mprage.nii.gz')),
+         ...
 
 
-The `unfold` function
-~~~~~~~~~~~~~~~~~~~~~
+The `unfold` and `ls` functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Unfold the whole crumb path to get the whole file tree in a list of paths:
 
     .. code:: python
 
-        >>> all_images = Crumb("/home/hansel/raw/{subject_id}/{session_id}/{modality}/{image}")
+        >>> all_images = Crumb("/tmp/hansel/data/raw/{subject_id}/{session_id}/{image_type}/{image}")
         >>> all_images = all_images.unfold()
-        >>> print(all_images)
-        [Crumb("/home/hansel/data/raw/0040000/session_1/anat_1/mprage.nii.gz"),
-         Crumb("/home/hansel/data/raw/0040000/session_1/rest_1/rest.nii.gz"),
-         Crumb("/home/hansel/data/raw/0040001/session_1/anat_1/mprage.nii.gz"),
-         Crumb("/home/hansel/data/raw/0040001/session_1/rest_1/rest.nii.gz"),
-         Crumb("/home/hansel/data/raw/0040002/session_1/anat_1/mprage.nii.gz"),
-         Crumb("/home/hansel/data/raw/0040002/session_1/rest_1/rest.nii.gz"),
-         Crumb("/home/hansel/data/raw/0040003/session_1/anat_1/mprage.nii.gz"),
-         Crumb("/home/hansel/data/raw/0040003/session_1/rest_1/rest.nii.gz"),
-         ...
+        >>> pprint(all_images)
+        [Crumb("/tmp/hansel/data/raw/0040000/session_1/anat_1/mprage.nii.gz"),
+         Crumb("/tmp/hansel/data/raw/0040000/session_1/rest_1/mprage.nii.gz"),
+         Crumb("/tmp/hansel/data/raw/0040001/session_1/anat_1/mprage.nii.gz"),
+         Crumb("/tmp/hansel/data/raw/0040001/session_1/rest_1/mprage.nii.gz"),
+         Crumb("/tmp/hansel/data/raw/0040002/session_1/anat_1/mprage.nii.gz"),
+         Crumb("/tmp/hansel/data/raw/0040002/session_1/rest_1/mprage.nii.gz"),
+         Crumb("/tmp/hansel/data/raw/0040003/session_1/anat_1/mprage.nii.gz"),
+        ...
 
         # and you can ask for the value of the crumb argument in each element
-        >>> print(crumbs[0]['subject_id'])
+        >>> print(all_images[0]['subject_id'])
         ['0040000']
 
 Note that `unfold` is the same as calling `ls` function without arguments.
@@ -412,48 +432,43 @@ The syntax for crumb arguments with a regular expression is: ``"{<arg_name>:<arg
 
     .. code:: python
 
-        # only the session_0 folders
-        >>> s0_cr = Crumb("/home/hansel/raw/{subject_id}/{session_id:*_0}/{modality}/{image}")
-        >>> s0_imgs = s0_cr.ls()
-        >>> print(s0_imgs)
-        [Crumb("/home/hansel/data/raw/0040000/session_0/anat_1/mprage.nii.gz"),
-         Crumb("/home/hansel/data/raw/0040000/session_0/rest_1/rest.nii.gz"),
-         Crumb("/home/hansel/data/raw/0040001/session_0/anat_1/mprage.nii.gz"),
-         Crumb("/home/hansel/data/raw/0040001/session_0/rest_1/rest.nii.gz"),
-         ...
+        # only the session_1 folders
+        >>> session1_cr = Crumb("/tmp/hansel/data/raw/{subject_id}/{session_id:*_1}/{image_type}/{image}")
+        >>> session1_imgs = session1_cr.ls()
+        >>> pprint(session1_imgs)
+        [Crumb("/tmp/hansel/data/raw/0040000/session_1/anat_1/mprage.nii.gz"),
+         Crumb("/tmp/hansel/data/raw/0040000/session_1/rest_1/mprage.nii.gz"),
+         Crumb("/tmp/hansel/data/raw/0040001/session_1/anat_1/mprage.nii.gz"),
+         Crumb("/tmp/hansel/data/raw/0040001/session_1/rest_1/mprage.nii.gz"),
+        ...
 
 The default is for ``fnmatch`` expressions. If you prefer using ``re.match`` for filtering,
 set the ``regex`` argument to ``'re'`` or ``'re.ignorecase'`` in the constructor.
 
     .. code:: python
 
-        # only the ``session_0`` folders
-        >>> s0_cr = Crumb("/home/hansel/raw/{subject_id}/{session_id:^.*_0$}/{modality}/{image}",
-        >>>                 regex='re')
-        >>> s0_imgs = s0_cr.ls()
-        >>> print(s0_imgs)
-        [Crumb("/home/hansel/data/raw/0040000/session_0/anat_1/mprage.nii.gz"),
-         Crumb("/home/hansel/data/raw/0040000/session_0/rest_1/rest.nii.gz"),
-         Crumb("/home/hansel/data/raw/0040001/session_0/anat_1/mprage.nii.gz"),
-         Crumb("/home/hansel/data/raw/0040001/session_0/rest_1/rest.nii.gz"),
-         ...
+        # only the rest images from the subject ``040000``
+        >>> s0_rest_cr = Crumb("/tmp/hansel/data/raw/{subject_id:.*00$}/{session_id}/{image_type:rest.*}/{image}", regex='re')
+        >>> s0_rest_imgs = s0_rest_cr.ls()
+        >>> print(s0_rest_imgs)
+        [Crumb("/tmp/hansel/data/raw/0040000/session_1/rest_1/mprage.nii.gz")]
 
 The regular expressions can be checked with the `patterns` property.
 
     .. code:: python
 
-        >>> print(s0_cr.patterns)
-        {'session_id': '^.*_0$', 'modality': '', 'image': '', 'subject_id': ''}
+        >>> print(s0_rest_cr.patterns)
+        {'subject_id': '.*00$', 'image_type': 'rest.*'}
 
 And can be also modified with the `set_pattern` function.
 
     .. code:: python
 
-        >>> s0_cr.set_pattern('modality', 'a.*')
-        >>> print(s0_cr.patterns)
-        {'session_id': '^.*_0$', 'modality': 'a.*', 'image': '', 'subject_id': ''}
-        >>> print(s0_cr.path)
-        /home/hansel/raw/{subject_id}/{session_id:^.*_0$}/{modality:a.*}/{image}
+        >>> s0_rest_cr.set_pattern('session_id', '.*_1$')
+        >>> print(s0_rest_cr.patterns)
+        {'subject_id': '.*00$', 'session_id': '.*_1$', 'image_type': 'rest.*'}
+        >>> print(s0_rest_cr.path)
+        /tmp/hansel/data/raw/{subject_id:.*00$}/{session_id:.*_1$}/{image_type:rest.*}/{image}
 
 
 A regular expression can be temporarily set with the `ls` function and the `[]`
@@ -461,20 +476,28 @@ operator.
 
     .. code:: python
 
-        >>> mprage_s0_imgs = s0_cr.ls('image:mprage.*')
-        >>> print(mprage_s0_imgs)
-        [Crumb("/home/hansel/data/raw/0040000/session_0/anat_1/mprage.nii.gz"),
-         Crumb("/home/hansel/data/raw/0040001/session_0/anat_1/mprage.nii.gz"),
-         ...
+        >>> crumb = Crumb("/tmp/hansel/data/raw/{subject_id}/{session_id}/{image_type}/{image}")
+        >>> mprage_crumb = crumb.ls('image:mprage.*')
+        >>> pprint(mprage_crumb)
+        [Crumb("/tmp/hansel/data/raw/0040000/session_1/anat_1/mprage.nii.gz"),
+         Crumb("/tmp/hansel/data/raw/0040000/session_1/rest_1/mprage.nii.gz"),
+         Crumb("/tmp/hansel/data/raw/0040001/session_1/anat_1/mprage.nii.gz"),
+         Crumb("/tmp/hansel/data/raw/0040001/session_1/rest_1/mprage.nii.gz"),
+         Crumb("/tmp/hansel/data/raw/0040002/session_1/anat_1/mprage.nii.gz"),
+        ...
 
-        >>> print(s0_cr['image:mprage.*']
-        [Crumb("/home/hansel/data/raw/0040000/session_0/anat_1/mprage.nii.gz"),
-         Crumb("/home/hansel/data/raw/0040001/session_0/anat_1/mprage.nii.gz"),
-         ...
+        >>> pprint(crumb['image:mprage.*'])
+        ['mprage.nii.gz',
+         'mprage.nii.gz',
+         'mprage.nii.gz',
+         'mprage.nii.gz',
+         'mprage.nii.gz',
+         'mprage.nii.gz',
+        ...
 
 
-`crumb_copy`
-~~~~~~~~~~~~
+Copy and modify folder structure with `crumb_copy`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Copy a folder structure from one crumb to the other. The source crumb
 must be fully specified, i.e., all crumb arguments must get an existing value.
@@ -484,8 +507,8 @@ of the source crumb.
     .. code:: python
 
         >>> from hansel import Crumb, crumb_copy
-        >>> src_cr = Crumb("/home/hansel/raw/{subj_id}/{sess}/{modal}/{img}")
-        >>> dst_cr = Crumb("/home/hansel/copy/{subj_id}/{sess}/{img}")
+        >>> src_cr = Crumb("/tmp/hansel/data/raw/{subj_id}/{sess}/{type}/{img}")
+        >>> dst_cr = Crumb("/tmp/hansel/data/copy/{subj_id}/{sess}/{type}")
         >>> crumb_copy(src_cr, dst_cr)
 
 
@@ -639,9 +662,6 @@ or
 
 .. |Coverage Status| image:: https://coveralls.io/repos/alexsavio/hansel/badge.svg?branch=master&service=github
    :target: https://coveralls.io/github/alexsavio/hansel?branch=master
-
-.. |PyPI Downloads| image:: https://img.shields.io/pypi/dm/hansel.svg
-        :target: https://pypi.python.org/pypi/hansel
 
 .. |Code Health| image:: https://landscape.io/github/alexsavio/hansel/master/landscape.svg?style=flat
         :target: https://landscape.io/github/alexsavio/hansel/master
