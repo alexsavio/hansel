@@ -53,7 +53,7 @@ def joint_value_map(crumb: hansel.Crumb, arg_names: Iterator[str], check_exists:
     return sorted(values_map_checked)
 
 
-def intersection(crumb1: hansel.Crumb, crumb2: hansel.Crumb, on:Iterator[str]=None) -> List[str]:
+def intersection(crumb1: hansel.Crumb, crumb2: hansel.Crumb, on: Iterator[str]=None) -> List[str]:
     """Return an 'inner join' of both given Crumbs, i.e., will return a list of
     Crumbs with common values for the common arguments of both crumbs.
 

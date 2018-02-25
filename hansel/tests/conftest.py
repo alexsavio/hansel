@@ -63,4 +63,3 @@ def tmp_tree_crumb(base_dir, brain_data_crumb_args):
     crumb_path, values_dict = brain_data_crumb_args
     yield make_tree_from_crumb(base_dir, crumb_path, values_dict)
     shutil.rmtree(base_dir)
-

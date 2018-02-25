@@ -62,7 +62,8 @@ def _build_path(
     crumb_path: str,
     arg_values: Dict[str, str],
     with_regex: bool=True,
-    regexes: Dict[str, str]=None) -> str:
+    regexes: Dict[str, str]=None
+) -> str:
     """ Build the crumb_path with the values in arg_values.
     Parameters
     ----------
