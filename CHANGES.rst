@@ -3,8 +3,16 @@
 Changelog
 =========
 
-Version 2.0.0
--------------
+Version 2.0.1 (25.02.2018)
+--------------------------
+
+- Add type annotations accross all code base.
+
+- Fixed documentation. Now it README example code snippets are tested.
+
+
+Version 2.0.0 (24.02.2018)
+--------------------------
 
 - Drop support for Python 2.7. Add support for Python 3.6.
 
