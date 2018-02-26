@@ -6,9 +6,9 @@ Changelog
 Version 2.0.1 (25.02.2018)
 --------------------------
 
-- Add type annotations accross all code base.
+- Add type annotations across all code base.
 
-- Fixed documentation. Now it README example code snippets are tested.
+- Fixed documentation. Now the README example code snippets are also tested.
 
 
 Version 2.0.0 (24.02.2018)
