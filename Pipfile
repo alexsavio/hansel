@@ -1,26 +1,19 @@
 [[source]]
-
 url = "https://pypi.python.org/simple"
 verify_ssl = true
 name = "pypi"
 
-
 [dev-packages]
-
 pytest = "*"
 pytest-cov = "*"
 pdbpp = "*"
-pipenv-tools = "*"
 pytest-xdist = "*"
 better-exceptions = "*"
 "flake8" = "*"
 bumpversion = "*"
-awscli = "*"
 coveralls = "*"
 pandas = "*"
 rstcheck = "*"
 
-
 [packages]
-
 click = "*"
