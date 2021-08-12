@@ -573,6 +573,14 @@ Install
 
 It works on Python 3.4, 3.5 and 2.7. For Python 2.7 install `pathlib2` as well.
 
+    .. code:: bash
+
+        pip install hansel
+
+
+From sources
+------------
+
 This package uses setuptools. You can install it running:
 
     .. code:: bash
